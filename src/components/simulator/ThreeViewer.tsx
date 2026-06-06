@@ -3,7 +3,7 @@ import { OrbitControls, Stage, PerspectiveCamera, Environment, ContactShadows } 
 import { Suspense, useMemo } from 'react'
 import * as THREE from 'three'
 import { useSimulatorStore } from '../../store/useSimulatorStore'
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
+import { GLTFLoader } from 'three-stdlib'
 
 function ShirtModel() {
   const { selectedDesign, selectedTemplate } = useSimulatorStore()
@@ -11,8 +11,8 @@ function ShirtModel() {
   // Carrega o arquivo GLB dinamicamente se houver um template selecionado com glb_url
   const glb = useLoader(
     GLTFLoader, 
-    selectedTemplate?.glb_url || '/camisa_default.glb' // Precisamos de um default ou fallback
-  ).clone()
+    selectedTemplate?.glb_url || '/placeholder-uv.png' // Fallback para não quebrar enquanto não há modelos
+  )
 
   // Carrega o UV Map se houver um design selecionado
   const texture = useLoader(
@@ -23,8 +23,9 @@ function ShirtModel() {
   // Inverter textura se necessário (comum em exports de CLO3D)
   texture.flipY = false;
 
-  useMemo(() => {
-    glb.scene.traverse((child) => {
+  const clonedScene = useMemo(() => {
+    const scene = glb.scene.clone();
+    scene.traverse((child) => {
       if ((child as THREE.Mesh).isMesh) {
         const mesh = child as THREE.Mesh;
         mesh.castShadow = true;
@@ -39,9 +40,10 @@ function ShirtModel() {
         });
       }
     });
+    return scene;
   }, [glb, texture]);
 
-  return <primitive object={glb.scene} />
+  return <primitive object={clonedScene} />
 }
 
 export function ThreeViewer() {

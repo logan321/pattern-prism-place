@@ -51,31 +51,40 @@ export function CustomizerPanel() {
                 {templates.length} DISPONÍVEIS
               </span>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              {templates.map((template) => (
-                <button 
-                  key={template.id}
-                  onClick={() => selectTemplate(template)}
-                  className={`group relative aspect-[3/4] rounded-xl border-2 transition-all overflow-hidden ${
-                    selectedTemplate?.id === template.id 
-                      ? 'border-orange-500 ring-2 ring-orange-500/20 shadow-lg' 
-                      : 'border-gray-100 hover:border-gray-300 bg-gray-50'
-                  }`}
-                >
-                  <img src={template.image} alt={template.name} className="w-full h-full object-contain p-2" />
-                  {selectedTemplate?.id === template.id && (
-                    <div className="absolute top-2 right-2 bg-orange-500 text-white rounded-full p-1 shadow-sm">
-                      <Check className="w-3 h-3" />
+            
+            {templates.length === 0 ? (
+              <div className="text-center py-8 px-4 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                <p className="text-xs text-gray-400 italic">Nenhum modelo 3D cadastrado no painel administrativo.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-4">
+                {templates.map((template) => (
+                  <button 
+                    key={template.id}
+                    onClick={() => selectTemplate(template)}
+                    className={`group relative aspect-[3/4] rounded-xl border-2 transition-all overflow-hidden ${
+                      selectedTemplate?.id === template.id 
+                        ? 'border-orange-500 ring-2 ring-orange-500/20 shadow-lg' 
+                        : 'border-gray-100 hover:border-gray-300 bg-gray-50'
+                    }`}
+                  >
+                    <div className="w-full h-full flex items-center justify-center p-4">
+                      <Shirt className={`w-12 h-12 ${selectedTemplate?.id === template.id ? 'text-orange-500' : 'text-gray-300'}`} />
                     </div>
-                  )}
-                  <div className={`absolute bottom-0 inset-x-0 p-2 text-[10px] font-bold text-center transition-colors ${
-                    selectedTemplate?.id === template.id ? 'bg-orange-500 text-white' : 'bg-white/90 text-gray-700'
-                  }`}>
-                    {template.name}
-                  </div>
-                </button>
-              ))}
-            </div>
+                    {selectedTemplate?.id === template.id && (
+                      <div className="absolute top-2 right-2 bg-orange-500 text-white rounded-full p-1 shadow-sm">
+                        <Check className="w-3 h-3" />
+                      </div>
+                    )}
+                    <div className={`absolute bottom-0 inset-x-0 p-2 text-[10px] font-bold text-center transition-colors ${
+                      selectedTemplate?.id === template.id ? 'bg-orange-500 text-white' : 'bg-white/90 text-gray-700'
+                    }`}>
+                      {template.name}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         )}
 

@@ -2,7 +2,38 @@ import { Header } from '../layout/Header'
 import { ThreeViewer } from './ThreeViewer'
 import { CustomizerPanel } from './CustomizerPanel'
 
+import { useEffect } from 'react'
+import { supabase } from '@/integrations/supabase/client'
+import { useSimulatorStore } from '../../store/useSimulatorStore'
+
 export function SimulatorContainer() {
+  const { setTemplates, selectTemplate } = useSimulatorStore()
+
+  useEffect(() => {
+    const fetchInitialData = async () => {
+      const { data, error } = await supabase
+        .from('shirt_models')
+        .select('*')
+        .eq('is_active', true)
+        .order('created_at', { ascending: false });
+
+      if (!error && data && data.length > 0) {
+        const formattedTemplates = data.map(m => ({
+          id: m.id,
+          name: m.name,
+          image: '/uploads/colado-1780761035664.png',
+          type: 'custom',
+          glb_url: m.glb_url
+        }));
+        setTemplates(formattedTemplates);
+        // Seleciona o primeiro por padrão
+        selectTemplate(formattedTemplates[0]);
+      }
+    };
+
+    fetchInitialData();
+  }, []);
+
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-gray-50">
       <Header />

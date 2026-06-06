@@ -105,6 +105,40 @@ export default function Admin() {
     }
   };
 
+  const handleDelete = async (id: string, bucket: string, filePath: string) => {
+    if (!window.confirm('Tem certeza que deseja excluir este item?')) return;
+
+    try {
+      // 1. Deletar do Storage
+      const fileName = filePath.split('/').pop();
+      if (fileName) {
+        const { error: storageError } = await supabase.storage
+          .from(bucket)
+          .remove([fileName]);
+        
+        if (storageError) {
+          console.warn('Erro ao deletar do storage:', storageError);
+        }
+      }
+
+      // 2. Deletar do Banco
+      const table = bucket === 'models' ? 'modelos' : 'patterns';
+      const { error: dbError } = await supabase
+        .from(table)
+        .delete()
+        .eq('id', id);
+
+      if (dbError) throw dbError;
+
+      queryClient.invalidateQueries({ queryKey: [activeView] });
+      alert('Item excluído com sucesso!');
+    } catch (error: any) {
+      console.error('Erro ao excluir:', error);
+      alert(`Erro ao excluir: ${error.message}`);
+    }
+  };
+
+
 
   const { data: models, isLoading: modelsLoading } = useQuery({
     queryKey: ['models'],
@@ -214,8 +248,54 @@ export default function Admin() {
                         <Box className="w-12 h-12 text-gray-300" />
                       )}
                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center space-x-2">
-                        <button className="bg-white p-2 rounded-lg text-gray-700 hover:bg-gray-100"><Upload className="w-4 h-4" /></button>
-                        <button className="bg-red-500 p-2 rounded-lg text-white hover:bg-red-600"><Trash2 className="w-4 h-4" /></button>
+                        <button 
+                          onClick={() => {
+                            const input = document.createElement('input');
+                            input.type = 'file';
+                            input.accept = 'image/*';
+                            input.onchange = async (e: any) => {
+                              const file = e.target.files?.[0];
+                              if (!file) return;
+                              
+                              try {
+                                const fileName = `thumb_${Date.now()}_${file.name}`;
+                                const { data: uploadData, error: uploadError } = await supabase.storage
+                                  .from('textures')
+                                  .upload(fileName, file);
+                                
+                                if (uploadError) throw uploadError;
+                                
+                                const { data: urlData } = supabase.storage
+                                  .from('textures')
+                                  .getPublicUrl(uploadData.path);
+                                
+                                const { error: updateError } = await supabase
+                                  .from('modelos')
+                                  .update({ thumbnail_url: urlData.publicUrl } as any)
+                                  .eq('id', model.id);
+                                
+                                if (updateError) throw updateError;
+                                
+                                queryClient.invalidateQueries({ queryKey: ['models'] });
+                                alert('Thumbnail atualizada!');
+                              } catch (err: any) {
+                                alert('Erro ao atualizar thumbnail: ' + err.message);
+                              }
+                            };
+                            input.click();
+                          }}
+                          className="bg-white p-2 rounded-lg text-gray-700 hover:bg-gray-100" 
+                          title="Atualizar Thumbnail"
+                        >
+                          <Upload className="w-4 h-4" />
+                        </button>
+                        <button 
+                          onClick={() => handleDelete(model.id, 'models', model.glb_url)}
+                          className="bg-red-500 p-2 rounded-lg text-white hover:bg-red-600"
+                          title="Excluir Modelo"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
                       </div>
                     </div>
                     <div className="p-4 flex items-center justify-between">
@@ -237,11 +317,20 @@ export default function Admin() {
                  </div>
                ) : (
                  patterns?.map((pattern: any) => (
-                   <div key={pattern.id} className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden aspect-square flex items-center justify-center">
-                     {pattern.image_url && (
-                       <img src={pattern.image_url} alt={pattern.name} className="w-full h-full object-cover" />
-                     )}
-                   </div>
+                    <div key={pattern.id} className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden aspect-square flex items-center justify-center relative group">
+                      {pattern.image_url && (
+                        <img src={pattern.image_url} alt={pattern.name} className="w-full h-full object-cover" />
+                      )}
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <button 
+                          onClick={() => handleDelete(pattern.id, 'textures', pattern.image_url)}
+                          className="bg-red-500 p-1.5 rounded-lg text-white hover:bg-red-600"
+                          title="Excluir Estampa"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
 
                  ))
                )}

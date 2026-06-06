@@ -11,18 +11,16 @@ function Model({ url, textureUrl }: { url: string; textureUrl?: string }) {
     if (!textureUrl) return;
 
     const applyTexture = (imageSrc: string) => {
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        canvas.width = img.width || 1024;
-        canvas.height = img.height || 1024;
-        const ctx = canvas.getContext('2d')!;
-        ctx.drawImage(img, 0, 0);
-
-        const texture = new THREE.CanvasTexture(canvas);
+      const textureLoader = new THREE.TextureLoader();
+      textureLoader.crossOrigin = 'anonymous';
+      
+      textureLoader.load(imageSrc, (texture) => {
         texture.flipY = false;
         texture.colorSpace = THREE.SRGBColorSpace;
+        texture.generateMipmaps = true;
+        texture.minFilter = THREE.LinearMipmapLinearFilter;
+        texture.magFilter = THREE.LinearFilter;
+        texture.anisotropy = 16;
         texture.needsUpdate = true;
 
         scene.traverse((child) => {
@@ -31,6 +29,9 @@ function Model({ url, textureUrl }: { url: string; textureUrl?: string }) {
             const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
             materials.forEach((mat) => {
               if (mat instanceof THREE.MeshStandardMaterial) {
+                // Limpa textura anterior se existir
+                if (mat.map) mat.map.dispose();
+                
                 mat.map = texture;
                 mat.roughness = 1;
                 mat.metalness = 0;
@@ -39,8 +40,9 @@ function Model({ url, textureUrl }: { url: string; textureUrl?: string }) {
             });
           }
         });
-      };
-      img.src = imageSrc;
+      }, undefined, (err) => {
+        console.error('Erro ao carregar textura via TextureLoader:', err);
+      });
     };
 
     const processTexture = () => {
@@ -101,7 +103,7 @@ export function ThreeDViewer({ modelUrl, textureUrl }: { modelUrl?: string; text
     <ErrorBoundary FallbackComponent={FallbackError}>
       <Canvas shadows camera={{ position: [0, 0, 4], fov: 45 }}>
         <Suspense fallback={null}>
-          <Stage intensity={0.5} environment="city" shadows="contact" adjustCamera={1.5}>
+          <Stage intensity={0.5} environment="city" shadows="contact" adjustCamera={1.5} preset="rembrandt">
             <Model url={modelUrl} textureUrl={textureUrl} />
           </Stage>
           <OrbitControls makeDefault />

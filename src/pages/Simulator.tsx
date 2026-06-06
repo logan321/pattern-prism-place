@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { 
   Shirt, 
   Palette, 
@@ -8,20 +8,24 @@ import {
   Upload, 
   ZoomIn, 
   ZoomOut, 
-  ArrowUp, 
-  ArrowDown, 
+  ChevronUp,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Smartphone,
   MessageSquare,
   Save,
   Send,
-  Settings
+  Settings,
+  User,
+  RotateCcw
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { useCustomizerStore } from '../store/useCustomizerStore';
-import { ThreeDViewer } from '../components/ThreeDViewer';
+import { ThreeDViewer, type ThreeDViewerRef } from '../components/ThreeDViewer';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../integrations/supabase/client';
 import golaPadreAsset from '../assets/GOLA_PADRE_otimizado.glb.asset.json';
@@ -109,6 +113,7 @@ const PatternCard = ({ name, active, onClick, imageUrl }: { name: string, active
 
 
 export default function Simulator() {
+  const viewerRef = useRef<ThreeDViewerRef>(null);
   const { 
     activeTab, 
     setActiveTab, 
@@ -372,6 +377,7 @@ export default function Simulator() {
         <main className="flex-1 relative bg-gray-200">
           <div className="absolute inset-0">
             <ThreeDViewer 
+              ref={viewerRef}
               modelUrl={modelUrl} 
               textureUrl={currentPattern?.svg_url || currentPattern?.image_url || undefined}
             />
@@ -392,16 +398,71 @@ export default function Simulator() {
           </div>
 
           {/* Right Controls */}
-          <div className="absolute right-6 bottom-32 flex flex-col space-y-2 z-10">
+          <div className="absolute right-6 bottom-32 flex flex-col space-y-3 z-10">
+            {/* View Selector */}
+            <div className="bg-white p-2 rounded-lg shadow-md border flex flex-col space-y-2">
+              <p className="text-[10px] text-gray-400 font-bold uppercase text-center mb-1">Vistas</p>
+              <button 
+                onClick={() => viewerRef.current?.setView('front')}
+                className="p-2 hover:bg-orange-50 hover:text-orange-600 rounded flex flex-col items-center transition-colors group"
+                title="Vista Frontal"
+              >
+                <User className="w-5 h-5 text-gray-600 group-hover:text-orange-600" />
+                <span className="text-[8px] font-bold">FRENTE</span>
+              </button>
+              <button 
+                onClick={() => viewerRef.current?.setView('back')}
+                className="p-2 hover:bg-orange-50 hover:text-orange-600 rounded flex flex-col items-center transition-colors group"
+                title="Vista Costas"
+              >
+                <div className="relative">
+                  <User className="w-5 h-5 text-gray-600 group-hover:text-orange-600 opacity-40" />
+                  <RotateCcw className="w-3 h-3 absolute -bottom-1 -right-1 text-orange-600" />
+                </div>
+                <span className="text-[8px] font-bold">COSTAS</span>
+              </button>
+              <div className="flex space-x-1">
+                <button 
+                  onClick={() => viewerRef.current?.setView('left')}
+                  className="p-2 hover:bg-orange-50 hover:text-orange-600 rounded flex flex-col items-center transition-colors group flex-1"
+                  title="Lateral Esquerda"
+                >
+                  <ChevronLeft className="w-5 h-5 text-gray-600 group-hover:text-orange-600" />
+                  <span className="text-[8px] font-bold">ESQ</span>
+                </button>
+                <button 
+                  onClick={() => viewerRef.current?.setView('right')}
+                  className="p-2 hover:bg-orange-50 hover:text-orange-600 rounded flex flex-col items-center transition-colors group flex-1"
+                  title="Lateral Direita"
+                >
+                  <ChevronRight className="w-5 h-5 text-gray-600 group-hover:text-orange-600" />
+                  <span className="text-[8px] font-bold">DIR</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Zoom Controls */}
             <div className="bg-white p-2 rounded-lg shadow-md border flex flex-col space-y-3">
-              <button aria-label="Aumentar zoom" className="p-1 hover:bg-gray-100 rounded"><ZoomIn className="w-5 h-5 text-gray-600" /></button>
-              <button aria-label="Diminuir zoom" className="p-1 hover:bg-gray-100 rounded"><ZoomOut className="w-5 h-5 text-gray-600" /></button>
-              <button aria-label="Mover para cima" className="p-1 hover:bg-gray-100 rounded"><ArrowUp className="w-5 h-5 text-gray-600" /></button>
-              <button aria-label="Mover para baixo" className="p-1 hover:bg-gray-100 rounded"><ArrowDown className="w-5 h-5 text-gray-600" /></button>
+              <button 
+                onClick={() => viewerRef.current?.zoom('in')}
+                aria-label="Aumentar zoom" 
+                className="p-1 hover:bg-gray-100 rounded transition-colors"
+              >
+                <ZoomIn className="w-5 h-5 text-gray-600" />
+              </button>
+              <button 
+                onClick={() => viewerRef.current?.zoom('out')}
+                aria-label="Diminuir zoom" 
+                className="p-1 hover:bg-gray-100 rounded transition-colors"
+              >
+                <ZoomOut className="w-5 h-5 text-gray-600" />
+              </button>
               <div className="h-px bg-gray-200" />
               <div className="flex items-center justify-between space-x-2">
                 <Shirt className="w-4 h-4 text-gray-600" />
-                <div className="w-8 h-4 bg-blue-600 rounded-full relative cursor-pointer"><div className="absolute right-1 top-0.5 w-3 h-3 bg-white rounded-full" /></div>
+                <div className="w-8 h-4 bg-blue-600 rounded-full relative cursor-pointer">
+                  <div className="absolute right-1 top-0.5 w-3 h-3 bg-white rounded-full" />
+                </div>
               </div>
             </div>
           </div>

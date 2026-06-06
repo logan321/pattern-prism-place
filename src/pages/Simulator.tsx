@@ -242,10 +242,15 @@ export default function Simulator() {
         <main className="flex-1 relative bg-gray-200">
           {/* 3D Mockup Container */}
           <div className="absolute inset-0">
-            <ThreeDViewer 
-              modelUrl={currentModel?.glb_url} 
-              textureUrl={currentPattern?.image_url || undefined}
-            />
+            {(() => {
+              console.log('modelUrl sendo passada pro ThreeDViewer:', currentModel?.glb_url);
+              return (
+                <ThreeDViewer 
+                  modelUrl={currentModel?.glb_url} 
+                  textureUrl={currentPattern?.image_url || undefined}
+                />
+              );
+            })()}
           </div>
 
           

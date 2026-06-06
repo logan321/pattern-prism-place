@@ -329,7 +329,9 @@ export default function Admin() {
         <div className="max-w-6xl mx-auto">
           <div className="flex items-center justify-between mb-8">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">{activeView === 'models' ? 'Modelos 3D' : 'Gerenciamento de Estampas'}</h2>
+              <h2 className="text-2xl font-bold text-gray-900">
+                {activeView === 'models' ? 'Modelos 3D' : activeView === 'patterns' ? 'Gerenciamento de Estampas' : 'Configuração de UV Universal'}
+              </h2>
               <p className="text-gray-500 text-sm mt-1">
                 {activeView === 'models' ? 'Gerencie os arquivos GLB/GLTF dos seus produtos.' : 'Importe e configure as estampas disponíveis para personalização.'}
               </p>

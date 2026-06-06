@@ -105,12 +105,13 @@ export const ThreeDViewer = forwardRef<ThreeDViewerRef, { modelUrl?: string; tex
         
         const controls = orbitRef.current;
         const targetPos = new THREE.Vector3();
+        const distance = 3.5; // Distância ideal para enquadrar a camisa
         
         switch (view) {
-          case 'front': targetPos.set(0, 0, 5); break;
-          case 'back': targetPos.set(0, 0, -5); break;
-          case 'left': targetPos.set(-5, 0, 0); break;
-          case 'right': targetPos.set(5, 0, 0); break;
+          case 'front': targetPos.set(0, 0, distance); break;
+          case 'back': targetPos.set(0, 0, -distance); break;
+          case 'left': targetPos.set(-distance, 0, 0); break;
+          case 'right': targetPos.set(distance, 0, 0); break;
         }
 
         gsap.to(controls.object.position, {
@@ -123,9 +124,13 @@ export const ThreeDViewer = forwardRef<ThreeDViewerRef, { modelUrl?: string; tex
         });
       },
       zoom: (direction) => {
-        if (!orbitRef.current) return;
         const controls = orbitRef.current;
-        const factor = direction === 'in' ? 0.8 : 1.2;
+        const currentDistance = controls.object.position.length();
+        const factor = direction === 'in' ? 0.85 : 1.15;
+        const newDistance = currentDistance * factor;
+
+        // Limites de segurança para não afastar demais nem entrar no modelo
+        if (newDistance < 1.8 || newDistance > 7) return;
         
         gsap.to(controls.object.position, {
           x: controls.object.position.x * factor,
@@ -148,12 +153,12 @@ export const ThreeDViewer = forwardRef<ThreeDViewerRef, { modelUrl?: string; tex
 
     return (
       <ErrorBoundary FallbackComponent={FallbackError}>
-        <Canvas shadows camera={{ position: [0, 0, 5], fov: 45 }}>
+        <Canvas shadows camera={{ position: [0, 0, 3.5], fov: 40 }}>
           <Suspense fallback={null}>
-            <Stage intensity={0.5} environment="city" shadows="contact" adjustCamera={1.5} preset="rembrandt">
-              <Model url={modelUrl} textureUrl={textureUrl} />
-            </Stage>
-            <OrbitControls ref={orbitRef} makeDefault minDistance={2} maxDistance={10} />
+          <Stage intensity={0.5} environment="city" shadows="contact" adjustCamera={false} preset="rembrandt">
+            <Model url={modelUrl} textureUrl={textureUrl} />
+          </Stage>
+          <OrbitControls ref={orbitRef} makeDefault minDistance={1.5} maxDistance={8} />
           </Suspense>
         </Canvas>
       </ErrorBoundary>

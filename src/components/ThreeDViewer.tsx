@@ -145,38 +145,24 @@ export const ThreeDViewer = forwardRef<ThreeDViewerRef, { modelUrl?: string; tex
       },
       zoom: (direction) => {
         const controls = orbitRef.current;
+        if (!controls) return;
+        
         const currentDistance = controls.getDistance();
         const factor = direction === 'in' ? 0.85 : 1.15;
-        const newDistance = currentDistance * factor;
-
-        if (newDistance < 1.5 || newDistance > 6) return;
+        const newDistance = Math.min(Math.max(currentDistance * factor, 1.2), 5);
         
-        gsap.to(controls.object, {
-          zoom: 1, // Mantemos zoom da câmera em 1 e alteramos posição
+        const proxy = { distance: currentDistance };
+        gsap.to(proxy, {
+          distance: newDistance,
           duration: 0.5,
           ease: 'power2.out',
           onUpdate: () => {
-            // Animamos a distância alterando a posição relativa ao alvo
-            const ratio = (currentDistance + (newDistance - currentDistance) * gsap.getProperty(controls.object, "progress" || 1)) / currentDistance;
-            // Simplificando a animação de zoom para ser direta na posição preservando o ângulo
-            if (gsap.isTweening(controls.object.position)) return;
-            
-            const targetPos = controls.object.position.clone().multiplyScalar(factor);
-            controls.object.position.copy(targetPos);
+            const distance = controls.getDistance();
+            if (distance === 0) return;
+            const ratio = proxy.distance / distance;
+            controls.object.position.multiplyScalar(ratio);
             controls.update();
           }
-        });
-        
-        // Jeito mais limpo de animar zoom mantendo o orbit
-        gsap.to(controls, {
-          minDistance: newDistance,
-          maxDistance: newDistance,
-          duration: 0.5,
-          onComplete: () => {
-            controls.minDistance = 1.5;
-            controls.maxDistance = 6;
-          },
-          onUpdate: () => controls.update()
         });
       }
     }));
@@ -191,12 +177,18 @@ export const ThreeDViewer = forwardRef<ThreeDViewerRef, { modelUrl?: string; tex
 
     return (
       <ErrorBoundary FallbackComponent={FallbackError}>
-        <Canvas shadows camera={{ position: [0, 0, 2.8], fov: 40 }}>
+        <Canvas shadows camera={{ position: [0, 0, 2.0], fov: 45 }}>
           <Suspense fallback={null}>
           <Stage intensity={0.5} environment="city" shadows="contact" adjustCamera={false} preset="rembrandt">
             <Model url={modelUrl} textureUrl={textureUrl} />
           </Stage>
-          <OrbitControls ref={orbitRef} makeDefault minDistance={1.5} maxDistance={8} />
+          <OrbitControls 
+            ref={orbitRef} 
+            makeDefault 
+            minDistance={1.0} 
+            maxDistance={6} 
+            enablePan={false}
+          />
           </Suspense>
         </Canvas>
       </ErrorBoundary>

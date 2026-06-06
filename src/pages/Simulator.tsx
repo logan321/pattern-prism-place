@@ -122,9 +122,10 @@ export default function Simulator() {
       {/* Header */}
       <header className="bg-orange-600 h-16 flex items-center justify-between px-4 shrink-0 shadow-md">
         <div className="flex items-center">
-          <div className="bg-white p-1 rounded font-bold text-xs leading-none text-center mr-8">
+          <div className="bg-white p-1 rounded font-bold text-xs leading-none text-center mr-4">
             SUA<br/>LOGO<br/>AQUI
           </div>
+          <h1 className="text-white text-lg font-bold mr-8 hidden md:block">Simulador de Uniformes 3D Jumptec</h1>
           <div className="flex items-center space-x-4">
              <div className="bg-white/20 p-2 rounded-full cursor-pointer hover:bg-white/30">
                <div className="w-5 h-5 border-2 border-white rounded-full flex items-center justify-center">

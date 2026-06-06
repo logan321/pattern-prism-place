@@ -295,7 +295,7 @@ function AdminPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Upload de PNG (Thumbnail)</label>
+                <label className="block text-sm font-medium text-gray-700">Upload de PNG (Miniatura)</label>
                 <input
                   type="file"
                   accept="image/png"
@@ -303,23 +303,27 @@ function AdminPage() {
                   className="mt-1 block w-full text-sm text-gray-500"
                 />
               </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Upload de SVG (UV Map)</label>
+                <input
+                  type="file"
+                  accept=".svg"
+                  onChange={handleSvgUpload}
+                  className="mt-1 block w-full text-sm text-gray-500"
+                />
+              </div>
               <button
                 type="button"
-                onClick={() => {
-                  if (!selectedMoldeId || !estampaNome || !estampaMiniaturaBase64) {
-                    alert("Preencha todos os campos do Passo 1");
-                    return;
-                  }
-                  setStep(2);
-                }}
-                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 font-medium"
+                onClick={() => setStep(2)}
+                disabled={!selectedMoldeId || !estampaNome || !estampaMiniaturaBase64 || !estampaSvgBase64}
+                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Próximo
               </button>
             </div>
           ) : (
             <div className="space-y-4">
-              <h3 className="font-medium text-sm text-blue-600">Passo 2: SVG e Cores</h3>
+              <h3 className="font-medium text-sm text-blue-600">Passo 2: Nomear Regiões</h3>
               <div>
                 <label className="block text-sm font-medium text-gray-700">Upload de SVG (UV Map)</label>
                 <input

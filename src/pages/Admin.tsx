@@ -250,13 +250,15 @@ export default function Admin() {
 
       const patternsWithSignedUrls = await Promise.all(data.map(async (p) => {
         try {
-          const getPath = (url: string | null) => {
+          const getPath = (url: string | null, bucket: string) => {
             if (!url) return null;
-            const parts = url.split('/public/textures/');
-            return parts.length > 1 ? parts[1] : null;
+            if (url.includes('token=')) return null;
+            const marker = `/public/${bucket}/`;
+            const parts = url.split(marker);
+            return parts.length > 1 ? parts[1].split('?')[0] : null;
           };
 
-          const pngPath = getPath(p.image_url);
+          const pngPath = getPath(p.image_url, 'textures');
           if (pngPath) {
             const { data: pngData } = await supabase.storage.from('textures').createSignedUrl(pngPath, 3600);
             if (pngData) return { ...p, image_url: pngData.signedUrl };

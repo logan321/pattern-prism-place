@@ -97,7 +97,7 @@ function AdminPage() {
 
     // Read colors from SVG
     const svgText = atob(base64.split(",")[1]);
-    const hexRegex = /fill="(#[a-fA-F0-9]{6})"/g;
+    const hexRegex = /fill\s*[:=]\s*['"]?(#[a-fA-F0-9]{6})['"]?/gi;
     const matches = svgText.matchAll(hexRegex);
     const colors = Array.from(new Set(Array.from(matches).map(m => m[1])));
     

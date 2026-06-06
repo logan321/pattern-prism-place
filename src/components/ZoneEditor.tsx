@@ -63,20 +63,25 @@ export default function ZoneEditor({ modelUrl, initialZones = [], onSave, onClos
   onClose: () => void 
 }) {
   const [zones, setZones] = useState<Zone[]>(initialZones);
-  const [selectedPoint, setSelectedPoint] = useState<THREE.Vector3 | null>(null);
+  const [selectedUV, setSelectedUV] = useState<{ uv: THREE.Vector2, point: THREE.Vector3 } | null>(null);
   const [newZoneName, setNewZoneName] = useState('');
 
+  const handlePointSelect = (uv: THREE.Vector2, point: THREE.Vector3) => {
+    setSelectedUV({ uv: uv.clone(), point: point.clone() });
+  };
+
   const handleAddZone = () => {
-    if (!selectedPoint || !newZoneName) return;
+    if (!selectedUV || !newZoneName) return;
     
     const newZone: Zone = {
       id: Math.random().toString(36).substr(2, 9),
       name: newZoneName,
-      position: [selectedPoint.x, selectedPoint.y, selectedPoint.z]
+      uv: { x: selectedUV.uv.x, y: selectedUV.uv.y },
+      position: [selectedUV.point.x, selectedUV.point.y, selectedUV.point.z]
     };
     
     setZones([...zones, newZone]);
-    setSelectedPoint(null);
+    setSelectedUV(null);
     setNewZoneName('');
   };
 

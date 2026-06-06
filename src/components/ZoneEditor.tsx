@@ -9,6 +9,8 @@ interface Zone {
   name: string;
   position?: [number, number, number]; // Legacy compatibility
   uv?: { x: number; y: number }; 
+  u?: { x: number; y: number }; // Added for compatibility with current usage
+
   meshUuid?: string;
   meshName?: string;
   faceIndex?: number;

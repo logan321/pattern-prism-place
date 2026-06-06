@@ -721,6 +721,12 @@ export default function Admin() {
           )}
         </div>
       </main>
+
+      <UVMatrizImportModal 
+        isOpen={showUVMatrizModal} 
+        onClose={() => setShowUVMatrizModal(false)} 
+        queryClient={queryClient} 
+      />
     </div>
 
       {/* Pattern Upload Modal */}

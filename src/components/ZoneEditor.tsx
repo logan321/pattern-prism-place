@@ -123,25 +123,28 @@ export default function ZoneEditor({ modelUrl, initialZones = [], onSave, onClos
   onClose: () => void 
 }) {
   const [zones, setZones] = useState<Zone[]>(initialZones);
-  const [selectedUV, setSelectedUV] = useState<{ uv: THREE.Vector2, point: THREE.Vector3 } | null>(null);
+  const [selectedHit, setSelectedHit] = useState<any | null>(null);
   const [newZoneName, setNewZoneName] = useState('');
 
-  const handlePointSelect = (uv: THREE.Vector2, point: THREE.Vector3) => {
-    setSelectedUV({ uv: uv.clone(), point: point.clone() });
+  const handlePointSelect = (hit: any) => {
+    setSelectedHit(hit);
   };
 
   const handleAddZone = () => {
-    if (!selectedUV || !newZoneName) return;
+    if (!selectedHit || !newZoneName) return;
     
     const newZone: Zone = {
       id: Math.random().toString(36).substr(2, 9),
       name: newZoneName,
-      uv: { x: selectedUV.uv.x, y: selectedUV.uv.y },
-      position: [selectedUV.point.x, selectedUV.point.y, selectedUV.point.z]
+      uv: { x: selectedHit.uv.x, y: selectedHit.uv.y },
+      meshUuid: selectedHit.object.uuid,
+      meshName: selectedHit.object.name,
+      faceIndex: selectedHit.faceIndex,
+      position: [selectedHit.point.x, selectedHit.point.y, selectedHit.point.z]
     };
     
     setZones([...zones, newZone]);
-    setSelectedUV(null);
+    setSelectedHit(null);
     setNewZoneName('');
   };
 

@@ -101,20 +101,15 @@ function Model({ url, textureUrl, universalUvUrl }: { url: string; textureUrl?: 
         color={nameColor}
         anchorX="center"
         anchorY="middle"
-        polygonOffset
-        polygonOffsetFactor={-1}
       >
         {name}
+        <meshStandardMaterial attach="material" color={nameColor} polygonOffset polygonOffsetFactor={-1} />
       </Text>
 
       {/* Placeholder do Escudo */}
-      <mesh 
-        position={(shieldPosition === 'left' ? posMap.shield.left : posMap.shield.right) as any}
-        polygonOffset
-        polygonOffsetFactor={-1}
-      >
+      <mesh position={(shieldPosition === 'left' ? posMap.shield.left : posMap.shield.right) as any}>
         <circleGeometry args={[0.04, 32]} />
-        <meshStandardMaterial color="#FFD700" metalness={0.5} roughness={0.2} />
+        <meshStandardMaterial color="#FFD700" metalness={0.5} roughness={0.2} polygonOffset polygonOffsetFactor={-1} />
       </mesh>
 
       {/* Elementos Traseiros */}
@@ -125,10 +120,9 @@ function Model({ url, textureUrl, universalUvUrl }: { url: string; textureUrl?: 
         color={nameColor}
         anchorX="center"
         anchorY="middle"
-        polygonOffset
-        polygonOffsetFactor={-1}
       >
         {name}
+        <meshStandardMaterial attach="material" color={nameColor} polygonOffset polygonOffsetFactor={-1} />
       </Text>
 
       <Text
@@ -138,10 +132,9 @@ function Model({ url, textureUrl, universalUvUrl }: { url: string; textureUrl?: 
         color={numberColor}
         anchorX="center"
         anchorY="middle"
-        polygonOffset
-        polygonOffsetFactor={-1}
       >
         {number}
+        <meshStandardMaterial attach="material" color={numberColor} polygonOffset polygonOffsetFactor={-1} />
       </Text>
     </group>
   );

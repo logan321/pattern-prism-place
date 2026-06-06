@@ -5,7 +5,9 @@ import * as THREE from 'three';
 import { ErrorBoundary } from 'react-error-boundary';
 
 function Model({ url, textureUrl }: { url: string; textureUrl?: string }) {
+  console.log('Tentando carregar GLB:', url);
   const { scene } = useGLTF(url);
+  console.log('GLB carregado com sucesso:', scene);
 
   useEffect(() => {
     if (!textureUrl) return;
@@ -26,10 +28,12 @@ function Model({ url, textureUrl }: { url: string; textureUrl?: string }) {
   return <primitive object={scene} />;
 }
 
-function FallbackError() {
+function FallbackError({ error }: { error: Error }) {
+  console.error('Erro ThreeDViewer:', error);
   return (
-    <div className="w-full h-full flex items-center justify-center bg-gray-100 text-red-500">
-      Erro ao carregar o modelo 3D. Verifique se o arquivo GLB é válido.
+    <div className="w-full h-full flex flex-col items-center justify-center bg-gray-100 gap-2">
+      <p className="text-red-500 font-bold">Erro ao carregar o modelo 3D</p>
+      <p className="text-red-400 text-sm text-center px-4">{error?.message}</p>
     </div>
   );
 }

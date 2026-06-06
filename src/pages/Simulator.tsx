@@ -40,6 +40,7 @@ const LOCAL_MODELS = [
     pecas: ['Camisa', 'Calção', 'Meião'],
     categoria_id: null,
     created_at: '',
+    universal_uv_svg: null,
   },
 ];
 

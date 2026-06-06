@@ -24,28 +24,33 @@ import { supabase } from '../integrations/supabase/client';
 export default function Admin() {
   const [activeView, setActiveView] = useState<'models' | 'patterns'>('models');
   const [isUploading, setIsUploading] = useState(false);
+  const [showPatternModal, setShowPatternModal] = useState(false);
+  const [patternData, setPatternData] = useState({ name: '', png: null as File | null, svg: null as File | null });
   const queryClient = useQueryClient();
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
+    if (activeView === 'patterns') {
+      // For patterns, we'll use the modal now, but let's keep this as a simple fallback if needed
+      // or just redirect to modal logic.
+      setPatternData(prev => ({ ...prev, png: file, name: file.name.split('.')[0] }));
+      setShowPatternModal(true);
+      return;
+    }
+
     setIsUploading(true);
     try {
-      const bucket = activeView === 'models' ? 'models' : 'textures';
+      const bucket = 'models';
       const fileExt = file.name.split('.').pop();
       const fileName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
       
-      const uploadOptions = activeView === 'models' 
-        ? {
-            cacheControl: '3600',
-            upsert: false,
-            contentType: fileExt === 'glb' ? 'model/gltf-binary' : 'model/gltf+json'
-          }
-        : {
-            cacheControl: '3600',
-            upsert: false
-          };
+      const uploadOptions = {
+        cacheControl: '3600',
+        upsert: false,
+        contentType: fileExt === 'glb' ? 'model/gltf-binary' : 'model/gltf+json'
+      };
 
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from(bucket)
@@ -61,38 +66,23 @@ export default function Admin() {
         .getPublicUrl(uploadData.path);
 
       const publicUrl = urlData.publicUrl;
-      console.log('URL gerada:', publicUrl);
 
-      // Teste se a URL é acessível antes de salvar
+      // Teste se a URL é acessível
       const testFetch = await fetch(publicUrl, { method: 'HEAD' });
       if (!testFetch.ok) {
         throw new Error(`URL gerada inválida (${testFetch.status}): ${publicUrl}`);
       }
 
-      if (activeView === 'models') {
-        const { error: dbError } = await supabase
-          .from('modelos')
-          .insert({
-            nome: file.name,
-            glb_url: publicUrl,
-            categoria_id: null,
-          } as any);
-        if (dbError) {
-          console.error('Erro no banco modelos:', dbError);
-          throw new Error(`Erro no banco: ${dbError.message}`);
-        }
-      } else {
-        const { error: dbError } = await supabase
-          .from('patterns')
-          .insert({
-            name: file.name,
-            image_url: publicUrl,
-          });
-
-        if (dbError) {
-          console.error('Erro no banco patterns:', dbError);
-          throw new Error(`Erro no banco: ${dbError.message}`);
-        }
+      const { error: dbError } = await supabase
+        .from('modelos')
+        .insert({
+          nome: file.name,
+          glb_url: publicUrl,
+          categoria_id: null,
+        } as any);
+      if (dbError) {
+        console.error('Erro no banco modelos:', dbError);
+        throw new Error(`Erro no banco: ${dbError.message}`);
       }
 
       queryClient.invalidateQueries({ queryKey: [activeView] });
@@ -100,6 +90,52 @@ export default function Admin() {
     } catch (error: any) {
       console.error('Erro geral no upload:', error);
       alert(`Erro: ${error.message || 'Erro desconhecido'}`);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handlePatternSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!patternData.name || !patternData.png || !patternData.svg) {
+      alert('Por favor, preencha o nome e selecione ambos os arquivos (PNG e SVG).');
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      // 1. Upload PNG
+      const pngName = `thumb_${Date.now()}_${patternData.png.name}`;
+      const { data: pngUpload, error: pngError } = await supabase.storage
+        .from('textures')
+        .upload(pngName, patternData.png);
+      if (pngError) throw pngError;
+      const pngUrl = supabase.storage.from('textures').getPublicUrl(pngUpload.path).data.publicUrl;
+
+      // 2. Upload SVG
+      const svgName = `texture_${Date.now()}_${patternData.svg.name}`;
+      const { data: svgUpload, error: svgError } = await supabase.storage
+        .from('textures')
+        .upload(svgName, patternData.svg, { contentType: 'image/svg+xml' });
+      if (svgError) throw svgError;
+      const svgUrl = supabase.storage.from('textures').getPublicUrl(svgUpload.path).data.publicUrl;
+
+      // 3. Save to DB
+      const { error: dbError } = await supabase
+        .from('patterns')
+        .insert({
+          name: patternData.name,
+          image_url: pngUrl,
+          svg_url: svgUrl
+        } as any);
+      if (dbError) throw dbError;
+
+      queryClient.invalidateQueries({ queryKey: ['patterns'] });
+      alert('Estampa cadastrada com sucesso!');
+      setShowPatternModal(false);
+      setPatternData({ name: '', png: null, svg: null });
+    } catch (error: any) {
+      alert('Erro no upload: ' + error.message);
     } finally {
       setIsUploading(false);
     }
@@ -211,20 +247,23 @@ export default function Admin() {
                 {activeView === 'models' ? 'Gerencie os arquivos GLB/GLTF dos seus produtos.' : 'Importe e configure as estampas disponíveis para personalização.'}
               </p>
             </div>
-            <label className={cn(
-              "bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg font-bold flex items-center space-x-2 transition-all shadow-sm cursor-pointer",
-              isUploading && "opacity-50 cursor-not-allowed"
-            )}>
+            <button 
+              onClick={() => activeView === 'models' ? document.getElementById('file-upload-input')?.click() : setShowPatternModal(true)}
+              className={cn(
+                "bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg font-bold flex items-center space-x-2 transition-all shadow-sm cursor-pointer",
+                isUploading && "opacity-50 cursor-not-allowed"
+              )}>
               <Plus className="w-4 h-4" />
               <span>{isUploading ? 'Enviando...' : activeView === 'models' ? 'Novo Modelo' : 'Nova Estampa'}</span>
               <input 
+                id="file-upload-input"
                 type="file" 
                 className="hidden" 
                 onChange={handleFileUpload} 
                 disabled={isUploading}
                 accept={activeView === 'models' ? '.glb,.gltf' : 'image/*'}
               />
-            </label>
+            </button>
 
           </div>
 
@@ -339,6 +378,85 @@ export default function Admin() {
         </div>
       </main>
     </div>
+
+      {/* Pattern Upload Modal */}
+      {showPatternModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
+            <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+              <h3 className="text-xl font-bold text-gray-900">Nova Estampa</h3>
+              <button onClick={() => setShowPatternModal(false)} className="text-gray-400 hover:text-gray-600">
+                <Trash2 className="w-5 h-5 rotate-45" /> {/* Use Trash2 as an X icon for now, rotated */}
+              </button>
+            </div>
+            <form onSubmit={handlePatternSubmit} className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Nome da Estampa</label>
+                <input 
+                  type="text" 
+                  value={patternData.name} 
+                  onChange={e => setPatternData(prev => ({ ...prev, name: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none"
+                  placeholder="Ex: Camuflado Azul"
+                  required
+                />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Figura (PNG)</label>
+                  <label className="flex flex-col items-center justify-center h-32 border-2 border-dashed border-gray-200 rounded-xl hover:bg-gray-50 cursor-pointer transition-colors">
+                    {patternData.png ? (
+                      <span className="text-xs text-green-600 font-medium text-center px-2 truncate w-full">{patternData.png.name}</span>
+                    ) : (
+                      <>
+                        <ImageIcon className="w-8 h-8 text-gray-300 mb-2" />
+                        <span className="text-[10px] text-gray-400">Selecionar PNG</span>
+                      </>
+                    )}
+                    <input 
+                      type="file" 
+                      className="hidden" 
+                      accept="image/png,image/jpeg,image/webp"
+                      onChange={e => setPatternData(prev => ({ ...prev, png: e.target.files?.[0] || null }))}
+                    />
+                  </label>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">UV Map (SVG)</label>
+                  <label className="flex flex-col items-center justify-center h-32 border-2 border-dashed border-gray-200 rounded-xl hover:bg-gray-50 cursor-pointer transition-colors">
+                    {patternData.svg ? (
+                      <span className="text-xs text-blue-600 font-medium text-center px-2 truncate w-full">{patternData.svg.name}</span>
+                    ) : (
+                      <>
+                        <Upload className="w-8 h-8 text-gray-300 mb-2" />
+                        <span className="text-[10px] text-gray-400">Selecionar SVG</span>
+                      </>
+                    )}
+                    <input 
+                      type="file" 
+                      className="hidden" 
+                      accept=".svg"
+                      onChange={e => setPatternData(prev => ({ ...prev, svg: e.target.files?.[0] || null }))}
+                    />
+                  </label>
+                </div>
+              </div>
+
+              <div className="pt-4">
+                <button 
+                  type="submit" 
+                  disabled={isUploading}
+                  className="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 rounded-xl transition-all shadow-md disabled:opacity-50"
+                >
+                  {isUploading ? 'Enviando...' : 'Cadastrar Estampa'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </>
   );
 }

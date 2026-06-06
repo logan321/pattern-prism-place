@@ -259,10 +259,11 @@ export default function Simulator() {
           <div className="absolute inset-0">
             {(() => {
               console.log('modelUrl sendo passada pro ThreeDViewer:', currentModel?.glb_url);
+              console.log('textureUrl sendo passada pro ThreeDViewer:', currentPattern?.svg_url || currentPattern?.image_url);
               return (
                 <ThreeDViewer 
                   modelUrl={currentModel?.glb_url} 
-                  textureUrl={currentPattern?.image_url || undefined}
+                  textureUrl={currentPattern?.svg_url || currentPattern?.image_url || undefined}
                 />
               );
             })()}

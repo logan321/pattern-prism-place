@@ -104,10 +104,10 @@ export const ThreeDViewer = forwardRef<ThreeDViewerRef, { modelUrl?: string; tex
         if (!orbitRef.current) return;
         
         const controls = orbitRef.current;
-        const currentDistance = controls.getDistance();
+        const defaultDistance = 2.0;
         
         let targetTheta = 0;
-        let targetPhi = Math.PI / 2; // Nível do horizonte (frontal)
+        let targetPhi = Math.PI / 2;
         
         switch (view) {
           case 'front': targetTheta = 0; break;
@@ -119,10 +119,9 @@ export const ThreeDViewer = forwardRef<ThreeDViewerRef, { modelUrl?: string; tex
         const proxy = { 
           theta: controls.getAzimuthalAngle(), 
           phi: controls.getPolarAngle(),
-          distance: currentDistance 
+          distance: controls.getDistance()
         };
 
-        // Calcula o caminho mais curto para a rotação
         let endTheta = targetTheta;
         const diff = endTheta - proxy.theta;
         if (diff > Math.PI) endTheta -= 2 * Math.PI;
@@ -131,6 +130,7 @@ export const ThreeDViewer = forwardRef<ThreeDViewerRef, { modelUrl?: string; tex
         gsap.to(proxy, {
           theta: endTheta,
           phi: targetPhi,
+          distance: defaultDistance,
           duration: 0.8,
           ease: 'power2.inOut',
           onUpdate: () => {

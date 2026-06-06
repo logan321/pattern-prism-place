@@ -200,7 +200,7 @@ function UVConfigView({ models, queryClient, modelsLoading }: { models: any[] | 
 
 function UVMatrizImportModal({ isOpen, onClose, queryClient, models }: { isOpen: boolean, onClose: () => void, queryClient: any, models: any[] | undefined }) {
   const [name, setName] = useState('');
-  
+  const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {

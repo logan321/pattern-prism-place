@@ -94,27 +94,30 @@ function Model({ url, textureUrl, universalUvUrl }: { url: string; textureUrl?: 
     <group>
       <primitive object={scene} />
       
-      {/* Front Elements */}
-      <Float speed={1.5} rotationIntensity={0.1} floatIntensity={0.1}>
-        <Text
-          position={namePos as any}
-          fontSize={0.04}
-          color={nameColor}
-          anchorX="center"
-          anchorY="middle"
-          depthOffset={-1}
-        >
-          {name}
-        </Text>
-      </Float>
+      {/* Elementos Frontais */}
+      <Text
+        position={namePos as any}
+        fontSize={0.04}
+        color={nameColor}
+        anchorX="center"
+        anchorY="middle"
+        polygonOffset
+        polygonOffsetFactor={-1}
+      >
+        {name}
+      </Text>
 
-      {/* Shield Placeholder */}
-      <mesh position={(shieldPosition === 'left' ? posMap.shield.left : posMap.shield.right) as any}>
+      {/* Placeholder do Escudo */}
+      <mesh 
+        position={(shieldPosition === 'left' ? posMap.shield.left : posMap.shield.right) as any}
+        polygonOffset
+        polygonOffsetFactor={-1}
+      >
         <circleGeometry args={[0.04, 32]} />
         <meshStandardMaterial color="#FFD700" metalness={0.5} roughness={0.2} />
       </mesh>
 
-      {/* Back Elements */}
+      {/* Elementos Traseiros */}
       <Text
         position={posMap.name.back as any}
         rotation={[0, Math.PI, 0]}
@@ -122,7 +125,8 @@ function Model({ url, textureUrl, universalUvUrl }: { url: string; textureUrl?: 
         color={nameColor}
         anchorX="center"
         anchorY="middle"
-        depthOffset={-1}
+        polygonOffset
+        polygonOffsetFactor={-1}
       >
         {name}
       </Text>
@@ -134,7 +138,8 @@ function Model({ url, textureUrl, universalUvUrl }: { url: string; textureUrl?: 
         color={numberColor}
         anchorX="center"
         anchorY="middle"
-        depthOffset={-1}
+        polygonOffset
+        polygonOffsetFactor={-1}
       >
         {number}
       </Text>

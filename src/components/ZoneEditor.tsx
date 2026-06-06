@@ -7,35 +7,51 @@ import { X, Save, Plus, Trash2 } from 'lucide-react';
 interface Zone {
   id: string;
   name: string;
-  position: [number, number, number];
-  rotation?: [number, number, number];
+  position?: [number, number, number]; // Legacy compatibility
+  uv?: { x: number; y: number }; // New coordinate system
 }
 
-function ModelWithClick({ url, onPointSelect, zones }: { url: string, onPointSelect: (point: THREE.Vector3) => void, zones: Zone[] }) {
+function ModelWithClick({ url, onPointSelect, zones }: { url: string, onPointSelect: (uv: THREE.Vector2, point: THREE.Vector3) => void, zones: Zone[] }) {
   const { scene } = useGLTF(url);
-  
-  return (
-    <group>
-      <primitive 
-        object={scene} 
-        onClick={(e: any) => {
-          e.stopPropagation();
-          onPointSelect(e.point);
-        }}
-      />
-      {zones.map((zone) => (
-        <group key={zone.id} position={zone.position}>
+  const meshRef = useRef<THREE.Group>(null);
+
+  // We need to handle the conversion of UV to world position for rendering markers
+  const renderMarkers = () => {
+    return zones.map((zone) => {
+      // If the zone has position (legacy) use it, otherwise we would need UV to world conversion
+      // But we can also just use the position saved during placement if the geometry hasn't changed
+      // For the editor, we'll use position for visual feedback but save UV as the source of truth
+      const displayPos = zone.position;
+      if (!displayPos) return null;
+
+      return (
+        <group key={zone.id} position={displayPos}>
           <mesh>
-            <sphereGeometry args={[0.02, 16, 16]} />
-            <meshStandardMaterial color="#ea580c" />
+            <sphereGeometry args={[0.015, 16, 16]} />
+            <meshStandardMaterial color="#ea580c" emissive="#ea580c" emissiveIntensity={0.5} />
           </mesh>
-          <Html distanceFactor={10} position={[0, 0.05, 0]}>
-            <div className="bg-orange-600 text-white text-[10px] px-2 py-0.5 rounded whitespace-nowrap font-bold shadow-lg">
+          <Html distanceFactor={5} position={[0, 0.03, 0]}>
+            <div className="bg-orange-600 text-white text-[10px] px-2 py-0.5 rounded whitespace-nowrap font-bold shadow-lg pointer-events-none select-none">
               {zone.name}
             </div>
           </Html>
         </group>
-      ))}
+      );
+    });
+  };
+
+  return (
+    <group ref={meshRef}>
+      <primitive 
+        object={scene} 
+        onClick={(e: any) => {
+          e.stopPropagation();
+          if (e.uv) {
+            onPointSelect(e.uv, e.point);
+          }
+        }}
+      />
+      {renderMarkers()}
     </group>
   );
 }

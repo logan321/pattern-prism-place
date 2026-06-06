@@ -30,18 +30,40 @@ function Model({ url, textureUrl }: { url: string; textureUrl?: string }) {
 
   useEffect(() => {
     if (!textureUrl) return;
+    console.log('Tentando aplicar textura:', textureUrl);
+    
+    // SVGs precisam de tratamento especial se forem usados como textura diretamente,
+    // mas o THREE.TextureLoader geralmente lida bem com a URL se o navegador renderizar o SVG.
+    // No entanto, para garantir que mudanças de textura ocorram:
     const loader = new THREE.TextureLoader();
-    loader.load(textureUrl, (texture) => {
-      texture.flipY = false;
-      scene.traverse((child) => {
-        const mesh = child as THREE.Mesh;
-        if (mesh.isMesh && mesh.material) {
-          const material = mesh.material as THREE.MeshStandardMaterial;
-          material.map = texture;
-          material.needsUpdate = true;
-        }
-      });
-    });
+    loader.load(
+      textureUrl, 
+      (texture) => {
+        console.log('Textura carregada com sucesso:', textureUrl);
+        texture.flipY = false;
+        texture.colorSpace = THREE.SRGBColorSpace; // Garantir cores corretas
+        
+        scene.traverse((child) => {
+          if ((child as THREE.Mesh).isMesh) {
+            const mesh = child as THREE.Mesh;
+            if (mesh.material) {
+              // Se for um array de materiais, percorre todos
+              const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+              materials.forEach((mat) => {
+                if (mat instanceof THREE.MeshStandardMaterial) {
+                  mat.map = texture;
+                  mat.needsUpdate = true;
+                }
+              });
+            }
+          }
+        });
+      },
+      undefined,
+      (err) => {
+        console.error('Erro ao carregar textura:', textureUrl, err);
+      }
+    );
   }, [scene, textureUrl]);
 
   return <primitive object={scene} />;

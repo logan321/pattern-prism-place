@@ -440,7 +440,7 @@ export default function Admin() {
                 ))
               )}
             </div>
-          ) : (
+          ) : activeView === 'patterns' ? (
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
                {patternsLoading ? (
                  <div className="col-span-full py-12 text-center text-gray-400">Carregando estampas...</div>
@@ -469,6 +469,8 @@ export default function Admin() {
                  ))
                )}
             </div>
+          ) : (
+            <UVConfigView models={models} queryClient={queryClient} />
           )}
         </div>
       </main>

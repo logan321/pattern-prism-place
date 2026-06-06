@@ -10,6 +10,8 @@ interface Molde {
   nome: string;
   pngBase64: string;
   glbNome: string;
+}
+
 interface Estampa {
   id: string;
   moldeId: string;
@@ -187,10 +189,10 @@ function AdminPage() {
   return (
     <div className="min-h-screen bg-gray-50 p-8">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold mb-8">Admin - Moldes</h1>
+        <h1 className="text-3xl font-bold mb-8">Admin</h1>
         
         <section className="bg-white p-6 rounded shadow-md mb-8">
-          <h2 className="text-xl font-semibold mb-4">Adicionar Novo Molde</h2>
+          <h2 className="text-xl font-semibold mb-4">Moldes</h2>
           <form onSubmit={handleSaveMolde} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700">Nome do molde</label>
@@ -244,32 +246,31 @@ function AdminPage() {
               Salvar Molde
             </button>
           </form>
+          
+          <div className="mt-8">
+            <h3 className="text-lg font-medium mb-4">Moldes Salvos</h3>
+            {moldes.length === 0 ? (
+              <p className="text-gray-500">Nenhum molde cadastrado.</p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {moldes.map((m) => (
+                  <div key={m.id} className="border rounded p-4 flex flex-col items-center bg-gray-50">
+                    <img src={m.pngBase64} alt={m.nome} className="h-24 w-24 object-contain mb-2 bg-white rounded border" />
+                    <span className="font-medium text-center text-sm">{m.nome}</span>
+                    {m.glbNome && <span className="text-[10px] text-gray-500 mt-1">GLB: {m.glbNome}</span>}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </section>
 
-        <section className="bg-white p-6 rounded shadow-md">
-          <h2 className="text-xl font-semibold mb-4">Moldes Salvos</h2>
-          {moldes.length === 0 ? (
-            <p className="text-gray-500">Nenhum molde cadastrado.</p>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {moldes.map((m) => (
-                <div key={m.id} className="border rounded p-4 flex flex-col items-center">
-                  <img src={m.pngBase64} alt={m.nome} className="h-32 w-32 object-contain mb-2 bg-gray-100 rounded" />
-                  <span className="font-medium text-center">{m.nome}</span>
-                  {m.glbNome && <span className="text-xs text-gray-500 mt-1">GLB: {m.glbNome}</span>}
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
-        </section>
-
-        <section className="bg-white p-6 rounded shadow-md mt-8 mb-8">
-          <h2 className="text-xl font-semibold mb-4">Seção Estampas</h2>
+        <section className="bg-white p-6 rounded shadow-md mb-8">
+          <h2 className="text-xl font-semibold mb-4">Estampas</h2>
           
           {step === 1 ? (
             <div className="space-y-4">
-              <h3 className="font-medium">Passo 1: Dados Básicos</h3>
+              <h3 className="font-medium text-sm text-blue-600">Passo 1: Dados Básicos</h3>
               <div>
                 <label className="block text-sm font-medium text-gray-700">Escolher Molde</label>
                 <select 
@@ -277,6 +278,7 @@ function AdminPage() {
                   value={selectedMoldeId}
                   onChange={(e) => setSelectedMoldeId(e.target.value)}
                 >
+                  <option value="">Selecione um molde</option>
                   {moldes.map(m => (
                     <option key={m.id} value={m.id}>{m.nome}</option>
                   ))}
@@ -302,9 +304,10 @@ function AdminPage() {
                 />
               </div>
               <button
+                type="button"
                 onClick={() => {
-                  if (!estampaNome || !estampaPngBase64) {
-                    alert("Preencha o nome e a thumbnail");
+                  if (!selectedMoldeId || !estampaNome || !estampaPngBase64) {
+                    alert("Preencha todos os campos do Passo 1");
                     return;
                   }
                   setStep(2);
@@ -316,7 +319,7 @@ function AdminPage() {
             </div>
           ) : (
             <div className="space-y-4">
-              <h3 className="font-medium">Passo 2: SVG e Cores</h3>
+              <h3 className="font-medium text-sm text-blue-600">Passo 2: SVG e Cores</h3>
               <div>
                 <label className="block text-sm font-medium text-gray-700">Upload de SVG (UV Map)</label>
                 <input
@@ -355,12 +358,14 @@ function AdminPage() {
 
               <div className="flex gap-2">
                 <button
+                  type="button"
                   onClick={() => setStep(1)}
                   className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 font-medium"
                 >
                   Voltar
                 </button>
                 <button
+                  type="button"
                   onClick={handleSaveEstampa}
                   className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 font-medium"
                 >
@@ -369,25 +374,25 @@ function AdminPage() {
               </div>
             </div>
           )}
-        </section>
 
-        <section className="bg-white p-6 rounded shadow-md mb-8">
-          <h2 className="text-xl font-semibold mb-4">Estampas Salvas</h2>
-          {estampas.length === 0 ? (
-            <p className="text-gray-500">Nenhuma estampa cadastrada.</p>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {estampas.map((e) => (
-                <div key={e.id} className="border rounded p-4 flex flex-col items-center">
-                  <img src={e.pngBase64} alt={e.nome} className="h-32 w-32 object-contain mb-2 bg-gray-100 rounded" />
-                  <span className="font-medium text-center">{e.nome}</span>
-                  <span className="text-xs text-gray-500">
-                    Molde: {moldes.find(m => m.id === e.moldeId)?.nome || "Desconhecido"}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
+          <div className="mt-8 pt-8 border-t">
+            <h3 className="text-lg font-medium mb-4">Estampas Salvas</h3>
+            {estampas.length === 0 ? (
+              <p className="text-gray-500">Nenhuma estampa cadastrada.</p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {estampas.map((e) => (
+                  <div key={e.id} className="border rounded p-4 flex flex-col items-center bg-gray-50">
+                    <img src={e.pngBase64} alt={e.nome} className="h-24 w-24 object-contain mb-2 bg-white rounded border" />
+                    <span className="font-medium text-center text-sm">{e.nome}</span>
+                    <span className="text-[10px] text-gray-500 mt-1">
+                      Molde: {moldes.find(m => m.id === e.moldeId)?.nome || "Desconhecido"}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </section>
       </div>
     </div>

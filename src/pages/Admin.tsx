@@ -241,5 +241,6 @@ export default function Admin() {
         </div>
       </main>
     </div>
+    </>
   );
 }

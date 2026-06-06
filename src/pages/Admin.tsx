@@ -333,7 +333,11 @@ export default function Admin() {
                 {activeView === 'models' ? 'Modelos 3D' : activeView === 'patterns' ? 'Gerenciamento de Estampas' : 'Configuração de UV Universal'}
               </h2>
               <p className="text-gray-500 text-sm mt-1">
-                {activeView === 'models' ? 'Gerencie os arquivos GLB/GLTF dos seus produtos.' : 'Importe e configure as estampas disponíveis para personalização.'}
+                {activeView === 'models' 
+                  ? 'Gerencie os arquivos GLB/GLTF dos seus produtos.' 
+                  : activeView === 'patterns' 
+                    ? 'Importe e configure as estampas disponíveis para personalização.'
+                    : 'Configure o mapa UV universal para posicionamento de textos e escudos.'}
               </p>
             </div>
             <button 

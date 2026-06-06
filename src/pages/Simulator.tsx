@@ -141,7 +141,9 @@ export default function Simulator() {
   console.log('=== MODEL URL ===', modelUrl);
   console.log('=== TEXTURE URL ===', currentPattern?.svg_url, currentPattern?.image_url);
 
+  return (
     <>
+
       <Helmet>
         <title>Simulador de Uniformes 3D Jumptec | Macro Master</title>
         <meta name="description" content="Personalize uniformes esportivos em 3D em tempo real com o simulador Macro Master. Escolha cores, padrões, números e logos." />

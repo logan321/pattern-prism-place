@@ -36,7 +36,7 @@ export default function HomePage() {
   }, []);
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#f3f4f6', fontFamily: 'Inter, sans-serif' }}>
+    <div style={{ minHeight: '100vh', backgroundColor: '#f3f4f6', fontFamily: 'Inter, sans-serif', padding: '20px' }}>
       {/* Header */}
       <header style={{ 
         position: 'fixed', 

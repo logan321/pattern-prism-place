@@ -8,7 +8,7 @@ export const Route = createFileRoute("/editor/$moldeId")({
     meta: [{ title: "Editor — Simulador de Camisas" }],
   }),
   loader: ({ params }) => {
-    const saved = localStorage.getItem("moldes");
+    const saved = typeof window !== "undefined" ? localStorage.getItem("moldes") : null;
     const dynamicMoldes = saved ? JSON.parse(saved).map((m: any) => ({
       id: m.id,
       nome: m.nome,

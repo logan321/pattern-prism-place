@@ -153,6 +153,107 @@ function UVConfigView({ models, queryClient, modelsLoading }: { models: any[] | 
   );
 }
 
+function UVMatrizImportModal({ isOpen, onClose, queryClient }: { isOpen: boolean, onClose: () => void, queryClient: any }) {
+  const [name, setName] = useState('');
+  const [file, setFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name || !file) {
+      alert('Por favor, preencha o nome e selecione o arquivo SVG.');
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const fileName = `uv_matriz_${Date.now()}_${file.name}`;
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('textures')
+        .upload(fileName, file, { contentType: 'image/svg+xml' });
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage.from('textures').getPublicUrl(uploadData.path);
+      
+      const { error: dbError } = await supabase
+        .from('modelos')
+        .insert({
+          nome: name,
+          universal_uv_svg: urlData.publicUrl,
+          glb_url: '', // Campo obrigatório no banco, deixamos vazio até subir o GLB
+          categoria_id: null,
+        } as any);
+
+      if (dbError) throw dbError;
+
+      queryClient.invalidateQueries({ queryKey: ['models'] });
+      alert('UV Matriz importada com sucesso! Agora você pode adicionar o arquivo .glb a este registro.');
+      onClose();
+      setName('');
+      setFile(null);
+    } catch (err: any) {
+      alert('Erro: ' + err.message);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
+        <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+          <h3 className="text-xl font-bold text-gray-900">Importar UV Matriz</h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Nome do Modelo/Matriz</label>
+            <input 
+              type="text" 
+              value={name} 
+              onChange={e => setName(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none"
+              placeholder="Ex: Matriz Camisa Gola V"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Arquivo SVG da Matriz</label>
+            <label className="flex flex-col items-center justify-center h-32 border-2 border-dashed border-gray-200 rounded-xl hover:bg-gray-50 cursor-pointer transition-colors">
+              {file ? (
+                <span className="text-xs text-orange-600 font-medium">{file.name}</span>
+              ) : (
+                <>
+                  <Upload className="w-8 h-8 text-gray-300 mb-2" />
+                  <span className="text-[10px] text-gray-400">Selecionar SVG</span>
+                </>
+              )}
+              <input 
+                type="file" 
+                className="hidden" 
+                accept=".svg"
+                onChange={e => setFile(e.target.files?.[0] || null)}
+              />
+            </label>
+          </div>
+          <button 
+            type="submit" 
+            disabled={isUploading}
+            className="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 rounded-xl transition-all shadow-md disabled:opacity-50"
+          >
+            {isUploading ? 'Importando...' : 'Importar Matriz'}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 export default function Admin() {
   const queryClient = useQueryClient();
 

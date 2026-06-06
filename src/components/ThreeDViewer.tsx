@@ -28,7 +28,7 @@ function Model({ url, textureUrl }: { url: string; textureUrl?: string }) {
   return <primitive object={scene} />;
 }
 
-function FallbackError({ error }: { error: Error }) {
+function FallbackError({ error }: { error: { message: string } }) {
   console.error('Erro ThreeDViewer:', error);
   return (
     <div className="w-full h-full flex flex-col items-center justify-center bg-gray-100 gap-2">

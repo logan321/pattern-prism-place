@@ -9,7 +9,7 @@ interface Molde {
   id: string;
   nome: string;
   pngBase64: string;
-  glbBase64: string;
+  glbNome: string;
 }
 
 function AdminPage() {
@@ -17,7 +17,7 @@ function AdminPage() {
   const [password, setPassword] = useState("");
   const [nome, setNome] = useState("");
   const [pngBase64, setPngBase64] = useState("");
-  const [glbBase64, setGlbBase64] = useState("");
+  const [glbNome, setGlbNome] = useState("");
   const [moldes, setMoldes] = useState<Molde[]>([]);
 
   useEffect(() => {
@@ -50,22 +50,18 @@ function AdminPage() {
   const handleGlbUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setGlbBase64(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+      setGlbNome(file.name);
     }
   };
 
   const handleSaveMolde = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!nome || !pngBase64 || !glbBase64) {
+    if (!nome || !pngBase64 || !glbNome) {
       alert("Preencha o nome e selecione os arquivos PNG e GLB");
       return;
     }
 
-    const molde = { id: Date.now().toString(), nome, pngBase64, glbBase64 };
+    const molde = { id: Date.now().toString(), nome, pngBase64, glbNome };
     const updatedMoldes = [...moldes, molde];
     
     localStorage.setItem("moldes", JSON.stringify(updatedMoldes));
@@ -74,7 +70,7 @@ function AdminPage() {
     // Reset form
     setNome("");
     setPngBase64("");
-    setGlbBase64("");
+    setGlbNome("");
     const pngInput = document.getElementById("png-upload") as HTMLInputElement;
     if (pngInput) pngInput.value = "";
     const glbInput = document.getElementById("glb-upload") as HTMLInputElement;
@@ -141,7 +137,7 @@ function AdminPage() {
                 className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
               />
             </div>
-            {(pngBase64 || glbBase64) && (
+            {(pngBase64 || glbNome) && (
               <div className="mt-2 flex gap-4">
                 {pngBase64 && (
                   <div>
@@ -149,9 +145,9 @@ function AdminPage() {
                     <img src={pngBase64} alt="Preview" className="h-20 w-20 object-contain border rounded bg-gray-100" />
                   </div>
                 )}
-                {glbBase64 && (
+                {glbNome && (
                   <div className="flex flex-col justify-center">
-                    <p className="text-xs text-green-600 font-medium">✓ GLB Carregado</p>
+                    <p className="text-xs text-green-600 font-medium">✓ GLB: {glbNome}</p>
                   </div>
                 )}
               </div>
@@ -175,7 +171,7 @@ function AdminPage() {
                 <div key={m.id} className="border rounded p-4 flex flex-col items-center">
                   <img src={m.pngBase64} alt={m.nome} className="h-32 w-32 object-contain mb-2 bg-gray-100 rounded" />
                   <span className="font-medium text-center">{m.nome}</span>
-                  {m.glbBase64 && <span className="text-xs text-green-600">✓ Possui 3D</span>}
+                  {m.glbNome && <span className="text-xs text-gray-500 mt-1">GLB: {m.glbNome}</span>}
                 </div>
               ))}
             </div>

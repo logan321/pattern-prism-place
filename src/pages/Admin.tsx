@@ -579,7 +579,7 @@ export default function Admin() {
                     : 'Configure o mapa UV universal para posicionamento de textos e escudos.'}
               </p>
             </div>
-            {activeView !== 'config' && (
+            {activeView !== 'config' ? (
               <button 
                 onClick={() => activeView === 'models' ? document.getElementById('file-upload-input')?.click() : setShowPatternModal(true)}
                 className={cn(
@@ -596,6 +596,14 @@ export default function Admin() {
                   disabled={isUploading}
                   accept={activeView === 'models' ? '.glb,.gltf' : 'image/*'}
                 />
+              </button>
+            ) : (
+              <button 
+                onClick={() => setShowUVMatrizModal(true)}
+                className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg font-bold flex items-center space-x-2 transition-all shadow-sm cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Importar Nova Matriz</span>
               </button>
             )}
 

@@ -1,36 +1,22 @@
-text
-1. Infrastructure & Dependencies
-   - Install Three.js, React Three Fiber/Drei, Zustand, Lucide React, and Tailwind utilities.
-   - Define project folder structure: `src/components/simulator`, `src/store`, `src/types`, `src/hooks`, `src/lib/supabase`.
+Desenvolveremos o simulador 3D para o Macro Master focado na flexibilidade de estampas via UV Map.
 
-2. Database Schema (Supabase)
-   - Create migration for core tables: `lojistas`, `usuarios`, `categorias`, `modelos`, `fontes`, `tipos_gola`, `tipos_manga`, `tipos_punho`, `simulacoes`, `orcamentos`, `uploads_imagem`.
-   - Configure RLS policies for user-owned data and public leads.
-   - Set up triggers for `updated_at` columns.
+### Estrutura do Projeto
+1. **Visualizador 3D (R3F):** Componente principal usando React Three Fiber para renderizar o modelo da camisa (exportado do CLO3D).
+2. **Sistema de Materiais:** Uso de texturas dinâmicas. O UV Map da estampa será aplicado como um `Decal` ou substituindo o `map` principal do material, dependendo da complexidade do modelo.
+3. **Painel de Customização:** 
+    - Seletor de Modelo (baseado nas imagens PNG da frente).
+    - Grade de Estampas (miniaturas).
+    - Editor de Cores (usando as texturas de máscara UV para colorir partes específicas).
+    - Upload de Logotipos (posicionamento via Decals).
 
-3. State Management (Zustand)
-   - Create `useUniformStore` to manage:
-     - Uniform configuration (colors, finishes, names, numbers, logos).
-     - UI state (active tab, active piece, modal visibility).
-     - Auth status and user profile data.
+### Detalhes Técnicos
+- **Modelos 3D:** Devem ser exportados do CLO3D em formato `.glb` com UVs bem definidos.
+- **Mapeamento de Estampas:** Cada estampa terá uma miniatura (PNG/JPG) e um arquivo de textura correspondente (UV Map) que se encaixa perfeitamente no modelo 3D.
+- **Performance:** Carregamento progressivo das texturas e uso de `compressed textures` (Basis/KTX2) se necessário para mobile.
 
-4. 3D Scene Architecture
-   - Set up `Scene3D` component with `Canvas`, `OrbitControls`, `Stage`, and environment lighting.
-   - Create a `UniformModel` component that renders a placeholder box (eventually replacing with GLB).
-   - Implement dynamic texture/material updates based on store state.
+### Próximos Passos
+1. Implementar a estrutura básica do layout (Header, Canvas 3D lateral, Menu de opções).
+2. Adicionar o primeiro modelo 3D de camisa (usaremos um modelo genérico de alta qualidade para começar, ou um placeholder se você ainda não tiver o do CLO3D).
+3. Criar o fluxo de troca de estampas baseado no mapeamento UV solicitado.
 
-5. Layout & UI Components
-   - Implement `MainLayout` with fixed Header/Footer and split-screen responsive layout.
-   - Build the `ConfigPanel` with 6 tabs: Modelo, Cores, Acabamentos, Nome/Número, Escudo/Patrocínio, Upload.
-   - Create reusable UI components: `ColorPicker`, `TabButton`, `ThumbnailCard`, `Modal`.
-
-6. Features & Integrations
-   - Authentication flows (Login, Signup, Password Recovery).
-   - "Enviar Orçamento" functionality with WhatsApp link generation.
-   - Image upload system to Supabase Storage.
-   - Cookie banner and Facebook Pixel integration.
-
-Technical Details:
-- Three.js: Use `useGLTF` for model loading and `Decal` or `CanvasTexture` for dynamic placement of numbers/logos.
-- Styling: Tailwind CSS for all UI elements, ensuring mobile-first responsiveness.
-- Performance: Memoize Three.js components and use `Suspense` for asset loading.
+Deseja que eu comece pela interface do editor ou pela integração do primeiro modelo 3D?

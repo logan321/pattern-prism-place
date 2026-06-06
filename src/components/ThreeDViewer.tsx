@@ -30,28 +30,29 @@ function Model({ url, textureUrl }: { url: string; textureUrl?: string }) {
 
   useEffect(() => {
     if (!textureUrl) return;
-    console.log('Tentando aplicar textura:', textureUrl);
+    console.log('Tentando aplicar textura (UV Map):', textureUrl);
     
-    // SVGs precisam de tratamento especial se forem usados como textura diretamente,
-    // mas o THREE.TextureLoader geralmente lida bem com a URL se o navegador renderizar o SVG.
-    // No entanto, para garantir que mudanças de textura ocorram:
     const loader = new THREE.TextureLoader();
     loader.load(
       textureUrl, 
       (texture) => {
-        console.log('Textura carregada com sucesso:', textureUrl);
+        console.log('Textura UV carregada com sucesso:', textureUrl);
         texture.flipY = false;
-        texture.colorSpace = THREE.SRGBColorSpace; // Garantir cores corretas
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.wrapT = THREE.RepeatWrapping;
+        texture.colorSpace = THREE.SRGBColorSpace;
         
         scene.traverse((child) => {
           if ((child as THREE.Mesh).isMesh) {
             const mesh = child as THREE.Mesh;
+            console.log('Aplicando textura ao mesh:', mesh.name);
             if (mesh.material) {
-              // Se for um array de materiais, percorre todos
               const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
               materials.forEach((mat) => {
                 if (mat instanceof THREE.MeshStandardMaterial) {
                   mat.map = texture;
+                  mat.roughness = 1; // Ajuste para tecido
+                  mat.metalness = 0;
                   mat.needsUpdate = true;
                 }
               });
@@ -61,7 +62,7 @@ function Model({ url, textureUrl }: { url: string; textureUrl?: string }) {
       },
       undefined,
       (err) => {
-        console.error('Erro ao carregar textura:', textureUrl, err);
+        console.error('Erro ao carregar textura UV:', textureUrl, err);
       }
     );
   }, [scene, textureUrl]);

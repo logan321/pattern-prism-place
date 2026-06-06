@@ -36,12 +36,12 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-gray-100">
       {/* Header */}
       <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled ? 'bg-white shadow-md py-3' : 'bg-transparent py-5'}`}>
         <div className="container mx-auto px-4 flex items-center justify-between">
           <div className="flex items-center">
-            <span className="text-2xl font-bold text-[#F26522]">JumpTec</span>
+            <span className="text-2xl font-bold text-[#F26522]">MACRO MASTER</span>
           </div>
 
           <nav className="hidden md:flex items-center space-x-8">
@@ -221,7 +221,7 @@ export default function HomePage() {
       <footer className="bg-[#F8F9FA] pt-20 pb-10">
         <div className="container mx-auto px-4 grid md:grid-cols-4 gap-12 border-b border-[#E5E5E5] pb-12">
           <div className="col-span-2">
-            <span className="text-3xl font-bold text-[#F26522] block mb-6">JumpTec</span>
+            <span className="text-3xl font-bold text-[#F26522] block mb-6">MACRO MASTER</span>
             <p className="text-[#666666] max-w-md">Especialistas em simuladores 3D e soluções tecnológicas para empresas de confecção esportiva e brindes.</p>
           </div>
           <div>
@@ -243,7 +243,7 @@ export default function HomePage() {
           </div>
         </div>
         <div className="container mx-auto px-4 pt-10 text-center text-[#999999] text-sm">
-          <p>© 2026 JumpTec - Simuladores Virtuais. Todos os direitos reservados.</p>
+          <p>© 2026 MACRO MASTER - Simuladores Virtuais. Todos os direitos reservados.</p>
         </div>
       </footer>
     </div>

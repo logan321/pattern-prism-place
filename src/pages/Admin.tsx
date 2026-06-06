@@ -353,30 +353,28 @@ export default function Admin() {
       if (svgError) throw svgError;
       const svgUrl = supabase.storage.from('textures').getPublicUrl(svgUpload.path).data.publicUrl;
 
-      console.log('=== PNG URL SALVA ===', pngUrl);
-      console.log('=== SVG URL SALVA ===', svgUrl);
-
       // 3. Save to DB
-
       const { error: dbError } = await supabase
         .from('patterns')
         .insert({
           name: patternData.name,
           image_url: pngUrl,
-          svg_url: svgUrl
+          svg_url: svgUrl,
+          uv_matriz_id: patternData.uvMatrizId || null
         } as any);
       if (dbError) throw dbError;
 
       queryClient.invalidateQueries({ queryKey: ['patterns'] });
       alert('Estampa cadastrada com sucesso!');
       setShowPatternModal(false);
-      setPatternData({ name: '', png: null, svg: null });
+      setPatternData({ name: '', png: null, svg: null, uvMatrizId: '' });
     } catch (error: any) {
       alert('Erro no upload: ' + error.message);
     } finally {
       setIsUploading(false);
     }
   };
+
 
   const handleDelete = async (id: string, bucket: string, filePath: string) => {
     if (!window.confirm('Tem certeza que deseja excluir este item?')) return;

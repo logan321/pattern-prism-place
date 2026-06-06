@@ -95,6 +95,35 @@ function ZoneMarker({ zone, scene }: { zone: Zone, scene: THREE.Group }) {
 
 function ModelWithClick({ url, onPointSelect, zones }: { url: string, onPointSelect: (hit: any) => void, zones: Zone[] }) {
   const { scene } = useGLTF(url);
+
+  React.useEffect(() => {
+    if (scene) {
+      const relatorio: any[] = [];
+      scene.traverse((obj) => {
+        const entry: any = {
+          nome: obj.name,
+          tipo: obj.type,
+          uuid: obj.uuid,
+        };
+
+        if (obj instanceof THREE.Mesh) {
+          const geo = obj.geometry;
+          entry.temUV = !!geo.attributes.uv;
+          entry.temIndex = !!geo.index;
+          entry.totalVertices = geo.attributes.position?.count ?? 0;
+          entry.totalFaces = geo.index ? geo.index.count / 3 : 0;
+          entry.materialNome = Array.isArray(obj.material)
+            ? obj.material.map((m: any) => m.name)
+            : (obj.material as any).name;
+          entry.posicaoWorld = obj.getWorldPosition(new THREE.Vector3());
+        }
+        relatorio.push(entry);
+      });
+      console.log('=== DIAGNÓSTICO GLB ===');
+      console.table(relatorio);
+      console.log(JSON.stringify(relatorio, null, 2));
+    }
+  }, [scene]);
   
   return (
     <group>

@@ -92,7 +92,16 @@ function UVConfigView({ models, queryClient, modelsLoading }: { models: any[] | 
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {models?.map((model: any) => (
-              <div key={model.id} className="p-4 border border-gray-100 rounded-xl bg-gray-50 flex items-center justify-between">
+              <button 
+                key={model.id} 
+                onClick={() => setSelectedModelId(model.id)}
+                className={cn(
+                  "p-4 border rounded-xl flex items-center justify-between transition-all text-left",
+                  selectedModelId === model.id 
+                    ? "border-orange-500 bg-orange-50 ring-2 ring-orange-200" 
+                    : "border-gray-100 bg-gray-50 hover:border-gray-300"
+                )}
+              >
                 <div className="flex items-center space-x-3">
                   <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center border border-gray-200 overflow-hidden shrink-0">
                     {model.thumbnail_url ? (
@@ -106,11 +115,13 @@ function UVConfigView({ models, queryClient, modelsLoading }: { models: any[] | 
                     <p className="text-[10px] text-gray-400">ID: {model.id.substring(0, 8)}...</p>
                   </div>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <span className="flex h-2 w-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]"></span>
-                  <span className="text-[10px] font-bold text-gray-500 uppercase tracking-tight">Ativo</span>
-                </div>
-              </div>
+                {selectedModelId === model.id && (
+                  <div className="flex items-center space-x-1">
+                    <div className="h-2 w-2 rounded-full bg-orange-500 animate-pulse"></div>
+                    <span className="text-[10px] font-black text-orange-600 uppercase">Selecionado</span>
+                  </div>
+                )}
+              </button>
             ))}
           </div>
         )}

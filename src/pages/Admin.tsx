@@ -212,10 +212,21 @@ function UVMatrizImportModal({ isOpen, onClose, queryClient, models }: { isOpen:
 
     setIsUploading(true);
     try {
+      const { data: uploadData, error: uploadError } = file 
+        ? await supabase.storage.from('textures').upload(`uv_ref_${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`, file)
+        : { data: null, error: null };
+      
+      if (uploadError) throw uploadError;
+
+      const refUrl = uploadData 
+        ? supabase.storage.from('textures').getPublicUrl(uploadData.path).data.publicUrl
+        : null;
+
       const { error: dbError } = await supabase
         .from('uv_matrices')
         .insert({
           name: name,
+          reference_url: refUrl,
           zones: []
         } as any);
 

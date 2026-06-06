@@ -359,7 +359,7 @@ export default function Admin() {
     {
       id: 'local-gola-padre',
       nome: 'Gola Padre (Padrão)',
-      glb_url: '/public/uploads/GOLA_PADRE_otimizado.glb', // Fallback URL
+      glb_url: golaPadreAsset.url,
       thumbnail_url: null,
       pecas: ['Camisa', 'Calção', 'Meião'],
       categoria_id: null,

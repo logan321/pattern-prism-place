@@ -8,50 +8,110 @@ interface Zone {
   id: string;
   name: string;
   position?: [number, number, number]; // Legacy compatibility
-  uv?: { x: number; y: number }; // New coordinate system
+  uv?: { x: number; y: number }; 
+  meshUuid?: string;
+  meshName?: string;
+  faceIndex?: number;
 }
 
-function ModelWithClick({ url, onPointSelect, zones }: { url: string, onPointSelect: (uv: THREE.Vector2, point: THREE.Vector3) => void, zones: Zone[] }) {
-  const { scene } = useGLTF(url);
-  const meshRef = useRef<THREE.Group>(null);
+function uvParaBaricentrico(p: THREE.Vector2, a: THREE.Vector2, b: THREE.Vector2, c: THREE.Vector2) {
+  const v0 = new THREE.Vector2().subVectors(b, a);
+  const v1 = new THREE.Vector2().subVectors(c, a);
+  const v2 = new THREE.Vector2().subVectors(p, a);
+  const d00 = v0.dot(v0);
+  const d01 = v0.dot(v1);
+  const d11 = v1.dot(v1);
+  const d20 = v2.dot(v0);
+  const d21 = v2.dot(v1);
+  const denom = d00 * d11 - d01 * d01;
+  const v = (d11 * d20 - d01 * d21) / denom;
+  const w = (d00 * d21 - d01 * d20) / denom;
+  const u = 1.0 - v - w;
+  return new THREE.Vector3(u, v, w);
+}
 
-  // We need to handle the conversion of UV to world position for rendering markers
-  const renderMarkers = () => {
-    return zones.map((zone) => {
-      // If the zone has position (legacy) use it, otherwise we would need UV to world conversion
-      // But we can also just use the position saved during placement if the geometry hasn't changed
-      // For the editor, we'll use position for visual feedback but save UV as the source of truth
-      const displayPos = zone.position;
-      if (!displayPos) return null;
+function uvParaPosicao3DPrecisa(geometry: THREE.BufferGeometry, faceIndex: number, u: number, v: number) {
+  const pos = geometry.attributes.position;
+  const uvAttr = geometry.attributes.uv;
+  const index = geometry.index;
 
-      return (
-        <group key={zone.id} position={displayPos}>
-          <mesh>
-            <sphereGeometry args={[0.015, 16, 16]} />
-            <meshStandardMaterial color="#ea580c" emissive="#ea580c" emissiveIntensity={0.5} />
-          </mesh>
-          <Html distanceFactor={5} position={[0, 0.03, 0]}>
-            <div className="bg-orange-600 text-white text-[10px] px-2 py-0.5 rounded whitespace-nowrap font-bold shadow-lg pointer-events-none select-none">
-              {zone.name}
-            </div>
-          </Html>
-        </group>
-      );
-    });
-  };
+  if (!index || !uvAttr) return new THREE.Vector3();
+
+  const i0 = index.getX(faceIndex * 3);
+  const i1 = index.getX(faceIndex * 3 + 1);
+  const i2 = index.getX(faceIndex * 3 + 2);
+
+  const uv0 = new THREE.Vector2(uvAttr.getX(i0), uvAttr.getY(i0));
+  const uv1 = new THREE.Vector2(uvAttr.getX(i1), uvAttr.getY(i1));
+  const uv2 = new THREE.Vector2(uvAttr.getX(i2), uvAttr.getY(i2));
+
+  const p0 = new THREE.Vector3().fromBufferAttribute(pos, i0);
+  const p1 = new THREE.Vector3().fromBufferAttribute(pos, i1);
+  const p2 = new THREE.Vector3().fromBufferAttribute(pos, i2);
+
+  const bary = uvParaBaricentrico(new THREE.Vector2(u, v), uv0, uv1, uv2);
+  return new THREE.Vector3()
+    .addScaledVector(p0, bary.x)
+    .addScaledVector(p1, bary.y)
+    .addScaledVector(p2, bary.z);
+}
+
+function ZoneMarker({ zone, scene }: { zone: Zone, scene: THREE.Group }) {
+  const markerRef = useRef<THREE.Group>(null);
+  const [visible, setVisible] = useState(true);
+
+  useThree(({ camera }) => {
+    if (!markerRef.current || !zone.uv || !zone.meshUuid || zone.faceIndex === undefined) return;
+
+    const mesh = scene.getObjectByProperty('uuid', zone.meshUuid) as THREE.Mesh;
+    if (!mesh || !mesh.geometry) return;
+
+    const localPos = uvParaPosicao3DPrecisa(mesh.geometry, zone.faceIndex, zone.uv.x, zone.uv.y);
+    const worldPos = localPos.applyMatrix4(mesh.matrixWorld);
+    
+    markerRef.current.position.copy(worldPos);
+    
+    // Simple occlusion check
+    const ndc = worldPos.clone().project(camera);
+    setVisible(ndc.z <= 1);
+  });
+
+  if (!visible) return null;
 
   return (
-    <group ref={meshRef}>
+    <group ref={markerRef}>
+      <mesh>
+        <sphereGeometry args={[0.01, 16, 16]} />
+        <meshStandardMaterial color="#ea580c" emissive="#ea580c" emissiveIntensity={1} depthTest={false} transparent opacity={0.8} />
+      </mesh>
+      <Html distanceFactor={5} position={[0, 0.02, 0]} center>
+        <div className="bg-orange-600 text-white text-[9px] px-1.5 py-0.5 rounded whitespace-nowrap font-bold shadow-lg pointer-events-none">
+          {zone.name}
+        </div>
+      </Html>
+    </group>
+  );
+}
+
+function ModelWithClick({ url, onPointSelect, zones }: { url: string, onPointSelect: (hit: any) => void, zones: Zone[] }) {
+  const { scene } = useGLTF(url);
+  
+  return (
+    <group>
       <primitive 
         object={scene} 
         onClick={(e: any) => {
           e.stopPropagation();
-          if (e.uv) {
-            onPointSelect(e.uv, e.point);
+          const hit = e.intersections[0];
+          if (hit && hit.uv && hit.object) {
+            console.log('Hit Mesh:', hit.object.name, 'UUID:', hit.object.uuid);
+            onPointSelect(hit);
           }
         }}
       />
-      {renderMarkers()}
+      {zones.map((zone) => (
+        <ZoneMarker key={zone.id} zone={zone} scene={scene} />
+      ))}
     </group>
   );
 }

@@ -1,11 +1,12 @@
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
 /**
  * Vanilla Three.js viewer with manual render loop.
  * Renders only on user interaction (OrbitControls "change" event) or when props change.
- * Placeholder: renders a simple cube until the GLB shirt model is wired up.
+ * Placeholder: loads the GLB shirt model.
  */
 export function ThreeViewer() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -37,11 +38,35 @@ export function ThreeViewer() {
     dir.position.set(5, 10, 7);
     scene.add(dir);
 
-    // Placeholder cube
-    const geometry = new THREE.BoxGeometry(1.2, 1.2, 1.2);
-    const material = new THREE.MeshStandardMaterial({ color: 0x3b82f6 });
-    const cube = new THREE.Mesh(geometry, material);
-    scene.add(cube);
+    // Load GLB model
+    const loader = new GLTFLoader();
+    let model: THREE.Group | null = null;
+
+    loader.load(
+      "/models/shirt.glb",
+      (gltf) => {
+        model = gltf.scene;
+        scene.add(model);
+
+        // Center and scale model
+        const box = new THREE.Box3().setFromObject(model);
+        const center = box.getCenter(new THREE.Vector3());
+        const size = box.getSize(new THREE.Vector3());
+
+        const maxDim = Math.max(size.x, size.y, size.z);
+        const scale = 3 / maxDim; // Scale to fit nicely
+        model.scale.setScalar(scale);
+
+        // Reposition to center
+        model.position.sub(center.multiplyScalar(scale));
+
+        render();
+      },
+      undefined,
+      (error) => {
+        console.error("An error happened loading the GLB model:", error);
+      }
+    );
 
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
@@ -76,8 +101,19 @@ export function ThreeViewer() {
       resizeObserver.disconnect();
       controls.removeEventListener("change", onChange);
       controls.dispose();
-      geometry.dispose();
-      material.dispose();
+      if (model) {
+        model.traverse((child) => {
+          if ((child as THREE.Mesh).isMesh) {
+            const mesh = child as THREE.Mesh;
+            mesh.geometry.dispose();
+            if (Array.isArray(mesh.material)) {
+              mesh.material.forEach((m) => m.dispose());
+            } else {
+              mesh.material.dispose();
+            }
+          }
+        });
+      }
       renderer.dispose();
       container.removeChild(renderer.domElement);
     };

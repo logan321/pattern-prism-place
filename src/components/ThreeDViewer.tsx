@@ -8,15 +8,13 @@ import { useCustomizerStore } from '../store/useCustomizerStore';
 
 function Model({ url, textureUrl }: { url: string; textureUrl?: string }) {
   const { scene } = useGLTF(url);
-  const { 
-    name, 
-    number, 
-    namePosition, 
-    shieldPosition, 
-    nameColor, 
-    numberColor, 
-    nameFont 
-  } = useCustomizerStore();
+  const name = useCustomizerStore(state => state.name);
+  const number = useCustomizerStore(state => state.number);
+  const namePosition = useCustomizerStore(state => state.namePosition);
+  const shieldPosition = useCustomizerStore(state => state.shieldPosition);
+  const nameColor = useCustomizerStore(state => state.nameColor);
+  const numberColor = useCustomizerStore(state => state.numberColor);
+  const nameFont = useCustomizerStore(state => state.nameFont);
 
   useEffect(() => {
     if (!textureUrl) return;

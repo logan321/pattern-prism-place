@@ -49,7 +49,7 @@ export interface SimulatorState {
 }
 
 const initialState = {
-  activePieces: { camisa: true; calcao: true; meiao: true },
+  activePieces: { camisa: true, calcao: true, meiao: true },
   syncColors: true,
   colors: { 
     camisa: '#F26522', 

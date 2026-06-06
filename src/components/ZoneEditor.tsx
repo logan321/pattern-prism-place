@@ -1,6 +1,6 @@
-import React, { useState, useRef, Suspense } from 'react';
+import React, { useState, useRef, Suspense, useEffect } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls, Stage, useGLTF, Html } from '@react-three/drei';
+import { OrbitControls, Stage, useGLTF } from '@react-three/drei';
 import * as THREE from 'three';
 import { X, Save, Plus, Trash2 } from 'lucide-react';
 
@@ -12,6 +12,9 @@ interface Zone {
   meshUuid?: string;
   meshName?: string;
   faceIndex?: number;
+  screenX?: number;
+  screenY?: number;
+  visivel?: boolean;
 }
 
 function calcularBaricentrico(p: THREE.Vector2, a: THREE.Vector2, b: THREE.Vector2, c: THREE.Vector2): THREE.Vector3 {
@@ -46,8 +49,8 @@ function reprojetarMarcacao(marcacao: Zone, camera: THREE.Camera, canvasWidth: n
   const i2 = indexAttr.getX(fi + 2);
 
   const p0 = new THREE.Vector3().fromBufferAttribute(posAttr, i0);
-  const p1 = new THREE.Vector3().fromBufferAttribute(p1, i1);
-  const p2 = new THREE.Vector3().fromBufferAttribute(p2, i2);
+  const p1 = new THREE.Vector3().fromBufferAttribute(posAttr, i1);
+  const p2 = new THREE.Vector3().fromBufferAttribute(posAttr, i2);
 
   const uv0 = new THREE.Vector2(uvAttr.getX(i0), uvAttr.getY(i0));
   const uv1 = new THREE.Vector2(uvAttr.getX(i1), uvAttr.getY(i1));
@@ -71,14 +74,14 @@ function reprojetarMarcacao(marcacao: Zone, camera: THREE.Camera, canvasWidth: n
   };
 }
 
-function HTMLMarkers({ zones, scene, updateMarkerPos }: { zones: Zone[], scene: THREE.Group, updateMarkerPos: (id: string, x: number, y: number, visible: boolean) => void }) {
+function HTMLMarkersUpdater({ zones, scene, onUpdate }: { zones: Zone[], scene: THREE.Group, onUpdate: (id: string, x: number, y: number, visible: boolean) => void }) {
   useFrame(({ camera, gl }) => {
     zones.forEach((zone) => {
       const pos = reprojetarMarcacao(zone, camera, gl.domElement.clientWidth, gl.domElement.clientHeight, scene);
       if (pos) {
-        updateMarkerPos(zone.id, pos.x, pos.y, true);
+        onUpdate(zone.id, pos.x, pos.y, true);
       } else {
-        updateMarkerPos(zone.id, 0, 0, false);
+        onUpdate(zone.id, 0, 0, false);
       }
     });
   });
@@ -86,35 +89,21 @@ function HTMLMarkers({ zones, scene, updateMarkerPos }: { zones: Zone[], scene: 
   return null;
 }
 
-function ModelWithClick({ url, onPointSelect, zones }: { url: string, onPointSelect: (hit: any) => void, zones: Zone[] }) {
+function ModelWithClick({ url, onPointSelect, zones, updateMarkerPos }: { 
+  url: string, 
+  onPointSelect: (hit: any) => void, 
+  zones: Zone[],
+  updateMarkerPos: (id: string, x: number, y: number, visible: boolean) => void
+}) {
   const { scene } = useGLTF(url);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (scene) {
-      const relatorio: any[] = [];
       scene.traverse((obj) => {
-        const entry: any = {
-          nome: obj.name,
-          tipo: obj.type,
-          uuid: obj.uuid,
-        };
-
         if (obj instanceof THREE.Mesh) {
-          const geo = obj.geometry;
-          entry.temUV = !!geo.attributes.uv;
-          entry.temIndex = !!geo.index;
-          entry.totalVertices = geo.attributes.position?.count ?? 0;
-          entry.totalFaces = geo.index ? geo.index.count / 3 : 0;
-          entry.materialNome = Array.isArray(obj.material)
-            ? obj.material.map((m: any) => m.name)
-            : (obj.material as any).name;
-          entry.posicaoWorld = obj.getWorldPosition(new THREE.Vector3());
+          obj.updateMatrixWorld(true);
         }
-        relatorio.push(entry);
       });
-      console.log('=== DIAGNÓSTICO GLB ===');
-      console.table(relatorio);
-      console.log(JSON.stringify(relatorio, null, 2));
     }
   }, [scene]);
   
@@ -124,18 +113,26 @@ function ModelWithClick({ url, onPointSelect, zones }: { url: string, onPointSel
         object={scene} 
         onClick={(e: any) => {
           e.stopPropagation();
-          // Filter only the 'Cloth' mesh intersections as requested
-          const clothHit = e.intersections.find((hit: any) => hit.object.name === 'Cloth');
+          const meshAlvo: THREE.Mesh[] = [];
+          scene.traverse((obj) => {
+            if (obj instanceof THREE.Mesh && obj.name === 'Cloth') {
+              meshAlvo.push(obj);
+            }
+          });
           
-          if (clothHit && clothHit.uv) {
-            console.log('Hit Cloth Mesh:', clothHit.object.name, 'UUID:', clothHit.object.uuid);
-            onPointSelect(clothHit);
+          const raycaster = e.raycaster;
+          const intersects = raycaster.intersectObjects(meshAlvo, false);
+          
+          if (intersects.length > 0) {
+            const hit = intersects[0];
+            if (hit.uv && hit.faceIndex !== undefined) {
+              console.log('Hit Cloth Mesh:', hit.object.name, 'UUID:', hit.object.uuid);
+              onPointSelect(hit);
+            }
           }
         }}
       />
-      {zones.map((zone) => (
-        <ZoneMarker key={zone.id} zone={zone} scene={scene} />
-      ))}
+      <HTMLMarkersUpdater zones={zones} scene={scene} onUpdate={updateMarkerPos} />
     </group>
   );
 }
@@ -146,9 +143,15 @@ export default function ZoneEditor({ modelUrl, initialZones = [], onSave, onClos
   onSave: (zones: Zone[]) => void,
   onClose: () => void 
 }) {
-  const [zones, setZones] = useState<Zone[]>(initialZones);
+  const [zones, setZones] = useState<Zone[]>(initialZones.map(z => ({ ...z, visivel: false, screenX: 0, screenY: 0 })));
   const [selectedHit, setSelectedHit] = useState<any | null>(null);
   const [newZoneName, setNewZoneName] = useState('');
+
+  const updateMarkerPos = (id: string, x: number, y: number, visible: boolean) => {
+    setZones(prev => prev.map(z => 
+      z.id === id ? { ...z, screenX: x, screenY: y, visivel: visible } : z
+    ));
+  };
 
   const handlePointSelect = (hit: any) => {
     setSelectedHit(hit);
@@ -164,7 +167,9 @@ export default function ZoneEditor({ modelUrl, initialZones = [], onSave, onClos
       meshUuid: selectedHit.object.uuid,
       meshName: selectedHit.object.name,
       faceIndex: selectedHit.faceIndex,
-      position: [selectedHit.point.x, selectedHit.point.y, selectedHit.point.z]
+      visivel: false,
+      screenX: 0,
+      screenY: 0
     };
     
     setZones([...zones, newZone]);

@@ -1,11 +1,18 @@
 import React from 'react';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import HomePage from './pages/HomePage';
+import SimulatorPage from './pages/simulator/SimulatorPage';
 
 export default function App() {
   return (
-    <div style={{ padding: '20px', background: 'white' }}>
-      <h1>APP ROOT</h1>
-      <HomePage />
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/simulador/futebol_masculino_3d" element={<SimulatorPage />} />
+        <Route path="/clientes" element={<HomePage />} />
+        <Route path="/institucional_simulador" element={<HomePage />} />
+        <Route path="/anuncios" element={<HomePage />} />
+      </Routes>
+    </BrowserRouter>
   );
 }

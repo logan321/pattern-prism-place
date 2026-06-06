@@ -11,6 +11,11 @@ const Button = ({ children, style, className, ...props }: any) => (
       border: 'none',
       borderRadius: '8px',
       fontWeight: 'bold',
+      fontSize: '14px',
+      display: 'inline-flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      textTransform: 'uppercase',
       ...style 
     }} 
     {...props}

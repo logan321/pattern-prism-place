@@ -92,7 +92,8 @@ const PatternCard = ({ name, active, onClick, imageUrl }: { name: string, active
           alt={name} 
           className="w-full h-full object-cover"
           onError={(e) => {
-            (e.target as HTMLImageElement).src = 'https://placehold.co/100x100?text=No+Preview';
+            console.error('Erro ao carregar miniatura da estampa:', imageUrl);
+            (e.target as HTMLImageElement).src = 'https://placehold.co/100x100?text=Erro+Img';
           }}
         />
       ) : (
@@ -124,7 +125,47 @@ export default function Simulator() {
     queryFn: async () => {
       const { data, error } = await supabase.from('modelos').select('*');
       if (error) throw error;
-      return data;
+      
+      if (!data) return [];
+
+      const modelsWithSignedUrls = await Promise.all(data.map(async (m) => {
+        try {
+          const getPath = (url: string | null, bucket: string) => {
+            if (!url) return null;
+            // Se já for uma URL assinada (contém token), não tenta extrair o path
+            if (url.includes('token=')) return null;
+            const marker = `/public/${bucket}/`;
+            const parts = url.split(marker);
+            return parts.length > 1 ? parts[1].split('?')[0] : null;
+          };
+
+          const glbPath = getPath(m.glb_url, 'models');
+          const thumbPath = getPath(m.thumbnail_url, 'textures');
+
+          let signedGlbUrl = m.glb_url;
+          let signedThumbUrl = m.thumbnail_url;
+
+          if (glbPath) {
+            const { data: glbData } = await supabase.storage.from('models').createSignedUrl(glbPath, 3600);
+            if (glbData) signedGlbUrl = glbData.signedUrl;
+          }
+
+          if (thumbPath) {
+            const { data: thumbData } = await supabase.storage.from('textures').createSignedUrl(thumbPath, 3600);
+            if (thumbData) signedThumbUrl = thumbData.signedUrl;
+          }
+
+          return {
+            ...m,
+            glb_url: signedGlbUrl,
+            thumbnail_url: signedThumbUrl
+          };
+        } catch (err) {
+          return m;
+        }
+      }));
+
+      return modelsWithSignedUrls;
     }
   });
 
@@ -133,7 +174,48 @@ export default function Simulator() {
     queryFn: async () => {
       const { data, error } = await supabase.from('patterns').select('*');
       if (error) throw error;
-      return data;
+      
+      // Se não houver dados, retorna vazio
+      if (!data || data.length === 0) return [];
+
+      // Como os buckets estão privados (workspace restriction), precisamos gerar URLs assinadas
+      const patternsWithSignedUrls = await Promise.all(data.map(async (p) => {
+        try {
+          // Extrai o caminho do arquivo da URL pública (formato: .../public/textures/caminho)
+          const getPath = (url: string | null) => {
+            if (!url) return null;
+            const parts = url.split('/public/textures/');
+            return parts.length > 1 ? parts[1] : null;
+          };
+
+          const pngPath = getPath(p.image_url);
+          const svgPath = getPath(p.svg_url);
+
+          let signedImageUrl = p.image_url;
+          let signedSvgUrl = p.svg_url;
+
+          if (pngPath) {
+            const { data: pngData } = await supabase.storage.from('textures').createSignedUrl(pngPath, 3600);
+            if (pngData) signedImageUrl = pngData.signedUrl;
+          }
+
+          if (svgPath) {
+            const { data: svgData } = await supabase.storage.from('textures').createSignedUrl(svgPath, 3600);
+            if (svgData) signedSvgUrl = svgData.signedUrl;
+          }
+
+          return {
+            ...p,
+            image_url: signedImageUrl,
+            svg_url: signedSvgUrl
+          };
+        } catch (err) {
+          console.error('Erro ao gerar URL assinada para estampa:', p.id, err);
+          return p;
+        }
+      }));
+
+      return patternsWithSignedUrls;
     }
   });
 

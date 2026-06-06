@@ -17,6 +17,7 @@ import {
   Settings
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { useCustomizerStore } from '../store/useCustomizerStore';
@@ -118,6 +119,16 @@ export default function Simulator() {
 
 
   return (
+    <>
+      <Helmet>
+        <title>Simulador de Uniformes 3D Jumptec | Macro Master</title>
+        <meta name="description" content="Personalize uniformes esportivos em 3D em tempo real com o simulador Macro Master. Escolha cores, padrões, números e logos." />
+        <link rel="canonical" href="https://pattern-prism-place.lovable.app/" />
+        <meta property="og:title" content="Simulador de Uniformes 3D Jumptec | Macro Master" />
+        <meta property="og:description" content="Personalize uniformes esportivos em 3D em tempo real com o simulador Macro Master." />
+        <meta property="og:url" content="https://pattern-prism-place.lovable.app/" />
+        <meta property="og:type" content="website" />
+      </Helmet>
     <div className="flex flex-col h-screen bg-[#f0f0f0] font-sans overflow-hidden">
       {/* Header */}
       <header className="bg-orange-600 h-16 flex items-center justify-between px-4 shrink-0 shadow-md">
@@ -284,5 +295,6 @@ export default function Simulator() {
         </div>
       </footer>
     </div>
+    </>
   );
 }

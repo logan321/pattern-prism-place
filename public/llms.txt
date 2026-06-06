@@ -1,0 +1,7 @@
+# Macro Master
+
+> Simulador 3D profissional de uniformes esportivos e empresariais. Personalize camisas, calções e mais em tempo real.
+
+## Pages
+
+- [Simulador 3D](/): Personalize uniformes esportivos em 3D escolhendo cores, padrões, números e logos.

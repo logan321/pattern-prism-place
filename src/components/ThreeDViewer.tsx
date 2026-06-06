@@ -71,6 +71,10 @@ function Model({ url, textureUrl, zones = [] }: { url: string; textureUrl?: stri
         const isShield = zone.name.toLowerCase().includes('escudo');
         const isLogo = zone.name.toLowerCase().includes('logo') || zone.name.toLowerCase().includes('patrocínio');
 
+        // Heurística de rotação: se estiver na parte de trás (z < 0), vira 180 graus
+        const defaultRotation: [number, number, number] = zone.position[2] < -0.05 ? [0, Math.PI, 0] : [0, 0, 0];
+        const rotation = zone.rotation || defaultRotation;
+
         if (isName && name) {
           return (
             <Text
@@ -80,7 +84,7 @@ function Model({ url, textureUrl, zones = [] }: { url: string; textureUrl?: stri
               color={nameColor}
               anchorX="center"
               anchorY="middle"
-              rotation={zone.rotation || [0, 0, 0]}
+              rotation={rotation}
             >
               {name}
               <meshStandardMaterial attach="material" color={nameColor} polygonOffset polygonOffsetFactor={-1} />
@@ -97,7 +101,7 @@ function Model({ url, textureUrl, zones = [] }: { url: string; textureUrl?: stri
               color={numberColor}
               anchorX="center"
               anchorY="middle"
-              rotation={zone.rotation || [0, 0, 0]}
+              rotation={rotation}
             >
               {number}
               <meshStandardMaterial attach="material" color={numberColor} polygonOffset polygonOffsetFactor={-1} />
@@ -107,7 +111,7 @@ function Model({ url, textureUrl, zones = [] }: { url: string; textureUrl?: stri
 
         if (isShield || isLogo) {
           return (
-            <mesh key={zone.id} position={zone.position} rotation={zone.rotation || [0, 0, 0]}>
+            <mesh key={zone.id} position={zone.position} rotation={rotation}>
               <circleGeometry args={[0.04, 32]} />
               <meshStandardMaterial 
                 color={isShield ? "#FFD700" : "#ffffff"} 
@@ -122,6 +126,7 @@ function Model({ url, textureUrl, zones = [] }: { url: string; textureUrl?: stri
 
         return null;
       })}
+
     </group>
   );
 }

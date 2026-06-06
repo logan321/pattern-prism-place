@@ -155,8 +155,8 @@ export interface ThreeDViewerRef {
   zoom: (direction: 'in' | 'out') => void;
 }
 
-export const ThreeDViewer = forwardRef<ThreeDViewerRef, { modelUrl?: string; textureUrl?: string }>(
-  ({ modelUrl, textureUrl }, ref) => {
+export const ThreeDViewer = forwardRef<ThreeDViewerRef, { modelUrl?: string; textureUrl?: string; universalUvUrl?: string }>(
+  ({ modelUrl, textureUrl, universalUvUrl }, ref) => {
     const orbitRef = useRef<any>(null);
 
     useImperativeHandle(ref, () => ({

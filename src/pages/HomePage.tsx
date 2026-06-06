@@ -1,7 +1,15 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 
-const Button = ({ children, style, ...props }: any) => <button style={{ cursor: 'pointer', ...style }} {...props}>{children}</button>;
-const Link = ({ children, to, style, ...props }: any) => <a href={to} style={{ textDecoration: 'none', ...style }} {...props}>{children}</a>;
+const Button = ({ children, style, className, ...props }: any) => (
+  <button 
+    className={className} 
+    style={{ cursor: 'pointer', ...style }} 
+    {...props}
+  >
+    {children}
+  </button>
+);
 
 export default function HomePage() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -34,10 +42,10 @@ export default function HomePage() {
           </div>
 
           <nav style={{ display: 'flex', gap: '30px', alignItems: 'center' }}>
-            <Link to="/#simuladores" style={{ color: '#333' }}>Simuladores</Link>
-            <Link to="/#servicos" style={{ color: '#333' }}>Serviços</Link>
-            <Link to="/clientes" style={{ color: '#333' }}>Clientes</Link>
-            <Link to="/#contato" style={{ color: '#333' }}>Contato</Link>
+            <a href="/#simuladores" style={{ color: '#333', textDecoration: 'none' }}>Simuladores</a>
+            <a href="/#servicos" style={{ color: '#333', textDecoration: 'none' }}>Serviços</a>
+            <Link to="/clientes" style={{ color: '#333', textDecoration: 'none' }}>Clientes</Link>
+            <a href="/#contato" style={{ color: '#333', textDecoration: 'none' }}>Contato</a>
             <Link to="/simulador/futebol_masculino_3d">
               <Button style={{ padding: '10px 20px', backgroundColor: '#F26522', color: 'white', border: 'none', borderRadius: '8px' }}>
                 Acessar Simulador

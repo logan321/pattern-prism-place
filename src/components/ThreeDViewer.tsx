@@ -43,19 +43,36 @@ function Model({ url, textureUrl }: { url: string; textureUrl?: string }) {
       img.src = imageSrc;
     };
 
-    if (textureUrl.endsWith('.svg') || textureUrl.includes('svg')) {
-      // Converte SVG para blob URL
-      fetch(textureUrl)
-        .then(r => r.blob())
-        .then(blob => {
-          const blobUrl = URL.createObjectURL(blob);
-          applyTexture(blobUrl);
-        })
-        .catch(err => console.error('Erro ao processar SVG:', err));
-    } else {
-      applyTexture(textureUrl);
-    }
+    const processTexture = () => {
+      if (textureUrl.endsWith('.svg') || textureUrl.includes('svg')) {
+        fetch(textureUrl)
+          .then(r => r.blob())
+          .then(blob => {
+            const blobUrl = URL.createObjectURL(blob);
+            applyTexture(blobUrl);
+          })
+          .catch(err => console.error('Erro ao processar SVG:', err));
+      } else {
+        applyTexture(textureUrl);
+      }
+    };
+
+    // Testa se a URL é acessível antes de carregar
+    fetch(textureUrl, { method: 'HEAD' })
+      .then(res => {
+        if (!res.ok) {
+          console.warn('Textura inacessível:', textureUrl, res.status);
+          return;
+        }
+        processTexture();
+      })
+      .catch(err => {
+        console.warn('Erro ao verificar textura:', err);
+        // Fallback para tentar carregar mesmo se o HEAD falhar (alguns storages barram HEAD)
+        processTexture();
+      });
   }, [scene, textureUrl]);
+
 
   return <primitive object={scene} />;
 }

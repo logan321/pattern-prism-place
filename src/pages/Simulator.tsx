@@ -79,13 +79,22 @@ const PatternCard = ({ name, active, onClick, imageUrl }: { name: string, active
   <div 
     onClick={onClick}
     className={cn(
-      "border rounded-lg p-1 cursor-pointer transition-all hover:shadow-md bg-white flex flex-col items-center",
-      active ? "border-orange-500 ring-1 ring-orange-500" : "border-gray-200"
+      "border-2 rounded-lg p-1 cursor-pointer transition-all bg-white flex flex-col items-center",
+      active 
+        ? "border-orange-500 scale-105 shadow-md" 
+        : "border-transparent hover:border-gray-300"
     )}
   >
     <div className="w-full aspect-square bg-gray-100 rounded mb-1 overflow-hidden">
       {imageUrl ? (
-        <img src={imageUrl} alt={name} className="w-full h-full object-cover" />
+        <img 
+          src={imageUrl} 
+          alt={name} 
+          className="w-full h-full object-cover"
+          onError={(e) => {
+            (e.target as HTMLImageElement).src = 'https://placehold.co/100x100?text=No+Preview';
+          }}
+        />
       ) : (
         <Palette className="w-8 h-8 text-gray-300 m-auto mt-2" />
       )}
@@ -93,6 +102,7 @@ const PatternCard = ({ name, active, onClick, imageUrl }: { name: string, active
     <span className="text-[8px] text-gray-500 truncate w-full text-center">{name}</span>
   </div>
 );
+
 
 
 export default function Simulator() {

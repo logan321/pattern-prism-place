@@ -260,6 +260,7 @@ export type Database = {
           image_url: string | null
           name: string
           svg_url: string | null
+          uv_matriz_id: string | null
         }
         Insert: {
           category?: string | null
@@ -268,6 +269,7 @@ export type Database = {
           image_url?: string | null
           name: string
           svg_url?: string | null
+          uv_matriz_id?: string | null
         }
         Update: {
           category?: string | null
@@ -276,8 +278,17 @@ export type Database = {
           image_url?: string | null
           name?: string
           svg_url?: string | null
+          uv_matriz_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "patterns_uv_matriz_id_fkey"
+            columns: ["uv_matriz_id"]
+            isOneToOne: false
+            referencedRelation: "uv_matrices"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       products: {
         Row: {
@@ -582,6 +593,41 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      uv_matrices: {
+        Row: {
+          created_at: string
+          id: string
+          modelo_id: string | null
+          name: string
+          svg_url: string | null
+          zones: Json | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          modelo_id?: string | null
+          name: string
+          svg_url?: string | null
+          zones?: Json | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          modelo_id?: string | null
+          name?: string
+          svg_url?: string | null
+          zones?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "uv_matrices_modelo_id_fkey"
+            columns: ["modelo_id"]
+            isOneToOne: false
+            referencedRelation: "modelos"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

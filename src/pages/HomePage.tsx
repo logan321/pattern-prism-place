@@ -49,9 +49,11 @@ export default function HomePage() {
             <Link to="/#servicos" className="text-[#333333] font-medium hover:text-[#F26522] transition-colors">Serviços</Link>
             <Link to="/clientes" className="text-[#333333] font-medium hover:text-[#F26522] transition-colors">Clientes</Link>
             <Link to="/#contato" className="text-[#333333] font-medium hover:text-[#F26522] transition-colors">Contato</Link>
-            <Button className="bg-[#F26522] hover:bg-[#E55A00] text-white rounded-lg" asChild>
-              <Link to="/simulador/futebol_masculino_3d">Acessar Simulador</Link>
-            </Button>
+            <Link to="/simulador/futebol_masculino_3d">
+              <Button className="bg-[#F26522] hover:bg-[#E55A00] text-white rounded-lg">
+                Acessar Simulador
+              </Button>
+            </Link>
           </nav>
 
           <button className="md:hidden text-[#333333]" onClick={() => setIsMenuOpen(!isMenuOpen)}>
@@ -74,9 +76,11 @@ export default function HomePage() {
               <Link to="/#servicos" onClick={() => setIsMenuOpen(false)}>Serviços</Link>
               <Link to="/clientes" onClick={() => setIsMenuOpen(false)}>Clientes</Link>
               <Link to="/#contato" onClick={() => setIsMenuOpen(false)}>Contato</Link>
-              <Button className="bg-[#F26522] text-white py-6" asChild>
-                <Link to="/simulador/futebol_masculino_3d">Acessar Simulador</Link>
-              </Button>
+              <Link to="/simulador/futebol_masculino_3d">
+                <Button className="bg-[#F26522] text-white py-6 w-full">
+                  Acessar Simulador
+                </Button>
+              </Link>
             </nav>
           </motion.div>
         )}

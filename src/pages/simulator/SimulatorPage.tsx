@@ -57,7 +57,7 @@ export default function SimulatorPage() {
       {/* Header */}
       <header className="h-16 border-b flex items-center justify-between px-4 bg-white z-10">
         <div className="flex items-center gap-4">
-          <Link to="/" asChild>
+          <Link to="/">
             <Button variant="ghost" size="icon">
               <ChevronLeft />
             </Button>

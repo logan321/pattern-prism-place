@@ -8,7 +8,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 const Link = ({ children, to, ...props }: any) => <a href={to} {...props}>{children}</a>;
 
 
+// Fallback Link component defined above
+
 export default function HomePage() {
+  console.log("HomePage component rendering");
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 

@@ -1,5 +1,5 @@
 import React, { useState, useRef, Suspense } from 'react';
-import { Canvas, useThree } from '@react-three/fiber';
+import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, Stage, useGLTF, Html } from '@react-three/drei';
 import * as THREE from 'three';
 import { X, Save, Plus, Trash2 } from 'lucide-react';
@@ -60,7 +60,7 @@ function ZoneMarker({ zone, scene }: { zone: Zone, scene: THREE.Group }) {
   const markerRef = useRef<THREE.Group>(null);
   const [visible, setVisible] = useState(true);
 
-  useThree(({ camera }) => {
+  useFrame(({ camera }) => {
     if (!markerRef.current || !zone.uv || !zone.meshUuid || zone.faceIndex === undefined) return;
 
     const mesh = scene.getObjectByProperty('uuid', zone.meshUuid) as THREE.Mesh;

@@ -24,6 +24,19 @@ import { useCustomizerStore } from '../store/useCustomizerStore';
 import { ThreeDViewer } from '../components/ThreeDViewer';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../integrations/supabase/client';
+import golaPadreAsset from '../assets/GOLA_PADRE_otimizado.glb.asset.json';
+
+const LOCAL_MODELS = [
+  {
+    id: 'local-gola-padre',
+    nome: 'Gola Padre (Local)',
+    glb_url: golaPadreAsset.url,
+    thumbnail_url: null,
+    pecas: ['Camisa', 'Calção', 'Meião'],
+    categoria_id: null,
+    created_at: '',
+  },
+];
 
 
 function cn(...inputs: ClassValue[]) {
@@ -114,7 +127,9 @@ export default function Simulator() {
     }
   });
 
-  const currentModel = models?.find(m => m.id === selectedModel);
+  const allModels = [...LOCAL_MODELS, ...(models ?? [])];
+  const currentModel =
+    allModels.find(m => m.id === selectedModel) ?? LOCAL_MODELS[0];
   const currentPattern = patterns?.find(p => p.id === selectedPattern);
 
 

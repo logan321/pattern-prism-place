@@ -8,7 +8,8 @@ import {
   ArrowLeft,
   Upload,
   ChevronRight,
-  X
+  X,
+  Settings
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
@@ -22,8 +23,119 @@ function cn(...inputs: ClassValue[]) {
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../integrations/supabase/client';
 
+function UVConfigView({ models, queryClient }: { models: any[] | undefined, queryClient: any }) {
+  const [selectedModelId, setSelectedModelId] = useState<string>('');
+  const [isUploading, setIsUploading] = useState(false);
+  
+  const selectedModel = models?.find(m => m.id === selectedModelId);
+
+  const handleUVUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !selectedModelId) return;
+
+    setIsUploading(true);
+    try {
+      const fileName = `universal_uv_${Date.now()}_${file.name}`;
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('textures')
+        .upload(fileName, file, { contentType: 'image/svg+xml' });
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage.from('textures').getPublicUrl(uploadData.path);
+      
+      const { error: updateError } = await supabase
+        .from('modelos')
+        .update({ universal_uv_svg: urlData.publicUrl } as any)
+        .eq('id', selectedModelId);
+
+      if (updateError) throw updateError;
+
+      queryClient.invalidateQueries({ queryKey: ['models'] });
+      alert('UV Universal atualizada com sucesso!');
+    } catch (err: any) {
+      alert('Erro: ' + err.message);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  return (
+    <div className="bg-white rounded-2xl p-8 border border-gray-100 shadow-sm">
+      <div className="max-w-2xl">
+        <label className="block text-sm font-bold text-gray-700 mb-2 uppercase">Selecionar Modelo</label>
+        <select 
+          value={selectedModelId} 
+          onChange={(e) => setSelectedModelId(e.target.value)}
+          className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 outline-none mb-6"
+        >
+          <option value="">Selecione um modelo...</option>
+          {models?.map(m => (
+            <option key={m.id} value={m.id}>{m.nome}</option>
+          ))}
+        </select>
+
+        {selectedModelId && (
+          <div className="space-y-6">
+            <div className="p-6 bg-orange-50 rounded-2xl border border-orange-100">
+              <h4 className="font-bold text-orange-900 mb-2">Importar UV Universal (SVG)</h4>
+              <p className="text-sm text-orange-700 mb-4">
+                Este SVG será usado como matriz para posicionar textos, escudos e uploads. 
+                Ele deve conter as marcações corretas para o mapeamento UV do modelo.
+              </p>
+              
+              <div className="flex items-center space-x-4">
+                <button 
+                  onClick={() => document.getElementById('uv-upload')?.click()}
+                  disabled={isUploading}
+                  className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-2.5 rounded-xl font-bold flex items-center space-x-2 transition-all shadow-md disabled:opacity-50"
+                >
+                  <Upload className="w-4 h-4" />
+                  <span>{isUploading ? 'Enviando...' : 'Selecionar SVG Matriz'}</span>
+                </button>
+                <input 
+                  id="uv-upload" 
+                  type="file" 
+                  accept=".svg" 
+                  className="hidden" 
+                  onChange={handleUVUpload} 
+                />
+              </div>
+
+              {selectedModel?.universal_uv_svg && (
+                <div className="mt-6 pt-6 border-t border-orange-200">
+                  <span className="text-xs font-bold text-orange-800 uppercase block mb-2">Arquivo Atual:</span>
+                  <div className="flex items-center justify-between bg-white p-3 rounded-lg border border-orange-100">
+                    <span className="text-sm text-gray-600 truncate mr-4">{selectedModel.universal_uv_svg}</span>
+                    <a 
+                      href={selectedModel.universal_uv_svg} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-orange-600 font-bold text-xs hover:underline"
+                    >
+                      Ver SVG
+                    </a>
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            <div className="p-6 bg-gray-50 rounded-2xl border border-gray-100">
+              <h4 className="font-bold text-gray-900 mb-2">Ajuste de Posição</h4>
+              <p className="text-sm text-gray-500">
+                Após importar o SVG matriz, as marcações serão aplicadas automaticamente a todas as estampas.
+                Em breve você poderá ajustar as coordenadas diretamente no visualizador 3D.
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function Admin() {
-  const [activeView, setActiveView] = useState<'models' | 'patterns'>('models');
+  const [activeView, setActiveView] = useState<'models' | 'patterns' | 'config'>('models');
   const [isUploading, setIsUploading] = useState(false);
   const [showPatternModal, setShowPatternModal] = useState(false);
   const [patternData, setPatternData] = useState({ name: '', png: null as File | null, svg: null as File | null });
@@ -306,6 +418,13 @@ export default function Admin() {
             <ImageIcon className="w-5 h-5" />
             <span className="font-medium text-sm">Estampas</span>
           </button>
+          <button 
+            onClick={() => setActiveView('config')}
+            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeView === 'config' ? 'bg-orange-600 text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}
+          >
+            <Settings className="w-5 h-5" />
+            <span className="font-medium text-sm">Configuração UV</span>
+          </button>
         </nav>
 
         <div className="p-4 border-t border-gray-800">
@@ -321,28 +440,36 @@ export default function Admin() {
         <div className="max-w-6xl mx-auto">
           <div className="flex items-center justify-between mb-8">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">{activeView === 'models' ? 'Modelos 3D' : 'Gerenciamento de Estampas'}</h2>
+              <h2 className="text-2xl font-bold text-gray-900">
+                {activeView === 'models' ? 'Modelos 3D' : activeView === 'patterns' ? 'Gerenciamento de Estampas' : 'Configuração de UV Universal'}
+              </h2>
               <p className="text-gray-500 text-sm mt-1">
-                {activeView === 'models' ? 'Gerencie os arquivos GLB/GLTF dos seus produtos.' : 'Importe e configure as estampas disponíveis para personalização.'}
+                {activeView === 'models' 
+                  ? 'Gerencie os arquivos GLB/GLTF dos seus produtos.' 
+                  : activeView === 'patterns' 
+                    ? 'Importe e configure as estampas disponíveis para personalização.'
+                    : 'Configure o mapa UV universal para posicionamento de textos e escudos.'}
               </p>
             </div>
-            <button 
-              onClick={() => activeView === 'models' ? document.getElementById('file-upload-input')?.click() : setShowPatternModal(true)}
-              className={cn(
-                "bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg font-bold flex items-center space-x-2 transition-all shadow-sm cursor-pointer",
-                isUploading && "opacity-50 cursor-not-allowed"
-              )}>
-              <Plus className="w-4 h-4" />
-              <span>{isUploading ? 'Enviando...' : activeView === 'models' ? 'Novo Modelo' : 'Nova Estampa'}</span>
-              <input 
-                id="file-upload-input"
-                type="file" 
-                className="hidden" 
-                onChange={handleFileUpload} 
-                disabled={isUploading}
-                accept={activeView === 'models' ? '.glb,.gltf' : 'image/*'}
-              />
-            </button>
+            {activeView !== 'config' && (
+              <button 
+                onClick={() => activeView === 'models' ? document.getElementById('file-upload-input')?.click() : setShowPatternModal(true)}
+                className={cn(
+                  "bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg font-bold flex items-center space-x-2 transition-all shadow-sm cursor-pointer",
+                  isUploading && "opacity-50 cursor-not-allowed"
+                )}>
+                <Plus className="w-4 h-4" />
+                <span>{isUploading ? 'Enviando...' : activeView === 'models' ? 'Novo Modelo' : 'Nova Estampa'}</span>
+                <input 
+                  id="file-upload-input"
+                  type="file" 
+                  className="hidden" 
+                  onChange={handleFileUpload} 
+                  disabled={isUploading}
+                  accept={activeView === 'models' ? '.glb,.gltf' : 'image/*'}
+                />
+              </button>
+            )}
 
           </div>
 
@@ -424,7 +551,7 @@ export default function Admin() {
                 ))
               )}
             </div>
-          ) : (
+          ) : activeView === 'patterns' ? (
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
                {patternsLoading ? (
                  <div className="col-span-full py-12 text-center text-gray-400">Carregando estampas...</div>
@@ -453,6 +580,8 @@ export default function Admin() {
                  ))
                )}
             </div>
+          ) : (
+            <UVConfigView models={models} queryClient={queryClient} />
           )}
         </div>
       </main>

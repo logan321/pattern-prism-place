@@ -40,6 +40,7 @@ const LOCAL_MODELS = [
     pecas: ['Camisa', 'Calção', 'Meião'],
     categoria_id: null,
     created_at: '',
+    universal_uv_svg: null,
   },
 ];
 
@@ -427,6 +428,7 @@ export default function Simulator() {
               ref={viewerRef}
               modelUrl={modelUrl} 
               textureUrl={currentPattern?.svg_url || currentPattern?.image_url || undefined}
+              universalUvUrl={currentModel?.universal_uv_svg || undefined}
             />
           </div>
 

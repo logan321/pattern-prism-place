@@ -6,7 +6,7 @@ import { ErrorBoundary } from 'react-error-boundary';
 import { gsap } from 'gsap';
 import { useCustomizerStore } from '../store/useCustomizerStore';
 
-function Model({ url, textureUrl }: { url: string; textureUrl?: string }) {
+function Model({ url, textureUrl, universalUvUrl }: { url: string; textureUrl?: string; universalUvUrl?: string }) {
   const { scene } = useGLTF(url);
   const name = useCustomizerStore(state => state.name);
   const number = useCustomizerStore(state => state.number);
@@ -17,8 +17,6 @@ function Model({ url, textureUrl }: { url: string; textureUrl?: string }) {
   const nameFont = useCustomizerStore(state => state.nameFont);
 
   useEffect(() => {
-    if (!textureUrl) return;
-
     const applyTexture = (imageSrc: string) => {
       const textureLoader = new THREE.TextureLoader();
       textureLoader.crossOrigin = 'anonymous';
@@ -47,27 +45,31 @@ function Model({ url, textureUrl }: { url: string; textureUrl?: string }) {
             });
           }
         });
-      }, undefined, (err) => {
-        console.error('Erro ao carregar textura via TextureLoader:', err);
       });
     };
 
-    const processTexture = () => {
-      if (textureUrl.endsWith('.svg') || textureUrl.includes('svg')) {
-        fetch(textureUrl)
-          .then(r => r.blob())
-          .then(blob => {
-            const blobUrl = URL.createObjectURL(blob);
-            applyTexture(blobUrl);
-          })
-          .catch(err => console.error('Erro ao processar SVG:', err));
-      } else {
-        applyTexture(textureUrl);
+    const processAndCombine = async () => {
+      if (!textureUrl) return;
+      
+      // Se não houver UV universal, aplica a textura normalmente
+      if (!universalUvUrl) {
+        if (textureUrl.endsWith('.svg') || textureUrl.includes('svg')) {
+          fetch(textureUrl).then(r => r.blob()).then(blob => applyTexture(URL.createObjectURL(blob)));
+        } else {
+          applyTexture(textureUrl);
+        }
+        return;
       }
+
+      // Se houver UV universal, precisamos combinar
+      console.log('Combinando UV universal com estampa...');
+      // Implementação futura: Canvas para combinar SVG matriz com textura de fundo
+      // Por enquanto, apenas aplicamos a textura da estampa
+      applyTexture(textureUrl);
     };
 
-    processTexture();
-  }, [scene, textureUrl]);
+    processAndCombine();
+  }, [scene, textureUrl, universalUvUrl]);
 
   // Positions (Approximated for a standard t-shirt model)
   const posMap = {
@@ -92,27 +94,25 @@ function Model({ url, textureUrl }: { url: string; textureUrl?: string }) {
     <group>
       <primitive object={scene} />
       
-      {/* Front Elements */}
-      <Float speed={1.5} rotationIntensity={0.1} floatIntensity={0.1}>
-        <Text
-          position={namePos as any}
-          fontSize={0.04}
-          color={nameColor}
-          anchorX="center"
-          anchorY="middle"
-          depthOffset={-1}
-        >
-          {name}
-        </Text>
-      </Float>
+      {/* Elementos Frontais */}
+      <Text
+        position={namePos as any}
+        fontSize={0.04}
+        color={nameColor}
+        anchorX="center"
+        anchorY="middle"
+      >
+        {name}
+        <meshStandardMaterial attach="material" color={nameColor} polygonOffset polygonOffsetFactor={-1} />
+      </Text>
 
-      {/* Shield Placeholder */}
+      {/* Placeholder do Escudo */}
       <mesh position={(shieldPosition === 'left' ? posMap.shield.left : posMap.shield.right) as any}>
         <circleGeometry args={[0.04, 32]} />
-        <meshStandardMaterial color="#FFD700" metalness={0.5} roughness={0.2} />
+        <meshStandardMaterial color="#FFD700" metalness={0.5} roughness={0.2} polygonOffset polygonOffsetFactor={-1} />
       </mesh>
 
-      {/* Back Elements */}
+      {/* Elementos Traseiros */}
       <Text
         position={posMap.name.back as any}
         rotation={[0, Math.PI, 0]}
@@ -120,9 +120,9 @@ function Model({ url, textureUrl }: { url: string; textureUrl?: string }) {
         color={nameColor}
         anchorX="center"
         anchorY="middle"
-        depthOffset={-1}
       >
         {name}
+        <meshStandardMaterial attach="material" color={nameColor} polygonOffset polygonOffsetFactor={-1} />
       </Text>
 
       <Text
@@ -132,9 +132,9 @@ function Model({ url, textureUrl }: { url: string; textureUrl?: string }) {
         color={numberColor}
         anchorX="center"
         anchorY="middle"
-        depthOffset={-1}
       >
         {number}
+        <meshStandardMaterial attach="material" color={numberColor} polygonOffset polygonOffsetFactor={-1} />
       </Text>
     </group>
   );
@@ -155,8 +155,8 @@ export interface ThreeDViewerRef {
   zoom: (direction: 'in' | 'out') => void;
 }
 
-export const ThreeDViewer = forwardRef<ThreeDViewerRef, { modelUrl?: string; textureUrl?: string }>(
-  ({ modelUrl, textureUrl }, ref) => {
+export const ThreeDViewer = forwardRef<ThreeDViewerRef, { modelUrl?: string; textureUrl?: string; universalUvUrl?: string }>(
+  ({ modelUrl, textureUrl, universalUvUrl }, ref) => {
     const orbitRef = useRef<any>(null);
 
     useImperativeHandle(ref, () => ({
@@ -240,9 +240,7 @@ export const ThreeDViewer = forwardRef<ThreeDViewerRef, { modelUrl?: string; tex
         <Canvas shadows camera={{ position: [0, 0, 2.0], fov: 45 }}>
           <Suspense fallback={null}>
           <Stage intensity={0.5} environment="city" shadows="contact" adjustCamera={false} preset="rembrandt">
-            <Center top>
-              <Model url={modelUrl} textureUrl={textureUrl} />
-            </Center>
+            <Model url={modelUrl} textureUrl={textureUrl} universalUvUrl={universalUvUrl} />
           </Stage>
           <OrbitControls 
             ref={orbitRef} 

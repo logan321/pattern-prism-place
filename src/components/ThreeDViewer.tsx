@@ -98,9 +98,9 @@ function Model({ url, textureUrl }: { url: string; textureUrl?: string }) {
           position={namePos as any}
           fontSize={0.04}
           color={nameColor}
-          font={nameFont}
           anchorX="center"
           anchorY="middle"
+          depthOffset={-1}
         >
           {name}
         </Text>
@@ -118,9 +118,9 @@ function Model({ url, textureUrl }: { url: string; textureUrl?: string }) {
         rotation={[0, Math.PI, 0]}
         fontSize={0.05}
         color={nameColor}
-        font={nameFont}
         anchorX="center"
         anchorY="middle"
+        depthOffset={-1}
       >
         {name}
       </Text>
@@ -132,6 +132,7 @@ function Model({ url, textureUrl }: { url: string; textureUrl?: string }) {
         color={numberColor}
         anchorX="center"
         anchorY="middle"
+        depthOffset={-1}
       >
         {number}
       </Text>

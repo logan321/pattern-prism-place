@@ -8,7 +8,8 @@ import {
   ArrowLeft,
   Upload,
   ChevronRight,
-  X
+  X,
+  Settings
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';

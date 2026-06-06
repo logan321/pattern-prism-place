@@ -377,6 +377,33 @@ export type Database = {
           },
         ]
       }
+      shirt_models: {
+        Row: {
+          created_at: string
+          glb_url: string
+          id: string
+          is_active: boolean | null
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          glb_url: string
+          id?: string
+          is_active?: boolean | null
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          glb_url?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       simulacoes: {
         Row: {
           configuracao: Json

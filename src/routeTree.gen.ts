@@ -10,33 +10,44 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as SimuladorFutebol_masculino_3dRouteImport } from './routes/simulador/futebol_masculino_3d'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SimuladorFutebol_masculino_3dRoute =
+  SimuladorFutebol_masculino_3dRouteImport.update({
+    id: '/simulador/futebol_masculino_3d',
+    path: '/simulador/futebol_masculino_3d',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/simulador/futebol_masculino_3d': typeof SimuladorFutebol_masculino_3dRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/simulador/futebol_masculino_3d': typeof SimuladorFutebol_masculino_3dRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/simulador/futebol_masculino_3d': typeof SimuladorFutebol_masculino_3dRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/simulador/futebol_masculino_3d'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/simulador/futebol_masculino_3d'
+  id: '__root__' | '/' | '/simulador/futebol_masculino_3d'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  SimuladorFutebol_masculino_3dRoute: typeof SimuladorFutebol_masculino_3dRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,12 +59,30 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/simulador/futebol_masculino_3d': {
+      id: '/simulador/futebol_masculino_3d'
+      path: '/simulador/futebol_masculino_3d'
+      fullPath: '/simulador/futebol_masculino_3d'
+      preLoaderRoute: typeof SimuladorFutebol_masculino_3dRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  SimuladorFutebol_masculino_3dRoute: SimuladorFutebol_masculino_3dRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

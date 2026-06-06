@@ -150,13 +150,17 @@ export default function ZoneEditor({ modelUrl, initialZones = [], onSave, onClos
             <div className="space-y-2">
               {zones.map(zone => (
                 <div key={zone.id} className="bg-gray-800 rounded-lg p-3 flex items-center justify-between group">
-                  <div>
-                    <p className="text-white font-bold text-xs">{zone.name}</p>
-                    <p className="text-gray-500 text-[10px] font-mono">XYZ: {zone.position.map(p => p.toFixed(2)).join(', ')}</p>
+                  <div className="min-w-0">
+                    <p className="text-white font-bold text-xs truncate">{zone.name}</p>
+                    {zone.uv ? (
+                      <p className="text-orange-500 text-[9px] font-mono">UV: {zone.uv.x.toFixed(2)}, {zone.uv.y.toFixed(2)}</p>
+                    ) : (
+                      <p className="text-gray-500 text-[9px] font-mono">Legacy POS</p>
+                    )}
                   </div>
                   <button 
                     onClick={() => removeZone(zone.id)}
-                    className="text-gray-500 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"
+                    className="text-gray-500 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all shrink-0"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -174,7 +178,7 @@ export default function ZoneEditor({ modelUrl, initialZones = [], onSave, onClos
           <Canvas camera={{ position: [0, 0, 2], fov: 45 }}>
             <Suspense fallback={null}>
               <Stage intensity={0.5} environment="city" shadows="contact" adjustCamera={false}>
-                <ModelWithClick url={modelUrl} onPointSelect={setSelectedPoint} zones={zones} />
+                <ModelWithClick url={modelUrl} onPointSelect={handlePointSelect} zones={zones} />
               </Stage>
               <OrbitControls makeDefault />
             </Suspense>

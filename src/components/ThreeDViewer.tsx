@@ -1,55 +1,58 @@
-import React, { Suspense } from 'react';
+import React, { Suspense, useEffect } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { OrbitControls, Stage, useGLTF, Environment, ContactShadows } from '@react-three/drei';
+import { OrbitControls, Stage, useGLTF } from '@react-three/drei';
 import * as THREE from 'three';
+import { ErrorBoundary } from 'react-error-boundary';
 
 function Model({ url, textureUrl }: { url: string; textureUrl?: string }) {
   const { scene } = useGLTF(url);
-  
-  // Apply texture if provided
-  React.useEffect(() => {
-    if (textureUrl) {
-      const loader = new THREE.TextureLoader();
-      loader.load(textureUrl, (texture) => {
-        texture.flipY = false;
-        texture.colorSpace = THREE.SRGBColorSpace;
-        scene.traverse((child) => {
-          if ((child as THREE.Mesh).isMesh) {
-            const mesh = child as THREE.Mesh;
-            if (mesh.material) {
-              const material = mesh.material as THREE.MeshStandardMaterial;
-              // Clone the material to avoid affecting other meshes that share it
-              const newMaterial = material.clone();
-              newMaterial.map = texture;
-              newMaterial.needsUpdate = true;
-              mesh.material = newMaterial;
-            }
-          }
-        });
+
+  useEffect(() => {
+    if (!textureUrl) return;
+    const loader = new THREE.TextureLoader();
+    loader.load(textureUrl, (texture) => {
+      texture.flipY = false;
+      scene.traverse((child) => {
+        const mesh = child as THREE.Mesh;
+        if (mesh.isMesh && mesh.material) {
+          const material = mesh.material as THREE.MeshStandardMaterial;
+          material.map = texture;
+          material.needsUpdate = true;
+        }
       });
-    }
+    });
   }, [scene, textureUrl]);
 
   return <primitive object={scene} />;
 }
 
+function FallbackError() {
+  return (
+    <div className="w-full h-full flex items-center justify-center bg-gray-100 text-red-500">
+      Erro ao carregar o modelo 3D. Verifique se o arquivo GLB é válido.
+    </div>
+  );
+}
+
 export function ThreeDViewer({ modelUrl, textureUrl }: { modelUrl?: string; textureUrl?: string }) {
   if (!modelUrl) {
     return (
-      <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-400">
-        Selecione um modelo 3D para visualizar
+      <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-500">
+        Selecione um modelo para visualizar
       </div>
     );
   }
 
   return (
-    <Canvas shadows camera={{ position: [0, 0, 4], fov: 45 }}>
-      <Suspense fallback={null}>
-        <Stage intensity={0.5} environment="city" shadows="contact" adjustCamera={1.5}>
-          <Model url={modelUrl} textureUrl={textureUrl} />
-        </Stage>
-        <OrbitControls makeDefault minPolarAngle={Math.PI / 4} maxPolarAngle={Math.PI / 1.5} />
-      </Suspense>
-    </Canvas>
+    <ErrorBoundary FallbackComponent={FallbackError}>
+      <Canvas shadows camera={{ position: [0, 0, 4], fov: 45 }}>
+        <Suspense fallback={null}>
+          <Stage intensity={0.5} environment="city" shadows="contact" adjustCamera={1.5}>
+            <Model url={modelUrl} textureUrl={textureUrl} />
+          </Stage>
+          <OrbitControls makeDefault />
+        </Suspense>
+      </Canvas>
+    </ErrorBoundary>
   );
 }

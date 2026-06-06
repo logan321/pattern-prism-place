@@ -7,35 +7,51 @@ import { X, Save, Plus, Trash2 } from 'lucide-react';
 interface Zone {
   id: string;
   name: string;
-  position: [number, number, number];
-  rotation?: [number, number, number];
+  position?: [number, number, number]; // Legacy compatibility
+  uv?: { x: number; y: number }; // New coordinate system
 }
 
-function ModelWithClick({ url, onPointSelect, zones }: { url: string, onPointSelect: (point: THREE.Vector3) => void, zones: Zone[] }) {
+function ModelWithClick({ url, onPointSelect, zones }: { url: string, onPointSelect: (uv: THREE.Vector2, point: THREE.Vector3) => void, zones: Zone[] }) {
   const { scene } = useGLTF(url);
-  
-  return (
-    <group>
-      <primitive 
-        object={scene} 
-        onClick={(e: any) => {
-          e.stopPropagation();
-          onPointSelect(e.point);
-        }}
-      />
-      {zones.map((zone) => (
-        <group key={zone.id} position={zone.position}>
+  const meshRef = useRef<THREE.Group>(null);
+
+  // We need to handle the conversion of UV to world position for rendering markers
+  const renderMarkers = () => {
+    return zones.map((zone) => {
+      // If the zone has position (legacy) use it, otherwise we would need UV to world conversion
+      // But we can also just use the position saved during placement if the geometry hasn't changed
+      // For the editor, we'll use position for visual feedback but save UV as the source of truth
+      const displayPos = zone.position;
+      if (!displayPos) return null;
+
+      return (
+        <group key={zone.id} position={displayPos}>
           <mesh>
-            <sphereGeometry args={[0.02, 16, 16]} />
-            <meshStandardMaterial color="#ea580c" />
+            <sphereGeometry args={[0.015, 16, 16]} />
+            <meshStandardMaterial color="#ea580c" emissive="#ea580c" emissiveIntensity={0.5} />
           </mesh>
-          <Html distanceFactor={10} position={[0, 0.05, 0]}>
-            <div className="bg-orange-600 text-white text-[10px] px-2 py-0.5 rounded whitespace-nowrap font-bold shadow-lg">
+          <Html distanceFactor={5} position={[0, 0.03, 0]}>
+            <div className="bg-orange-600 text-white text-[10px] px-2 py-0.5 rounded whitespace-nowrap font-bold shadow-lg pointer-events-none select-none">
               {zone.name}
             </div>
           </Html>
         </group>
-      ))}
+      );
+    });
+  };
+
+  return (
+    <group ref={meshRef}>
+      <primitive 
+        object={scene} 
+        onClick={(e: any) => {
+          e.stopPropagation();
+          if (e.uv) {
+            onPointSelect(e.uv, e.point);
+          }
+        }}
+      />
+      {renderMarkers()}
     </group>
   );
 }
@@ -47,20 +63,25 @@ export default function ZoneEditor({ modelUrl, initialZones = [], onSave, onClos
   onClose: () => void 
 }) {
   const [zones, setZones] = useState<Zone[]>(initialZones);
-  const [selectedPoint, setSelectedPoint] = useState<THREE.Vector3 | null>(null);
+  const [selectedUV, setSelectedUV] = useState<{ uv: THREE.Vector2, point: THREE.Vector3 } | null>(null);
   const [newZoneName, setNewZoneName] = useState('');
 
+  const handlePointSelect = (uv: THREE.Vector2, point: THREE.Vector3) => {
+    setSelectedUV({ uv: uv.clone(), point: point.clone() });
+  };
+
   const handleAddZone = () => {
-    if (!selectedPoint || !newZoneName) return;
+    if (!selectedUV || !newZoneName) return;
     
     const newZone: Zone = {
       id: Math.random().toString(36).substr(2, 9),
       name: newZoneName,
-      position: [selectedPoint.x, selectedPoint.y, selectedPoint.z]
+      uv: { x: selectedUV.uv.x, y: selectedUV.uv.y },
+      position: [selectedUV.point.x, selectedUV.point.y, selectedUV.point.z]
     };
     
     setZones([...zones, newZone]);
-    setSelectedPoint(null);
+    setSelectedUV(null);
     setNewZoneName('');
   };
 
@@ -94,12 +115,12 @@ export default function ZoneEditor({ modelUrl, initialZones = [], onSave, onClos
         <div className="w-80 bg-gray-900 border-r border-gray-800 p-6 flex flex-col">
           <div className="mb-8">
             <h4 className="text-gray-400 text-[10px] font-bold uppercase mb-4">Adicionar Nova Zona</h4>
-            {selectedPoint ? (
+            {selectedUV ? (
               <div className="space-y-4 animate-in fade-in slide-in-from-top-2">
                 <div className="bg-orange-600/10 border border-orange-600/20 p-3 rounded-lg">
-                  <p className="text-orange-500 text-[10px] font-bold">PONTO SELECIONADO</p>
+                  <p className="text-orange-500 text-[10px] font-bold">PONTO SELECIONADO (UV)</p>
                   <p className="text-white text-xs truncate font-mono">
-                    {selectedPoint.x.toFixed(3)}, {selectedPoint.y.toFixed(3)}, {selectedPoint.z.toFixed(3)}
+                    U: {selectedUV.uv.x.toFixed(3)}, V: {selectedUV.uv.y.toFixed(3)}
                   </p>
                 </div>
                 <input 
@@ -129,13 +150,17 @@ export default function ZoneEditor({ modelUrl, initialZones = [], onSave, onClos
             <div className="space-y-2">
               {zones.map(zone => (
                 <div key={zone.id} className="bg-gray-800 rounded-lg p-3 flex items-center justify-between group">
-                  <div>
-                    <p className="text-white font-bold text-xs">{zone.name}</p>
-                    <p className="text-gray-500 text-[10px] font-mono">XYZ: {zone.position.map(p => p.toFixed(2)).join(', ')}</p>
+                  <div className="min-w-0">
+                    <p className="text-white font-bold text-xs truncate">{zone.name}</p>
+                    {zone.uv ? (
+                      <p className="text-orange-500 text-[9px] font-mono">UV: {zone.uv.x.toFixed(2)}, {zone.uv.y.toFixed(2)}</p>
+                    ) : (
+                      <p className="text-gray-500 text-[9px] font-mono">Legacy POS</p>
+                    )}
                   </div>
                   <button 
                     onClick={() => removeZone(zone.id)}
-                    className="text-gray-500 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"
+                    className="text-gray-500 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all shrink-0"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -153,7 +178,7 @@ export default function ZoneEditor({ modelUrl, initialZones = [], onSave, onClos
           <Canvas camera={{ position: [0, 0, 2], fov: 45 }}>
             <Suspense fallback={null}>
               <Stage intensity={0.5} environment="city" shadows="contact" adjustCamera={false}>
-                <ModelWithClick url={modelUrl} onPointSelect={setSelectedPoint} zones={zones} />
+                <ModelWithClick url={modelUrl} onPointSelect={handlePointSelect} zones={zones} />
               </Stage>
               <OrbitControls makeDefault />
             </Suspense>

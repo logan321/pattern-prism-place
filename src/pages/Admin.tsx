@@ -128,10 +128,13 @@ function UVConfigView({ models, queryClient, modelsLoading }: { models: any[] | 
       </div>
 
       <div className="bg-white rounded-2xl p-8 border border-gray-100 shadow-sm">
-        <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center">
+        <h3 className="text-lg font-bold text-gray-900 mb-2 flex items-center">
           <Target className="w-5 h-5 mr-2 text-orange-600" />
-          UV Matrizes Cadastradas
+          Editor de Zonas 3D
         </h3>
+        <p className="text-gray-500 text-xs mb-6">
+          Selecione um modelo acima e uma matriz abaixo para configurar as áreas de personalização.
+        </p>
 
         {matricesLoading ? (
           <p className="text-gray-400 text-sm">Carregando matrizes...</p>
@@ -146,9 +149,14 @@ function UVConfigView({ models, queryClient, modelsLoading }: { models: any[] | 
                 <div className="flex justify-between items-start mb-2">
                   <div>
                     <h4 className="font-bold text-gray-800">{m.name}</h4>
-                    <p className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">
-                      Modelo: {m.modelos?.nome || 'N/A'}
-                    </p>
+                    <div className="flex items-center space-x-2 mt-1">
+                      <span className={cn(
+                        "text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider",
+                        m.modelo_id ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"
+                      )}>
+                        {m.modelo_id ? "Vinculado" : "Sem Vínculo"}
+                      </span>
+                    </div>
                   </div>
                   <button 
                     onClick={() => handleDeleteMatriz(m.id)}
@@ -160,11 +168,16 @@ function UVConfigView({ models, queryClient, modelsLoading }: { models: any[] | 
 
                 <div className="flex items-center space-x-3 mt-4">
                   <button 
-                    onClick={() => setEditingZonesFor(m)}
-                    className="flex-1 bg-gray-50 hover:bg-orange-50 text-gray-700 hover:text-orange-700 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center space-x-2 border border-gray-100 hover:border-orange-200"
+                    onClick={() => handleOpenEditor(m)}
+                    className={cn(
+                      "flex-1 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center space-x-2 border",
+                      selectedModelId 
+                        ? "bg-gray-50 hover:bg-orange-600 text-gray-700 hover:text-white border-gray-100 hover:border-orange-600"
+                        : "bg-gray-50 text-gray-300 border-gray-100 cursor-not-allowed"
+                    )}
                   >
                     <Edit3 className="w-3.5 h-3.5" />
-                    <span>Editar Zonas 3D</span>
+                    <span>{selectedModelId ? 'Abrir Editor de Zonas' : 'Selecione um Modelo 3D'}</span>
                   </button>
                 </div>
               </div>

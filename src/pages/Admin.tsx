@@ -125,7 +125,11 @@ export default function Admin() {
       if (svgError) throw svgError;
       const svgUrl = supabase.storage.from('textures').getPublicUrl(svgUpload.path).data.publicUrl;
 
+      console.log('=== PNG URL SALVA ===', pngUrl);
+      console.log('=== SVG URL SALVA ===', svgUrl);
+
       // 3. Save to DB
+
       const { error: dbError } = await supabase
         .from('patterns')
         .insert({

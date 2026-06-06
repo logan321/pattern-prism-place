@@ -133,10 +133,17 @@ export default function Simulator() {
   
   const FALLBACK_MODEL_URL = golaPadreAsset.url;
   const currentPattern = patterns?.find(p => p.id === selectedPattern);
+  const modelUrl = currentModel?.glb_url || FALLBACK_MODEL_URL;
 
+  console.log('=== PATTERNS DO BANCO ===', patterns);
+  console.log('=== SELECTED PATTERN ID ===', selectedPattern);
+  console.log('=== CURRENT PATTERN ===', currentPattern);
+  console.log('=== MODEL URL ===', modelUrl);
+  console.log('=== TEXTURE URL ===', currentPattern?.svg_url, currentPattern?.image_url);
 
   return (
     <>
+
       <Helmet>
         <title>Simulador de Uniformes 3D Jumptec | Macro Master</title>
         <meta name="description" content="Personalize uniformes esportivos em 3D em tempo real com o simulador Macro Master. Escolha cores, padrões, números e logos." />
@@ -258,18 +265,12 @@ export default function Simulator() {
         {/* Preview Area */}
         <main className="flex-1 relative bg-gray-200">
           <div className="absolute inset-0">
-            {(() => {
-              const modelUrl = currentModel?.glb_url || FALLBACK_MODEL_URL;
-              console.log('modelUrl sendo passada pro ThreeDViewer:', modelUrl);
-              console.log('textureUrl sendo passada pro ThreeDViewer:', currentPattern?.svg_url || currentPattern?.image_url);
-              return (
-                <ThreeDViewer 
-                  modelUrl={modelUrl} 
-                  textureUrl={currentPattern?.svg_url || currentPattern?.image_url || undefined}
-                />
-              );
-            })()}
+            <ThreeDViewer 
+              modelUrl={modelUrl} 
+              textureUrl={currentPattern?.svg_url || currentPattern?.image_url || undefined}
+            />
           </div>
+
 
           
           {/* Top Actions */}

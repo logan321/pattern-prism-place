@@ -323,9 +323,14 @@ export default function Admin() {
   const { data: models, isLoading: modelsLoading } = useQuery({
     queryKey: ['models'],
     queryFn: async () => {
+      console.log('Fetching models...');
       const { data, error } = await supabase.from('modelos').select('*');
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching models:', error);
+        throw error;
+      }
       
+      console.log('Models found:', data?.length);
       if (!data) return [];
 
       const modelsWithSignedUrls = await Promise.all(data.map(async (m) => {
@@ -344,6 +349,7 @@ export default function Admin() {
           }
           return m;
         } catch (err) {
+          console.error('Error processing model URL:', m.id, err);
           return m;
         }
       }));

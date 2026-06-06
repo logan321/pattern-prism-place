@@ -141,7 +141,7 @@ function App() {
         </aside>
 
         {/* Preview Area */}
-        <main className="flex-1 relative bg-[url('https://images.unsplash.com/photo-1508098682722-e99c43a406b2?q=80&w=2070&auto=format&fit=crop')] bg-cover bg-center">
+        <main className="flex-1 relative bg-[url('/uploads/colado-1780762220267.png')] bg-cover bg-center">
           <div className="absolute inset-0 bg-black/20" />
           
           {/* Top Actions */}

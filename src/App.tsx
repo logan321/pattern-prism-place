@@ -1,19 +1,14 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import HomePage from './pages/HomePage';
-import SimulatorPage from './pages/simulator/SimulatorPage';
 
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/simulador/futebol_masculino_3d" element={<SimulatorPage />} />
-        <Route path="/clientes" element={<HomePage />} />
-        <Route path="/institucional_simulador" element={<HomePage />} />
-        <Route path="/anuncios" element={<HomePage />} />
-      </Routes>
-    </BrowserRouter>
+    <div style={{ padding: '20px', background: '#f3f4f6', minHeight: '100vh' }}>
+      <header style={{ padding: '20px', background: 'white', marginBottom: '20px', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
+        <h1 style={{ color: '#F26522', margin: 0 }}>MACRO MASTER</h1>
+      </header>
+      <HomePage />
+    </div>
   );
 }
 

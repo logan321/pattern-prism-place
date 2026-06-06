@@ -7,7 +7,8 @@ import {
   Trash2, 
   ArrowLeft,
   Upload,
-  ChevronRight
+  ChevronRight,
+  X
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
@@ -408,8 +409,8 @@ export default function Admin() {
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
             <div className="p-6 border-b border-gray-100 flex items-center justify-between">
               <h3 className="text-xl font-bold text-gray-900">Nova Estampa</h3>
-              <button onClick={() => setShowPatternModal(false)} className="text-gray-400 hover:text-gray-600">
-                <Trash2 className="w-5 h-5 rotate-45" /> {/* Use Trash2 as an X icon for now, rotated */}
+              <button onClick={() => setShowPatternModal(false)} className="text-gray-400 hover:text-gray-600 transition-colors">
+                <X className="w-5 h-5" />
               </button>
             </div>
             <form onSubmit={handlePatternSubmit} className="p-6 space-y-4">

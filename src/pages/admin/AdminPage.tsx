@@ -17,9 +17,10 @@ interface Estampa {
   moldeId: string;
   nome: string;
   miniaturaBase64: string;
-  svgBase64: string;
+  svgTexto: string;
   cores: Cor[];
 }
+
 
 const SENHA = 'admin123';
 
@@ -64,7 +65,7 @@ export default function AdminPage() {
   const [moldeIdSel, setMoldeIdSel] = useState('');
   const [nomeEstampa, setNomeEstampa] = useState('');
   const [miniaturaBase64, setMiniaturaBase64] = useState('');
-  const [svgBase64, setSvgBase64] = useState('');
+  const [svgTexto, setSvgTexto] = useState('');
   const [coresExtraidas, setCoresExtraidas] = useState<string[]>([]);
   const [nomesCores, setNomesCores] = useState<Record<string, string>>({});
 
@@ -104,8 +105,7 @@ export default function AdminPage() {
     const file = e.target.files?.[0];
     if (!file) return;
     const texto = await fileToText(file);
-    const base64 = await fileToBase64(file);
-    setSvgBase64(base64);
+    setSvgTexto(texto);
     const cores = extrairCores(texto);
     setCoresExtraidas(cores);
     const nomesIniciais: Record<string, string> = {};
@@ -113,8 +113,9 @@ export default function AdminPage() {
     setNomesCores(nomesIniciais);
   };
 
+
   const avancarPasso = () => {
-    if (!moldeIdSel || !nomeEstampa || !miniaturaBase64 || !svgBase64) { alert('Preencha todos os campos'); return; }
+    if (!moldeIdSel || !nomeEstampa || !miniaturaBase64 || !svgTexto) { alert('Preencha todos os campos'); return; }
     setPasso(2);
   };
 
@@ -124,13 +125,14 @@ export default function AdminPage() {
       moldeId: moldeIdSel,
       nome: nomeEstampa,
       miniaturaBase64,
-      svgBase64,
+      svgTexto,
       cores: coresExtraidas.map(hex => ({ hex, nome: nomesCores[hex] || '' }))
     };
     const lista = [...estampas, nova];
     setEstampas(lista);
     localStorage.setItem('estampas', JSON.stringify(lista));
-    setPasso(1); setMoldeIdSel(''); setNomeEstampa(''); setMiniaturaBase64(''); setSvgBase64(''); setCoresExtraidas([]); setNomesCores({});
+    setPasso(1); setMoldeIdSel(''); setNomeEstampa(''); setMiniaturaBase64(''); setSvgTexto(''); setCoresExtraidas([]); setNomesCores({});
+
     alert('Estampa salva!');
   };
 
@@ -196,7 +198,8 @@ export default function AdminPage() {
               <label>Miniatura PNG (o que o cliente vê): <input type="file" accept="image/png,image/jpeg" onChange={handleMiniaturaEstampa} /></label>
               {miniaturaBase64 && <img src={miniaturaBase64} alt="miniatura" style={{ height:80, objectFit:'contain' }} />}
               <label>SVG do UV map (projetado no 3D): <input type="file" accept=".svg" onChange={handleSvgEstampa} /></label>
-              {svgBase64 && <p style={{ color:'green' }}>✅ SVG carregado — {coresExtraidas.length} cores encontradas</p>}
+              {svgTexto && <p style={{ color:'green' }}>✅ SVG carregado — {coresExtraidas.length} cores encontradas</p>}
+
               <button onClick={avancarPasso} style={{ padding:'8px 16px', background:'#2563eb', color:'#fff', border:'none', borderRadius:6, cursor:'pointer' }}>Próximo →</button>
             </div>
           )}

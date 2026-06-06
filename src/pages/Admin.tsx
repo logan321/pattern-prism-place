@@ -266,8 +266,41 @@ function UVMatrizImportModal({ isOpen, onClose, queryClient, models }: { isOpen:
               required
             />
           </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Imagem de Referência (Opcional)</label>
+            <div className="flex items-center space-x-2">
+              <label className="flex-1 flex flex-col items-center justify-center border-2 border-dashed border-gray-200 rounded-xl py-4 hover:bg-gray-50 cursor-pointer transition-colors group">
+                {file ? (
+                  <span className="text-xs text-green-600 font-bold">{file.name}</span>
+                ) : (
+                  <>
+                    <Upload className="w-5 h-5 text-gray-300 group-hover:text-orange-500 mb-1" />
+                    <span className="text-[10px] text-gray-400">PNG, JPG ou SVG</span>
+                  </>
+                )}
+                <input 
+                  type="file" 
+                  className="hidden" 
+                  accept="image/*,.svg"
+                  onChange={e => setFile(e.target.files?.[0] || null)}
+                />
+              </label>
+              {file && (
+                <button 
+                  type="button"
+                  onClick={() => setFile(null)}
+                  className="p-2 text-gray-400 hover:text-red-500"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+            <p className="text-[10px] text-gray-400 mt-1 italic">Imagem do UV Map para usar como base no editor.</p>
+          </div>
+
           <p className="text-xs text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-100">
-            Crie apenas o nome da matriz aqui. O vínculo com o modelo 3D e a configuração de zonas são feitos no <strong>Editor de Zonas 3D</strong>.
+            O vínculo com o modelo 3D e a configuração de zonas são feitos no <strong>Editor de Zonas 3D</strong>.
           </p>
           
           <button 

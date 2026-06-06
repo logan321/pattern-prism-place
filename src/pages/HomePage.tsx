@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Menu, X, Play, MapPin, CheckCircle2, Cloud, Monitor, Shirt, LayoutPanelTop, Instagram, Facebook, Twitter, MessageSquare } from 'lucide-react';
+import { Menu, X, Play, MapPin, CheckCircle2, Cloud, Monitor, Shirt, LayoutPanelTop, MessageSquare } from 'lucide-react';
+// Note: Some social icons might not be in the current lucide-react version or named differently
+// We'll use MessageSquare as placeholder or simple icons if others fail.
+
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -229,9 +232,9 @@ export default function HomePage() {
           <div>
             <h5 className="font-bold text-[#333333] mb-6">Redes Sociais</h5>
             <div className="flex space-x-4">
-              <Link to="#" className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm text-[#666666] hover:bg-[#F26522] hover:text-white transition-all"><Facebook size={20} /></Link>
-              <Link to="#" className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm text-[#666666] hover:bg-[#F26522] hover:text-white transition-all"><Instagram size={20} /></Link>
-              <Link to="#" className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm text-[#666666] hover:bg-[#F26522] hover:text-white transition-all"><Twitter size={20} /></Link>
+              <Link to="#" className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm text-[#666666] hover:bg-[#F26522] hover:text-white transition-all"><MessageSquare size={20} /></Link>
+              <Link to="#" className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm text-[#666666] hover:bg-[#F26522] hover:text-white transition-all"><MessageSquare size={20} /></Link>
+              <Link to="#" className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm text-[#666666] hover:bg-[#F26522] hover:text-white transition-all"><MessageSquare size={20} /></Link>
             </div>
           </div>
         </div>

@@ -713,11 +713,27 @@ export default function Admin() {
                   type="text" 
                   value={patternData.name} 
                   onChange={e => setPatternData(prev => ({ ...prev, name: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none text-sm"
                   placeholder="Ex: Camuflado Azul"
                   required
                 />
               </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Vincular a uma UV Matriz</label>
+                <select 
+                  value={patternData.uvMatrizId}
+                  onChange={e => setPatternData(prev => ({ ...prev, uvMatrizId: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none text-sm bg-white"
+                >
+                  <option value="">Sem Matriz (Apenas Visual)</option>
+                  {uvMatrices?.map((m: any) => (
+                    <option key={m.id} value={m.id}>{m.name}</option>
+                  ))}
+                </select>
+                <p className="text-[10px] text-gray-400 mt-1 italic">Vincule para que o simulador saiba onde aplicar as marcações de zona.</p>
+              </div>
+
               
               <div className="grid grid-cols-2 gap-4">
                 <div>

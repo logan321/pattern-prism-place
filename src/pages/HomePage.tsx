@@ -3,7 +3,16 @@ import { useState, useEffect } from 'react';
 const Button = ({ children, style, className, ...props }: any) => (
   <button 
     className={className} 
-    style={{ cursor: 'pointer', ...style }} 
+    style={{ 
+      cursor: 'pointer', 
+      padding: '12px 24px',
+      backgroundColor: '#F26522',
+      color: 'white',
+      border: 'none',
+      borderRadius: '8px',
+      fontWeight: 'bold',
+      ...style 
+    }} 
     {...props}
   >
     {children}
@@ -65,10 +74,10 @@ export default function HomePage() {
               Simule fácil e venda mais! Agilize a aprovação dos seus clientes com simulações profissionais!
             </p>
             <div style={{ display: 'flex', gap: '15px' }}>
-              <Button style={{ padding: '15px 30px', backgroundColor: '#F26522', color: 'white', border: 'none', borderRadius: '8px', fontSize: '16px', fontWeight: '600' }}>
+              <Button style={{ fontSize: '16px' }}>
                 ASSISTA AO VÍDEO
               </Button>
-              <Button style={{ padding: '15px 30px', backgroundColor: 'transparent', color: '#F26522', border: '1px solid #F26522', borderRadius: '8px', fontSize: '16px', fontWeight: '600' }}>
+              <Button style={{ backgroundColor: 'transparent', color: '#F26522', border: '1px solid #F26522', fontSize: '16px' }}>
                 ENCONTRE O LOJISTA
               </Button>
             </div>

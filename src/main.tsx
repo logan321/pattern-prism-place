@@ -1,22 +1,10 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
+import { hydrateRoot } from 'react-dom/client'
+import { StartClient } from '@tanstack/react-start/client'
+import { createRouter } from './router'
 
-const App = () => (
-  <div style={{ 
-    display: 'flex', 
-    height: '100vh', 
-    width: '100vw', 
-    justifyContent: 'center', 
-    alignItems: 'center',
-    background: '#f0f0f0',
-    fontFamily: 'sans-serif'
-  }}>
-    <h1>Projeto Zerado - Pronto para recomeçar</h1>
-  </div>
-);
+// In TanStack Start, we don't usually need to pass the router to StartClient
+// but we might need to initialize it or something if we use custom router logic.
+// However, the standard way is just <StartClient />.
+// The router is automatically loaded from the #tanstack-router-entry virtual module.
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-);
+hydrateRoot(document.getElementById('root')!, <StartClient />)

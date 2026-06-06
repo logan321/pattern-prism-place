@@ -9,6 +9,8 @@ interface Zone {
   name: string;
   position?: [number, number, number]; // Legacy compatibility
   uv?: { x: number; y: number }; 
+  u?: { x: number; y: number }; // Added for compatibility with current usage
+
   meshUuid?: string;
   meshName?: string;
   faceIndex?: number;
@@ -144,8 +146,18 @@ export default function ZoneEditor({ modelUrl, initialZones = [], onSave, onClos
   onClose: () => void 
 }) {
   const [zones, setZones] = useState<Zone[]>(initialZones.map(z => ({ ...z, visivel: false, screenX: 0, screenY: 0 })));
-  const [selectedHit, setSelectedHit] = useState<any | null>(null);
-  const [newZoneName, setNewZoneName] = useState('');
+  const [marcacaoPendente, setMarcacaoPendente] = useState<{
+    meshUuid: string;
+    faceIndex: number;
+    u: number;
+    v: number;
+    screenX: number;
+    screenY: number;
+    nome: string;
+  } | null>(null);
+  
+  const mouseStartPos = useRef({ x: 0, y: 0 });
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const updateMarkerPos = (id: string, x: number, y: number, visible: boolean) => {
     setZones(prev => prev.map(z => 
@@ -153,32 +165,59 @@ export default function ZoneEditor({ modelUrl, initialZones = [], onSave, onClos
     ));
   };
 
-  const handlePointSelect = (hit: any) => {
-    setSelectedHit(hit);
+  const handlePointSelect = (hit: any, screenPos: { x: number, y: number }) => {
+    setMarcacaoPendente({
+      meshUuid: hit.object.uuid,
+      faceIndex: hit.faceIndex,
+      u: hit.uv.x,
+      v: hit.uv.y,
+      screenX: screenPos.x,
+      screenY: screenPos.y,
+      nome: '',
+    });
   };
 
-  const handleAddZone = () => {
-    if (!selectedHit || !newZoneName) return;
-    
-    const newZone: Zone = {
-      id: Math.random().toString(36).substr(2, 9),
-      name: newZoneName,
-      uv: { x: selectedHit.uv.x, y: selectedHit.uv.y },
-      meshUuid: selectedHit.object.uuid,
-      meshName: selectedHit.object.name,
-      faceIndex: selectedHit.faceIndex,
-      visivel: false,
-      screenX: 0,
-      screenY: 0
+  const confirmarMarcacao = () => {
+    if (!marcacaoPendente || !marcacaoPendente.nome.trim()) return;
+    const nova: Zone = {
+      id: crypto.randomUUID(),
+      name: marcacaoPendente.nome.trim(),
+      meshName: 'Cloth',
+      meshUuid: marcacaoPendente.meshUuid,
+      u: { x: marcacaoPendente.u, y: marcacaoPendente.v },
+      faceIndex: marcacaoPendente.faceIndex,
+      screenX: marcacaoPendente.screenX,
+      screenY: marcacaoPendente.screenY,
+      visivel: true,
     };
-    
-    setZones([...zones, newZone]);
-    setSelectedHit(null);
-    setNewZoneName('');
+    setZones(prev => [...prev, nova]);
+    setMarcacaoPendente(null);
   };
 
   const removeZone = (id: string) => {
     setZones(zones.filter(z => z.id !== id));
+  };
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    mouseStartPos.current = { x: e.clientX, y: e.clientY };
+  };
+
+  const handleMouseUp = (e: React.MouseEvent) => {
+    const dx = Math.abs(e.clientX - mouseStartPos.current.x);
+    const dy = Math.abs(e.clientY - mouseStartPos.current.y);
+    
+    // Se moveu mais de 5px, é um drag/orbit, não um clique de marcação
+    if (dx > 5 || dy > 5) return;
+
+    // O clique real de marcação é tratado pelo ModelWithClick via R3F events
+    // Mas precisamos capturar a posição da tela aqui para o popover
+    if (containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      // Guardamos para uso no callback do hit
+      (window as any)._lastClickPos = { x, y };
+    }
   };
 
   return (
@@ -205,38 +244,6 @@ export default function ZoneEditor({ modelUrl, initialZones = [], onSave, onClos
       <div className="flex-1 flex overflow-hidden">
         {/* Sidebar de Zonas */}
         <div className="w-80 bg-gray-900 border-r border-gray-800 p-6 flex flex-col">
-          <div className="mb-8">
-            <h4 className="text-gray-400 text-[10px] font-bold uppercase mb-4">Adicionar Nova Zona</h4>
-            {selectedHit ? (
-              <div className="space-y-4 animate-in fade-in slide-in-from-top-2">
-                <div className="bg-orange-600/10 border border-orange-600/20 p-3 rounded-lg">
-                  <p className="text-orange-500 text-[10px] font-bold">MESH: {selectedHit.object.name || 'Sem nome'}</p>
-                  <p className="text-white text-[10px] truncate font-mono">
-                    U: {selectedHit.uv.x.toFixed(3)}, V: {selectedHit.uv.y.toFixed(3)}
-                  </p>
-                </div>
-                <input 
-                  type="text"
-                  placeholder="Nome da Zona (ex: Escudo)"
-                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm outline-none focus:ring-1 focus:ring-orange-500"
-                  value={newZoneName}
-                  onChange={e => setNewZoneName(e.target.value)}
-                />
-                <button 
-                  onClick={handleAddZone}
-                  className="w-full bg-white text-black font-bold py-2 rounded-lg text-sm flex items-center justify-center space-x-2"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>Confirmar Zona</span>
-                </button>
-              </div>
-            ) : (
-              <div className="bg-gray-800/50 border border-gray-700 border-dashed p-6 rounded-xl text-center">
-                <p className="text-gray-500 text-xs italic">Clique em qualquer parte do modelo 3D para selecionar a posição da zona.</p>
-              </div>
-            )}
-          </div>
-
           <div className="flex-1 overflow-y-auto">
             <h4 className="text-gray-400 text-[10px] font-bold uppercase mb-4">Zonas Mapeadas ({zones.length})</h4>
             <div className="space-y-2">
@@ -266,13 +273,18 @@ export default function ZoneEditor({ modelUrl, initialZones = [], onSave, onClos
         </div>
 
         {/* 3D Canvas */}
-        <div className="flex-1 bg-black relative">
+        <div 
+          ref={containerRef}
+          className="flex-1 bg-black relative"
+          onMouseDown={handleMouseDown}
+          onMouseUp={handleMouseUp}
+        >
           <Canvas camera={{ position: [0, 0, 2], fov: 45 }}>
             <Suspense fallback={null}>
               <Stage intensity={0.5} environment="city" shadows="contact" adjustCamera={false}>
                 <ModelWithClick 
                   url={modelUrl} 
-                  onPointSelect={handlePointSelect} 
+                  onPointSelect={(hit) => handlePointSelect(hit, (window as any)._lastClickPos || { x: 0, y: 0 })} 
                   zones={zones} 
                   updateMarkerPos={updateMarkerPos}
                 />
@@ -301,6 +313,70 @@ export default function ZoneEditor({ modelUrl, initialZones = [], onSave, onClos
               />
             )
           ))}
+
+          {/* Marcador Pendente */}
+          {marcacaoPendente && (
+            <div
+              style={{
+                position: 'absolute',
+                left: marcacaoPendente.screenX - 10,
+                top: marcacaoPendente.screenY - 10,
+                width: 20,
+                height: 20,
+                borderRadius: '50%',
+                background: 'orange',
+                border: '2px solid white',
+                pointerEvents: 'none',
+                zIndex: 11,
+              }}
+            />
+          )}
+
+          {/* Popover de Nomeação */}
+          {marcacaoPendente && (
+            <div style={{
+              position: 'absolute',
+              left: marcacaoPendente.screenX + 15,
+              top: marcacaoPendente.screenY - 10,
+              background: 'white',
+              border: '1px solid #ccc',
+              borderRadius: 8,
+              padding: '10px 12px',
+              zIndex: 100,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 8,
+              boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+              minWidth: 200,
+            }}>
+              <span style={{ fontWeight: 600, fontSize: 13, color: '#333' }}>Nome da zona</span>
+              <input
+                autoFocus
+                value={marcacaoPendente.nome}
+                onChange={(e) => setMarcacaoPendente(prev => ({ ...prev!, nome: e.target.value }))}
+                placeholder="Ex: Peito Esquerdo"
+                style={{ padding: '6px 8px', borderRadius: 4, border: '1px solid #ddd', fontSize: 13, color: '#000' }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') confirmarMarcacao();
+                  if (e.key === 'Escape') setMarcacaoPendente(null);
+                }}
+              />
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button 
+                  onClick={confirmarMarcacao} 
+                  style={{ flex: 1, background: '#f60', color: 'white', border: 'none', borderRadius: 4, padding: '6px 0', cursor: 'pointer', fontWeight: 'bold' }}
+                >
+                  Confirmar
+                </button>
+                <button 
+                  onClick={() => setMarcacaoPendente(null)} 
+                  style={{ flex: 1, background: '#eee', color: '#333', border: 'none', borderRadius: 4, padding: '6px 0', cursor: 'pointer' }}
+                >
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          )}
           
           <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex space-x-4">
             <div className="bg-gray-900/80 backdrop-blur px-4 py-2 rounded-full border border-gray-700">

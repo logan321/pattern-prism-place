@@ -9,7 +9,7 @@ import { MeshoptDecoder } from "three/examples/jsm/libs/meshopt_decoder.module.j
  * Renders only on user interaction (OrbitControls "change" event) or when props change.
  * Placeholder: loads the GLB shirt model.
  */
-export function ThreeViewer() {
+export function ThreeViewer({ glbUrl }: { glbUrl?: string }) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -44,8 +44,10 @@ export function ThreeViewer() {
     loader.setMeshoptDecoder(MeshoptDecoder);
     let model: THREE.Group | null = null;
 
+    const modelToLoad = glbUrl || "/models/shirt.glb";
+
     loader.load(
-      "/models/shirt.glb",
+      modelToLoad,
       (gltf) => {
         model = gltf.scene;
         scene.add(model);
@@ -118,7 +120,7 @@ export function ThreeViewer() {
       renderer.dispose();
       container.removeChild(renderer.domElement);
     };
-  }, []);
+  }, [glbUrl]);
 
   return <div ref={containerRef} className="h-full w-full" />;
 }

@@ -122,9 +122,10 @@ export default function Simulator() {
       {/* Header */}
       <header className="bg-orange-600 h-16 flex items-center justify-between px-4 shrink-0 shadow-md">
         <div className="flex items-center">
-          <div className="bg-white p-1 rounded font-bold text-xs leading-none text-center mr-8">
+          <div className="bg-white p-1 rounded font-bold text-xs leading-none text-center mr-4">
             SUA<br/>LOGO<br/>AQUI
           </div>
+          <h1 className="text-white text-lg font-bold mr-8 hidden md:block">Simulador de Uniformes 3D Jumptec</h1>
           <div className="flex items-center space-x-4">
              <div className="bg-white/20 p-2 rounded-full cursor-pointer hover:bg-white/30">
                <div className="w-5 h-5 border-2 border-white rounded-full flex items-center justify-center">
@@ -167,6 +168,7 @@ export default function Simulator() {
           <div className="flex items-center justify-between mb-4">
             <span className="text-[11px] text-gray-600">Sincronizar Camisa e Calção</span>
             <button 
+              aria-label={syncShirtShorts ? "Desativar sincronização de camisa e calção" : "Ativar sincronização de camisa e calção"}
               onClick={() => setSyncShirtShorts(!syncShirtShorts)}
               className={cn(
                 "w-10 h-5 rounded-full transition-colors relative",
@@ -251,10 +253,10 @@ export default function Simulator() {
           {/* Right Controls */}
           <div className="absolute right-6 bottom-32 flex flex-col space-y-2 z-10">
             <div className="bg-white p-2 rounded-lg shadow-md border flex flex-col space-y-3">
-              <button className="p-1 hover:bg-gray-100 rounded"><ZoomIn className="w-5 h-5 text-gray-600" /></button>
-              <button className="p-1 hover:bg-gray-100 rounded"><ZoomOut className="w-5 h-5 text-gray-600" /></button>
-              <button className="p-1 hover:bg-gray-100 rounded"><ArrowUp className="w-5 h-5 text-gray-600" /></button>
-              <button className="p-1 hover:bg-gray-100 rounded"><ArrowDown className="w-5 h-5 text-gray-600" /></button>
+              <button aria-label="Aumentar zoom" className="p-1 hover:bg-gray-100 rounded"><ZoomIn className="w-5 h-5 text-gray-600" /></button>
+              <button aria-label="Diminuir zoom" className="p-1 hover:bg-gray-100 rounded"><ZoomOut className="w-5 h-5 text-gray-600" /></button>
+              <button aria-label="Mover para cima" className="p-1 hover:bg-gray-100 rounded"><ArrowUp className="w-5 h-5 text-gray-600" /></button>
+              <button aria-label="Mover para baixo" className="p-1 hover:bg-gray-100 rounded"><ArrowDown className="w-5 h-5 text-gray-600" /></button>
               <div className="h-px bg-gray-200" />
               <div className="flex items-center justify-between space-x-2">
                 <Shirt className="w-4 h-4 text-gray-600" />

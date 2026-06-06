@@ -168,6 +168,7 @@ export default function Simulator() {
           <div className="flex items-center justify-between mb-4">
             <span className="text-[11px] text-gray-600">Sincronizar Camisa e Calção</span>
             <button 
+              aria-label={syncShirtShorts ? "Desativar sincronização de camisa e calção" : "Ativar sincronização de camisa e calção"}
               onClick={() => setSyncShirtShorts(!syncShirtShorts)}
               className={cn(
                 "w-10 h-5 rounded-full transition-colors relative",

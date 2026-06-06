@@ -306,6 +306,13 @@ export default function Admin() {
             <ImageIcon className="w-5 h-5" />
             <span className="font-medium text-sm">Estampas</span>
           </button>
+          <button 
+            onClick={() => setActiveView('config')}
+            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeView === 'config' ? 'bg-orange-600 text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}
+          >
+            <Settings className="w-5 h-5" />
+            <span className="font-medium text-sm">Configuração UV</span>
+          </button>
         </nav>
 
         <div className="p-4 border-t border-gray-800">

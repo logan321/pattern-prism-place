@@ -42,20 +42,19 @@ export default function HomePage() {
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#f3f4f6' }}>
-      {/* Header */}
-      <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled ? 'bg-white shadow-md py-3' : 'bg-transparent py-5'}`}>
-        <div className="container mx-auto px-4 flex items-center justify-between">
-          <div className="flex items-center">
-            <span className="text-2xl font-bold text-[#F26522]">MACRO MASTER</span>
+      <header style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50, padding: '20px', backgroundColor: isScrolled ? 'white' : 'transparent', borderBottom: isScrolled ? '1px solid #ddd' : 'none' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', maxWidth: '1200px', margin: '0 auto' }}>
+          <div>
+            <span style={{ fontSize: '24px', fontWeight: 'bold', color: '#F26522' }}>MACRO MASTER</span>
           </div>
 
-          <nav className="hidden md:flex items-center space-x-8">
-            <Link to="/#simuladores" className="text-[#333333] font-medium hover:text-[#F26522] transition-colors">Simuladores</Link>
-            <Link to="/#servicos" className="text-[#333333] font-medium hover:text-[#F26522] transition-colors">Serviços</Link>
-            <Link to="/clientes" className="text-[#333333] font-medium hover:text-[#F26522] transition-colors">Clientes</Link>
-            <Link to="/#contato" className="text-[#333333] font-medium hover:text-[#F26522] transition-colors">Contato</Link>
+          <nav style={{ display: 'flex', gap: '30px', alignItems: 'center' }}>
+            <Link to="/#simuladores" style={{ textDecoration: 'none', color: '#333' }}>Simuladores</Link>
+            <Link to="/#servicos" style={{ textDecoration: 'none', color: '#333' }}>Serviços</Link>
+            <Link to="/clientes" style={{ textDecoration: 'none', color: '#333' }}>Clientes</Link>
+            <Link to="/#contato" style={{ textDecoration: 'none', color: '#333' }}>Contato</Link>
             <Link to="/simulador/futebol_masculino_3d">
-              <Button className="bg-[#F26522] hover:bg-[#E55A00] text-white rounded-lg">
+              <Button style={{ padding: '10px 20px', backgroundColor: '#F26522', color: 'white', border: 'none', borderRadius: '8px' }}>
                 Acessar Simulador
               </Button>
             </Link>
@@ -91,21 +90,16 @@ export default function HomePage() {
         )}
       </AnimatePresence>
 
-      {/* Hero Section */}
-      <section className="pt-32 pb-20 md:pt-48 md:pb-32 bg-gradient-to-b from-[#F8F9FA] to-white overflow-hidden">
-        <div className="container mx-auto px-4 grid md:grid-cols-2 gap-12 items-center">
-          <motion.div 
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={containerVariants}
-          >
-            <motion.h1 variants={itemVariants} className="text-4xl md:text-6xl font-bold text-[#333333] mb-6 leading-tight">
+      <section style={{ paddingTop: '150px', paddingBottom: '100px', background: 'linear-gradient(to bottom, #F8F9FA, white)' }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 20px' }}>
+          <div>
+            <h1 style={{ fontSize: '48px', fontWeight: 'bold', color: '#333', marginBottom: '20px' }}>
               CONHEÇA A NOSSA SOLUÇÃO
-            </motion.h1>
-            <motion.p variants={itemVariants} className="text-lg md:text-xl text-[#666666] mb-10">
+            </h1>
+            <p style={{ fontSize: '20px', color: '#666', marginBottom: '40px' }}>
               Simule fácil e venda mais! Agilize a aprovação dos seus clientes com simulações profissionais!
-            </motion.p>
+            </p>
+          </div>
             <motion.div variants={itemVariants} className="flex flex-col sm:flex-row gap-4">
               <Button className="bg-[#F26522] hover:bg-[#E55A00] text-white h-14 px-8 rounded-lg flex items-center gap-2">
                 <Play size={20} /> ASSISTA AO VÍDEO

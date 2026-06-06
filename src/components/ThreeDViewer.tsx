@@ -5,7 +5,26 @@ import * as THREE from 'three';
 import { ErrorBoundary } from 'react-error-boundary';
 
 function Model({ url, textureUrl }: { url: string; textureUrl?: string }) {
-  console.log('Tentando carregar GLB:', url);
+  useEffect(() => {
+    const validateModel = async () => {
+      console.log('Validando URL do GLB:', url);
+      try {
+        const response = await fetch(url, { method: 'HEAD' });
+        console.log(`Status GLB: ${response.status} ${response.statusText}`);
+        console.log(`Content-Type: ${response.headers.get('content-type')}`);
+        console.log(`Tamanho: ${response.headers.get('content-length')} bytes`);
+        
+        if (!response.ok) {
+          console.warn('URL do modelo retornou erro, tentando carregar assim mesmo...');
+        }
+      } catch (err) {
+        console.error('Falha ao validar URL do GLB:', err);
+      }
+    };
+    validateModel();
+  }, [url]);
+
+  console.log('Iniciando useGLTF para:', url);
   const { scene } = useGLTF(url);
   console.log('GLB carregado com sucesso:', scene);
 

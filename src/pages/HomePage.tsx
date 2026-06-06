@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from '@tanstack/react-router';
 import { Menu, X, Play, MapPin, CheckCircle2, Cloud, Monitor, Shirt, LayoutPanelTop, MessageSquare } from 'lucide-react';
 // Note: Some social icons might not be in the current lucide-react version or named differently
 // We'll use MessageSquare as placeholder or simple icons if others fail.
@@ -49,9 +49,11 @@ export default function HomePage() {
             <Link to="/#servicos" className="text-[#333333] font-medium hover:text-[#F26522] transition-colors">Serviços</Link>
             <Link to="/clientes" className="text-[#333333] font-medium hover:text-[#F26522] transition-colors">Clientes</Link>
             <Link to="/#contato" className="text-[#333333] font-medium hover:text-[#F26522] transition-colors">Contato</Link>
-            <Button className="bg-[#F26522] hover:bg-[#E55A00] text-white rounded-lg">
-              <Link to="/simulador/futebol_masculino_3d">Acessar Simulador</Link>
-            </Button>
+            <Link to="/simulador/futebol_masculino_3d">
+              <Button className="bg-[#F26522] hover:bg-[#E55A00] text-white rounded-lg">
+                Acessar Simulador
+              </Button>
+            </Link>
           </nav>
 
           <button className="md:hidden text-[#333333]" onClick={() => setIsMenuOpen(!isMenuOpen)}>
@@ -74,9 +76,11 @@ export default function HomePage() {
               <Link to="/#servicos" onClick={() => setIsMenuOpen(false)}>Serviços</Link>
               <Link to="/clientes" onClick={() => setIsMenuOpen(false)}>Clientes</Link>
               <Link to="/#contato" onClick={() => setIsMenuOpen(false)}>Contato</Link>
-              <Button className="bg-[#F26522] text-white py-6">
-                <Link to="/simulador/futebol_masculino_3d">Acessar Simulador</Link>
-              </Button>
+              <Link to="/simulador/futebol_masculino_3d">
+                <Button className="bg-[#F26522] text-white py-6 w-full">
+                  Acessar Simulador
+                </Button>
+              </Link>
             </nav>
           </motion.div>
         )}
@@ -140,7 +144,7 @@ export default function HomePage() {
                   <CardContent className="p-6">
                     <h3 className="text-xl font-bold text-[#333333] mb-2">{item.title}</h3>
                     <p className="text-[#666666] mb-6 text-sm">{item.desc}</p>
-                    <Link to={item.link}>
+                    <Link to={item.link as any}>
                       <Button variant="outline" className="w-full border-[#F26522] text-[#F26522] group-hover:bg-[#F26522] group-hover:text-white transition-all">
                         ACESSAR SIMULADOR
                       </Button>

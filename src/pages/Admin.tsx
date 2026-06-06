@@ -663,23 +663,31 @@ export default function Admin() {
                    <p className="font-medium">Nenhuma estampa cadastrada</p>
                  </div>
                ) : (
-                 patterns?.map((pattern: any) => (
-                    <div key={pattern.id} className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden aspect-square flex items-center justify-center relative group">
-                      {pattern.image_url && (
-                        <img src={pattern.image_url} alt={pattern.name} className="w-full h-full object-cover" />
-                      )}
-                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <button 
-                          onClick={() => handleDelete(pattern.id, 'textures', pattern.image_url)}
-                          className="bg-red-500 p-1.5 rounded-lg text-white hover:bg-red-600"
-                          title="Excluir Estampa"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                patterns?.map((pattern: any) => (
+                    <div key={pattern.id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden group">
+                      <div className="aspect-square bg-gray-50 flex items-center justify-center relative">
+                        {pattern.image_url && (
+                          <img src={pattern.image_url} alt={pattern.name} className="w-full h-full object-cover" />
+                        )}
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <button 
+                            onClick={() => handleDelete(pattern.id, 'textures', pattern.image_url)}
+                            className="bg-red-500 p-2 rounded-lg text-white hover:bg-red-600"
+                            title="Excluir Estampa"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                      <div className="p-3">
+                        <p className="font-bold text-gray-800 text-sm truncate">{pattern.name}</p>
+                        <p className="text-[9px] text-orange-600 font-bold uppercase mt-1 truncate">
+                          {pattern.uv_matrices?.name || 'Sem Matriz'}
+                        </p>
                       </div>
                     </div>
-
                  ))
+
                )}
             </div>
           ) : (

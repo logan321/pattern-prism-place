@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import golaPadreAsset from '../assets/GOLA_PADRE_otimizado.glb.asset.json';
 import { 
   LayoutDashboard, 
   Box, 
@@ -188,7 +189,7 @@ function UVConfigView({ models, queryClient, modelsLoading }: { models: any[] | 
 
       {editingZonesFor && (
         <ZoneEditor 
-          modelUrl={editingZonesFor.modelos?.glb_url}
+          modelUrl={editingZonesFor.modelUrl}
           initialZones={editingZonesFor.zones || []}
           onSave={handleSaveZones}
           onClose={() => setEditingZonesFor(null)}
@@ -200,7 +201,7 @@ function UVConfigView({ models, queryClient, modelsLoading }: { models: any[] | 
 
 function UVMatrizImportModal({ isOpen, onClose, queryClient, models }: { isOpen: boolean, onClose: () => void, queryClient: any, models: any[] | undefined }) {
   const [name, setName] = useState('');
-  
+  const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -212,10 +213,21 @@ function UVMatrizImportModal({ isOpen, onClose, queryClient, models }: { isOpen:
 
     setIsUploading(true);
     try {
+      const { data: uploadData, error: uploadError } = file 
+        ? await supabase.storage.from('textures').upload(`uv_ref_${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`, file)
+        : { data: null, error: null };
+      
+      if (uploadError) throw uploadError;
+
+      const refUrl = uploadData 
+        ? supabase.storage.from('textures').getPublicUrl(uploadData.path).data.publicUrl
+        : null;
+
       const { error: dbError } = await supabase
         .from('uv_matrices')
         .insert({
           name: name,
+          reference_url: refUrl,
           zones: []
         } as any);
 
@@ -255,8 +267,41 @@ function UVMatrizImportModal({ isOpen, onClose, queryClient, models }: { isOpen:
               required
             />
           </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Imagem de Referência (Opcional)</label>
+            <div className="flex items-center space-x-2">
+              <label className="flex-1 flex flex-col items-center justify-center border-2 border-dashed border-gray-200 rounded-xl py-4 hover:bg-gray-50 cursor-pointer transition-colors group">
+                {file ? (
+                  <span className="text-xs text-green-600 font-bold">{file.name}</span>
+                ) : (
+                  <>
+                    <Upload className="w-5 h-5 text-gray-300 group-hover:text-orange-500 mb-1" />
+                    <span className="text-[10px] text-gray-400">PNG, JPG ou SVG</span>
+                  </>
+                )}
+                <input 
+                  type="file" 
+                  className="hidden" 
+                  accept="image/*,.svg"
+                  onChange={e => setFile(e.target.files?.[0] || null)}
+                />
+              </label>
+              {file && (
+                <button 
+                  type="button"
+                  onClick={() => setFile(null)}
+                  className="p-2 text-gray-400 hover:text-red-500"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+            <p className="text-[10px] text-gray-400 mt-1 italic">Imagem do UV Map para usar como base no editor.</p>
+          </div>
+
           <p className="text-xs text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-100">
-            Crie apenas o nome da matriz aqui. O vínculo com o modelo 3D e a configuração de zonas são feitos no <strong>Editor de Zonas 3D</strong>.
+            O vínculo com o modelo 3D e a configuração de zonas são feitos no <strong>Editor de Zonas 3D</strong>.
           </p>
           
           <button 
@@ -276,17 +321,13 @@ function UVMatrizImportModal({ isOpen, onClose, queryClient, models }: { isOpen:
 export default function Admin() {
   const queryClient = useQueryClient();
 
-  const { data: models, isLoading: modelsLoading } = useQuery({
+  // Buscar modelos do banco E incluir o modelo local se ele não estiver no banco
+  const { data: dbModels, isLoading: modelsLoading } = useQuery({
     queryKey: ['models'],
     queryFn: async () => {
-      console.log('Fetching models...');
       const { data, error } = await supabase.from('modelos').select('*');
-      if (error) {
-        console.error('Error fetching models:', error);
-        throw error;
-      }
+      if (error) throw error;
       
-      console.log('Models found:', data?.length);
       if (!data) return [];
 
       const modelsWithSignedUrls = await Promise.all(data.map(async (m) => {
@@ -305,7 +346,6 @@ export default function Admin() {
           }
           return m;
         } catch (err) {
-          console.error('Error processing model URL:', m.id, err);
           return m;
         }
       }));
@@ -313,6 +353,21 @@ export default function Admin() {
       return modelsWithSignedUrls;
     }
   });
+
+  // Replicar o LOCAL_MODELS do Simulator
+  const LOCAL_MODELS = [
+    {
+      id: 'local-gola-padre',
+      nome: 'Gola Padre (Padrão)',
+      glb_url: golaPadreAsset.url,
+      thumbnail_url: null,
+      pecas: ['Camisa', 'Calção', 'Meião'],
+      categoria_id: null,
+      created_at: '',
+    },
+  ];
+
+  const models = [...LOCAL_MODELS, ...(dbModels || [])];
   const [activeView, setActiveView] = useState<'models' | 'patterns' | 'config'>('models');
   
   const { data: uvMatrices } = useQuery({

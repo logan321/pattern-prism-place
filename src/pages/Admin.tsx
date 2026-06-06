@@ -251,6 +251,16 @@ export default function Admin() {
     }
   });
   const [activeView, setActiveView] = useState<'models' | 'patterns' | 'config'>('models');
+  
+  const { data: uvMatrices } = useQuery({
+    queryKey: ['uv_matrices'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('uv_matrices').select('*');
+      if (error) throw error;
+      return data;
+    }
+  });
+
   const [isUploading, setIsUploading] = useState(false);
   const [showPatternModal, setShowPatternModal] = useState(false);
   const [showUVMatrizModal, setShowUVMatrizModal] = useState(false);

@@ -5,66 +5,56 @@ import * as THREE from 'three';
 import { ErrorBoundary } from 'react-error-boundary';
 
 function Model({ url, textureUrl }: { url: string; textureUrl?: string }) {
-  useEffect(() => {
-    const validateModel = async () => {
-      console.log('Validando URL do GLB:', url);
-      try {
-        const response = await fetch(url, { method: 'HEAD' });
-        console.log(`Status GLB: ${response.status} ${response.statusText}`);
-        console.log(`Content-Type: ${response.headers.get('content-type')}`);
-        console.log(`Tamanho: ${response.headers.get('content-length')} bytes`);
-        
-        if (!response.ok) {
-          console.warn('URL do modelo retornou erro, tentando carregar assim mesmo...');
-        }
-      } catch (err) {
-        console.error('Falha ao validar URL do GLB:', err);
-      }
-    };
-    validateModel();
-  }, [url]);
-
-  console.log('Iniciando useGLTF para:', url);
   const { scene } = useGLTF(url);
-  console.log('GLB carregado com sucesso:', scene);
 
   useEffect(() => {
     if (!textureUrl) return;
-    console.log('Tentando aplicar textura (UV Map):', textureUrl);
-    
-    const loader = new THREE.TextureLoader();
-    loader.load(
-      textureUrl, 
-      (texture) => {
-        console.log('Textura UV carregada com sucesso:', textureUrl);
+
+    const applyTexture = (imageSrc: string) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width || 1024;
+        canvas.height = img.height || 1024;
+        const ctx = canvas.getContext('2d')!;
+        ctx.drawImage(img, 0, 0);
+
+        const texture = new THREE.CanvasTexture(canvas);
         texture.flipY = false;
-        texture.wrapS = THREE.RepeatWrapping;
-        texture.wrapT = THREE.RepeatWrapping;
         texture.colorSpace = THREE.SRGBColorSpace;
-        
+        texture.needsUpdate = true;
+
         scene.traverse((child) => {
-          if ((child as THREE.Mesh).isMesh) {
-            const mesh = child as THREE.Mesh;
-            console.log('Aplicando textura ao mesh:', mesh.name);
-            if (mesh.material) {
-              const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
-              materials.forEach((mat) => {
-                if (mat instanceof THREE.MeshStandardMaterial) {
-                  mat.map = texture;
-                  mat.roughness = 1; // Ajuste para tecido
-                  mat.metalness = 0;
-                  mat.needsUpdate = true;
-                }
-              });
-            }
+          const mesh = child as THREE.Mesh;
+          if (mesh.isMesh && mesh.material) {
+            const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+            materials.forEach((mat) => {
+              if (mat instanceof THREE.MeshStandardMaterial) {
+                mat.map = texture;
+                mat.roughness = 1;
+                mat.metalness = 0;
+                mat.needsUpdate = true;
+              }
+            });
           }
         });
-      },
-      undefined,
-      (err) => {
-        console.error('Erro ao carregar textura UV:', textureUrl, err);
-      }
-    );
+      };
+      img.src = imageSrc;
+    };
+
+    if (textureUrl.endsWith('.svg') || textureUrl.includes('svg')) {
+      // Converte SVG para blob URL
+      fetch(textureUrl)
+        .then(r => r.blob())
+        .then(blob => {
+          const blobUrl = URL.createObjectURL(blob);
+          applyTexture(blobUrl);
+        })
+        .catch(err => console.error('Erro ao processar SVG:', err));
+    } else {
+      applyTexture(textureUrl);
+    }
   }, [scene, textureUrl]);
 
   return <primitive object={scene} />;

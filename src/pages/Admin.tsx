@@ -297,6 +297,7 @@ export default function Admin() {
   const [activeView, setActiveView] = useState<'models' | 'patterns' | 'config'>('models');
   const [isUploading, setIsUploading] = useState(false);
   const [showPatternModal, setShowPatternModal] = useState(false);
+  const [showUVMatrizModal, setShowUVMatrizModal] = useState(false);
   const [patternData, setPatternData] = useState({ name: '', png: null as File | null, svg: null as File | null });
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {

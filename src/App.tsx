@@ -142,7 +142,7 @@ function App() {
 
         {/* Preview Area */}
         <main className="flex-1 relative bg-[url('/uploads/colado-1780762220267.png')] bg-cover bg-center">
-          <div className="absolute inset-0 bg-black/20" />
+          <div className="absolute inset-0 bg-black/5" />
           
           {/* Top Actions */}
           <div className="absolute top-6 right-6 flex space-x-3 z-10">
@@ -157,24 +157,8 @@ function App() {
           </div>
 
           {/* 3D Mockup Container (Placeholder for Three.js) */}
-          <div className="absolute inset-0 flex items-center justify-center">
-             <div className="relative w-full max-w-md pointer-events-none">
-                {/* SVG Mockup as a placeholder for the 3D model */}
-                <svg viewBox="0 0 200 300" className="w-full drop-shadow-2xl">
-                   {/* Shirt */}
-                   <path d="M50,40 L150,40 L160,80 L140,90 L140,200 L60,200 L60,90 L40,80 Z" fill="white" stroke="#eee" />
-                   <path d="M60,40 L140,40 Q100,60 60,40" fill="#f5f5f5" />
-                   <path d="M70,80 L130,160 M130,80 L70,160" stroke="#1e293b" strokeWidth="15" fill="none" opacity="0.8" />
-                   
-                   {/* Shorts */}
-                   <path d="M70,210 L130,210 L140,260 L105,260 L100,240 L95,260 L60,260 Z" fill="white" stroke="#eee" />
-                   <path d="M110,215 L110,255" stroke="#be123c" strokeWidth="6" />
-                   
-                   {/* Socks */}
-                   <path d="M75,265 L95,265 L95,295 L75,295 Z" fill="white" />
-                   <path d="M105,265 L125,265 L125,295 L105,295 Z" fill="white" />
-                </svg>
-             </div>
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+             {/* Invisible placeholder for where the 3D model would be */}
           </div>
 
           {/* Left Controls */}

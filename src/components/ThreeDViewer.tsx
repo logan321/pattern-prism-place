@@ -104,21 +104,21 @@ export const ThreeDViewer = forwardRef<ThreeDViewerRef, { modelUrl?: string; tex
         if (!orbitRef.current) return;
         
         const controls = orbitRef.current;
+        const currentDistance = controls.object.position.length();
         const targetPos = new THREE.Vector3();
-        const distance = 3.5; // Distância ideal para enquadrar a camisa
         
         switch (view) {
-          case 'front': targetPos.set(0, 0, distance); break;
-          case 'back': targetPos.set(0, 0, -distance); break;
-          case 'left': targetPos.set(-distance, 0, 0); break;
-          case 'right': targetPos.set(distance, 0, 0); break;
+          case 'front': targetPos.set(0, 0, currentDistance); break;
+          case 'back': targetPos.set(0, 0, -currentDistance); break;
+          case 'left': targetPos.set(-currentDistance, 0, 0); break;
+          case 'right': targetPos.set(currentDistance, 0, 0); break;
         }
 
         gsap.to(controls.object.position, {
           x: targetPos.x,
           y: targetPos.y,
           z: targetPos.z,
-          duration: 1,
+          duration: 0.8,
           ease: 'power2.inOut',
           onUpdate: () => controls.update()
         });
@@ -153,7 +153,7 @@ export const ThreeDViewer = forwardRef<ThreeDViewerRef, { modelUrl?: string; tex
 
     return (
       <ErrorBoundary FallbackComponent={FallbackError}>
-        <Canvas shadows camera={{ position: [0, 0, 3.5], fov: 40 }}>
+        <Canvas shadows camera={{ position: [0, 0, 2.8], fov: 40 }}>
           <Suspense fallback={null}>
           <Stage intensity={0.5} environment="city" shadows="contact" adjustCamera={false} preset="rembrandt">
             <Model url={modelUrl} textureUrl={textureUrl} />

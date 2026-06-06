@@ -1,17 +1,19 @@
 import { useState, useEffect } from 'react';
 import { Menu, X, Play, MapPin, CheckCircle2, Cloud, Monitor, Shirt, LayoutPanelTop, MessageSquare } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { motion, AnimatePresence } from 'framer-motion';
 
-// Temporary fallback for Link if not in a router context
+// Mock components to eliminate dependencies
+const Button = ({ children, className, ...props }: any) => <button className={className} {...props}>{children}</button>;
+const Card = ({ children, className }: any) => <div className={className}>{children}</div>;
+const CardContent = ({ children, className }: any) => <div className={className}>{children}</div>;
 const Link = ({ children, to, ...props }: any) => <a href={to} {...props}>{children}</a>;
+
 
 
 // Fallback Link component defined above
 
 export default function HomePage() {
-  console.log("HomePage component rendering");
+  console.log("HomePage rendering...");
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 

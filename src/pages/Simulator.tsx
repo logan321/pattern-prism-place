@@ -253,10 +253,10 @@ export default function Simulator() {
           {/* Right Controls */}
           <div className="absolute right-6 bottom-32 flex flex-col space-y-2 z-10">
             <div className="bg-white p-2 rounded-lg shadow-md border flex flex-col space-y-3">
-              <button className="p-1 hover:bg-gray-100 rounded"><ZoomIn className="w-5 h-5 text-gray-600" /></button>
-              <button className="p-1 hover:bg-gray-100 rounded"><ZoomOut className="w-5 h-5 text-gray-600" /></button>
-              <button className="p-1 hover:bg-gray-100 rounded"><ArrowUp className="w-5 h-5 text-gray-600" /></button>
-              <button className="p-1 hover:bg-gray-100 rounded"><ArrowDown className="w-5 h-5 text-gray-600" /></button>
+              <button aria-label="Aumentar zoom" className="p-1 hover:bg-gray-100 rounded"><ZoomIn className="w-5 h-5 text-gray-600" /></button>
+              <button aria-label="Diminuir zoom" className="p-1 hover:bg-gray-100 rounded"><ZoomOut className="w-5 h-5 text-gray-600" /></button>
+              <button aria-label="Mover para cima" className="p-1 hover:bg-gray-100 rounded"><ArrowUp className="w-5 h-5 text-gray-600" /></button>
+              <button aria-label="Mover para baixo" className="p-1 hover:bg-gray-100 rounded"><ArrowDown className="w-5 h-5 text-gray-600" /></button>
               <div className="h-px bg-gray-200" />
               <div className="flex items-center justify-between space-x-2">
                 <Shirt className="w-4 h-4 text-gray-600" />

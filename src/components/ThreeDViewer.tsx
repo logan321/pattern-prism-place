@@ -1,6 +1,6 @@
 import React, { Suspense, useEffect, useRef, useImperativeHandle, forwardRef, useState } from 'react';
 import { Canvas, useThree } from '@react-three/fiber';
-import { OrbitControls, Stage, useGLTF, Text, Float } from '@react-three/drei';
+import { OrbitControls, Stage, useGLTF, Text, Float, Center } from '@react-three/drei';
 import * as THREE from 'three';
 import { ErrorBoundary } from 'react-error-boundary';
 import { gsap } from 'gsap';
@@ -239,7 +239,9 @@ export const ThreeDViewer = forwardRef<ThreeDViewerRef, { modelUrl?: string; tex
         <Canvas shadows camera={{ position: [0, 0, 2.0], fov: 45 }}>
           <Suspense fallback={null}>
           <Stage intensity={0.5} environment="city" shadows="contact" adjustCamera={false} preset="rembrandt">
-            <Model url={modelUrl} textureUrl={textureUrl} />
+            <Center top>
+              <Model url={modelUrl} textureUrl={textureUrl} />
+            </Center>
           </Stage>
           <OrbitControls 
             ref={orbitRef} 

@@ -1,4 +1,7 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 @source "../src";
 
 @layer base {
@@ -53,8 +56,8 @@
     border-color: var(--border);
   }
   body {
-    background-color: var(--background);
-    color: var(--foreground);
+    background-color: #f3f4f6;
+    color: #111827;
   }
 }
 

@@ -10,12 +10,69 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { clsx, type ClassValue } from 'clsx';
+import { twMerge } from 'tailwind-merge';
+
+function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../integrations/supabase/client';
 
 export default function Admin() {
   const [activeView, setActiveView] = useState<'models' | 'patterns'>('models');
+  const [isUploading, setIsUploading] = useState(false);
   const queryClient = useQueryClient();
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const bucket = activeView === 'models' ? 'models' : 'textures';
+      
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from(bucket)
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from(bucket)
+        .getPublicUrl(fileName);
+
+      if (activeView === 'models') {
+        const { error: dbError } = await supabase
+          .from('modelos')
+          .insert({
+            nome: file.name.replace(`.${fileExt}`, ''),
+            glb_url: publicUrl,
+          });
+        if (dbError) throw dbError;
+      } else {
+        const { error: dbError } = await supabase
+          .from('patterns')
+          .insert({
+            name: file.name.replace(`.${fileExt}`, ''),
+            texture_url: publicUrl,
+          });
+        if (dbError) throw dbError;
+      }
+
+      queryClient.invalidateQueries({ queryKey: [activeView] });
+      alert('Upload concluído com sucesso!');
+    } catch (error: any) {
+      console.error('Erro no upload:', error);
+      alert(`Erro no upload: ${error.message}`);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
 
   const { data: models, isLoading: modelsLoading } = useQuery({
     queryKey: ['models'],
@@ -81,10 +138,21 @@ export default function Admin() {
                 {activeView === 'models' ? 'Gerencie os arquivos GLB/GLTF dos seus produtos.' : 'Importe e configure as estampas disponíveis para personalização.'}
               </p>
             </div>
-            <button className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg font-bold flex items-center space-x-2 transition-all shadow-sm">
+            <label className={cn(
+              "bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg font-bold flex items-center space-x-2 transition-all shadow-sm cursor-pointer",
+              isUploading && "opacity-50 cursor-not-allowed"
+            )}>
               <Plus className="w-4 h-4" />
-              <span>{activeView === 'models' ? 'Novo Modelo' : 'Nova Estampa'}</span>
-            </button>
+              <span>{isUploading ? 'Enviando...' : activeView === 'models' ? 'Novo Modelo' : 'Nova Estampa'}</span>
+              <input 
+                type="file" 
+                className="hidden" 
+                onChange={handleFileUpload} 
+                disabled={isUploading}
+                accept={activeView === 'models' ? '.glb,.gltf' : 'image/*'}
+              />
+            </label>
+
           </div>
 
           {activeView === 'models' ? (

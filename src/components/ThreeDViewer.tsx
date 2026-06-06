@@ -240,7 +240,7 @@ export const ThreeDViewer = forwardRef<ThreeDViewerRef, { modelUrl?: string; tex
         <Canvas shadows camera={{ position: [0, 0, 2.0], fov: 45 }}>
           <Suspense fallback={null}>
           <Stage intensity={0.5} environment="city" shadows="contact" adjustCamera={false} preset="rembrandt">
-            <Model url={modelUrl} textureUrl={textureUrl} />
+            <Model url={modelUrl} textureUrl={textureUrl} universalUvUrl={universalUvUrl} />
           </Stage>
           <OrbitControls 
             ref={orbitRef} 

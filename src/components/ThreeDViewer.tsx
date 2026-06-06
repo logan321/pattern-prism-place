@@ -104,40 +104,78 @@ export const ThreeDViewer = forwardRef<ThreeDViewerRef, { modelUrl?: string; tex
         if (!orbitRef.current) return;
         
         const controls = orbitRef.current;
-        const currentDistance = controls.object.position.length();
-        const targetPos = new THREE.Vector3();
+        const currentDistance = controls.getDistance();
+        
+        let targetTheta = 0;
+        let targetPhi = Math.PI / 2; // Nível do horizonte (frontal)
         
         switch (view) {
-          case 'front': targetPos.set(0, 0, currentDistance); break;
-          case 'back': targetPos.set(0, 0, -currentDistance); break;
-          case 'left': targetPos.set(-currentDistance, 0, 0); break;
-          case 'right': targetPos.set(currentDistance, 0, 0); break;
+          case 'front': targetTheta = 0; break;
+          case 'back': targetTheta = Math.PI; break;
+          case 'left': targetTheta = -Math.PI / 2; break;
+          case 'right': targetTheta = Math.PI / 2; break;
         }
 
-        gsap.to(controls.object.position, {
-          x: targetPos.x,
-          y: targetPos.y,
-          z: targetPos.z,
+        const proxy = { 
+          theta: controls.getAzimuthalAngle(), 
+          phi: controls.getPolarAngle(),
+          distance: currentDistance 
+        };
+
+        // Calcula o caminho mais curto para a rotação
+        let endTheta = targetTheta;
+        const diff = endTheta - proxy.theta;
+        if (diff > Math.PI) endTheta -= 2 * Math.PI;
+        if (diff < -Math.PI) endTheta += 2 * Math.PI;
+
+        gsap.to(proxy, {
+          theta: endTheta,
+          phi: targetPhi,
           duration: 0.8,
           ease: 'power2.inOut',
-          onUpdate: () => controls.update()
+          onUpdate: () => {
+            const sinPhi = Math.sin(proxy.phi);
+            const x = proxy.distance * sinPhi * Math.sin(proxy.theta);
+            const y = proxy.distance * Math.cos(proxy.phi);
+            const z = proxy.distance * sinPhi * Math.cos(proxy.theta);
+            controls.object.position.set(x, y, z);
+            controls.update();
+          }
         });
       },
       zoom: (direction) => {
         const controls = orbitRef.current;
-        const currentDistance = controls.object.position.length();
+        const currentDistance = controls.getDistance();
         const factor = direction === 'in' ? 0.85 : 1.15;
         const newDistance = currentDistance * factor;
 
-        // Limites de segurança para não afastar demais nem entrar no modelo
-        if (newDistance < 1.8 || newDistance > 7) return;
+        if (newDistance < 1.5 || newDistance > 6) return;
         
-        gsap.to(controls.object.position, {
-          x: controls.object.position.x * factor,
-          y: controls.object.position.y * factor,
-          z: controls.object.position.z * factor,
+        gsap.to(controls.object, {
+          zoom: 1, // Mantemos zoom da câmera em 1 e alteramos posição
           duration: 0.5,
           ease: 'power2.out',
+          onUpdate: () => {
+            // Animamos a distância alterando a posição relativa ao alvo
+            const ratio = (currentDistance + (newDistance - currentDistance) * gsap.getProperty(controls.object, "progress" || 1)) / currentDistance;
+            // Simplificando a animação de zoom para ser direta na posição preservando o ângulo
+            if (gsap.isTweening(controls.object.position)) return;
+            
+            const targetPos = controls.object.position.clone().multiplyScalar(factor);
+            controls.object.position.copy(targetPos);
+            controls.update();
+          }
+        });
+        
+        // Jeito mais limpo de animar zoom mantendo o orbit
+        gsap.to(controls, {
+          minDistance: newDistance,
+          maxDistance: newDistance,
+          duration: 0.5,
+          onComplete: () => {
+            controls.minDistance = 1.5;
+            controls.maxDistance = 6;
+          },
           onUpdate: () => controls.update()
         });
       }

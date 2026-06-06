@@ -158,14 +158,16 @@ export default function Admin() {
       // 2. Deletar do Storage
       const filesToRemove: string[] = [];
       if (bucket === 'models') {
-        const glbName = itemToDelete.glb_url?.split('/').pop();
+        const model = itemToDelete as any;
+        const glbName = model.glb_url?.split('/').pop();
         if (glbName) filesToRemove.push(glbName);
-        const thumbName = itemToDelete.thumbnail_url?.split('/').pop();
+        const thumbName = model.thumbnail_url?.split('/').pop();
         if (thumbName) filesToRemove.push(thumbName);
       } else {
-        const imgName = itemToDelete.image_url?.split('/').pop();
+        const pattern = itemToDelete as any;
+        const imgName = pattern.image_url?.split('/').pop();
         if (imgName) filesToRemove.push(imgName);
-        const svgName = itemToDelete.svg_url?.split('/').pop();
+        const svgName = pattern.svg_url?.split('/').pop();
         if (svgName) filesToRemove.push(svgName);
       }
 

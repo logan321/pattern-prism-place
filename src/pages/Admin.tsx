@@ -58,8 +58,9 @@ export default function Admin() {
           .from('patterns')
           .insert({
             name: file.name.replace(`.${fileExt}`, ''),
-            texture_url: publicUrl,
+            image_url: publicUrl,
           });
+
         if (dbError) throw dbError;
       }
 
@@ -199,10 +200,11 @@ export default function Admin() {
                ) : (
                  patterns?.map((pattern: any) => (
                    <div key={pattern.id} className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden aspect-square flex items-center justify-center">
-                     {pattern.texture_url && (
-                       <img src={pattern.texture_url} alt={pattern.name} className="w-full h-full object-cover" />
+                     {pattern.image_url && (
+                       <img src={pattern.image_url} alt={pattern.name} className="w-full h-full object-cover" />
                      )}
                    </div>
+
                  ))
                )}
             </div>

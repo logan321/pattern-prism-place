@@ -23,7 +23,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../integrations/supabase/client';
 
 export default function Admin() {
-  const [activeView, setActiveView] = useState<'models' | 'patterns'>('models');
+  const [activeView, setActiveView] = useState<'models' | 'patterns' | 'config'>('models');
   const [isUploading, setIsUploading] = useState(false);
   const [showPatternModal, setShowPatternModal] = useState(false);
   const [patternData, setPatternData] = useState({ name: '', png: null as File | null, svg: null as File | null });

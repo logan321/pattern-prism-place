@@ -448,7 +448,7 @@ export default function Admin() {
   const { data: patterns, isLoading: patternsLoading } = useQuery({
     queryKey: ['patterns'],
     queryFn: async () => {
-      const { data, error } = await supabase.from('patterns').select('*');
+      const { data, error } = await supabase.from('patterns').select('*, uv_matrices(name)');
       if (error) throw error;
       
       if (!data || data.length === 0) return [];
@@ -477,6 +477,7 @@ export default function Admin() {
       return patternsWithSignedUrls;
     }
   });
+
 
   return (
     <>

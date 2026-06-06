@@ -263,17 +263,12 @@ export default function Simulator() {
         {/* Preview Area */}
         <main className="flex-1 relative bg-gray-200">
           <div className="absolute inset-0">
-            {(() => {
-              return (
-
-              return (
-                <ThreeDViewer 
-                  modelUrl={modelUrl} 
-                  textureUrl={currentPattern?.svg_url || currentPattern?.image_url || undefined}
-                />
-              );
-            })()}
+            <ThreeDViewer 
+              modelUrl={modelUrl} 
+              textureUrl={currentPattern?.svg_url || currentPattern?.image_url || undefined}
+            />
           </div>
+
 
           
           {/* Top Actions */}

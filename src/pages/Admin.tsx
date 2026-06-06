@@ -65,8 +65,8 @@ export default function Admin() {
           .insert({
             nome: file.name,
             glb_url: urlData.publicUrl,
-            status: 'active'
-          });
+            categoria_id: null,
+          } as any);
         if (dbError) {
           console.error('Erro no banco modelos:', dbError);
           throw new Error(`Erro no banco: ${dbError.message}`);

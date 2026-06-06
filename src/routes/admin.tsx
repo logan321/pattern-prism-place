@@ -324,15 +324,6 @@ function AdminPage() {
           ) : (
             <div className="space-y-4">
               <h3 className="font-medium text-sm text-blue-600">Passo 2: Nomear Regiões</h3>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Upload de SVG (UV Map)</label>
-                <input
-                  type="file"
-                  accept=".svg"
-                  onChange={handleSvgUpload}
-                  className="mt-1 block w-full text-sm text-gray-500"
-                />
-              </div>
 
               {detectedCores.length > 0 && (
                 <div className="space-y-3 border-t pt-4">

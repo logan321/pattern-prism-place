@@ -1,20 +1,24 @@
-import React, { Suspense, useEffect, useRef, useImperativeHandle, forwardRef, useState } from 'react';
-import { Canvas, useThree } from '@react-three/fiber';
-import { OrbitControls, Stage, useGLTF, Text, Float, Center } from '@react-three/drei';
+import React, { Suspense, useEffect, useRef, useImperativeHandle, forwardRef } from 'react';
+import { Canvas } from '@react-three/fiber';
+import { OrbitControls, Stage, useGLTF, Text } from '@react-three/drei';
 import * as THREE from 'three';
 import { ErrorBoundary } from 'react-error-boundary';
 import { gsap } from 'gsap';
 import { useCustomizerStore } from '../store/useCustomizerStore';
 
-function Model({ url, textureUrl, universalUvUrl }: { url: string; textureUrl?: string; universalUvUrl?: string }) {
+interface Zone {
+  id: string;
+  name: string;
+  position: [number, number, number];
+  rotation?: [number, number, number];
+}
+
+function Model({ url, textureUrl, zones = [] }: { url: string; textureUrl?: string; zones?: Zone[] }) {
   const { scene } = useGLTF(url);
   const name = useCustomizerStore(state => state.name);
   const number = useCustomizerStore(state => state.number);
-  const namePosition = useCustomizerStore(state => state.namePosition);
-  const shieldPosition = useCustomizerStore(state => state.shieldPosition);
   const nameColor = useCustomizerStore(state => state.nameColor);
   const numberColor = useCustomizerStore(state => state.numberColor);
-  const nameFont = useCustomizerStore(state => state.nameFont);
 
   useEffect(() => {
     const applyTexture = (imageSrc: string) => {
@@ -48,94 +52,81 @@ function Model({ url, textureUrl, universalUvUrl }: { url: string; textureUrl?: 
       });
     };
 
-    const processAndCombine = async () => {
-      if (!textureUrl) return;
-      
-      // Se não houver UV universal, aplica a textura normalmente
-      if (!universalUvUrl) {
-        if (textureUrl.endsWith('.svg') || textureUrl.includes('svg')) {
-          fetch(textureUrl).then(r => r.blob()).then(blob => applyTexture(URL.createObjectURL(blob)));
-        } else {
-          applyTexture(textureUrl);
-        }
-        return;
+    if (textureUrl) {
+      if (textureUrl.endsWith('.svg') || textureUrl.includes('svg')) {
+        fetch(textureUrl).then(r => r.blob()).then(blob => applyTexture(URL.createObjectURL(blob)));
+      } else {
+        applyTexture(textureUrl);
       }
-
-      // Se houver UV universal, precisamos combinar
-      console.log('Combinando UV universal com estampa...');
-      // Implementação futura: Canvas para combinar SVG matriz com textura de fundo
-      // Por enquanto, apenas aplicamos a textura da estampa
-      applyTexture(textureUrl);
-    };
-
-    processAndCombine();
-  }, [scene, textureUrl, universalUvUrl]);
-
-  // Positions (Approximated for a standard t-shirt model)
-  const posMap = {
-    name: {
-      left: [-0.2, 0.45, 0.15],
-      right: [0.2, 0.45, 0.15],
-      center: [0, 0.45, 0.15],
-      back: [0, 0.6, -0.15]
-    },
-    shield: {
-      left: [-0.2, 0.35, 0.15],
-      right: [0.2, 0.35, 0.15]
-    },
-    number: {
-      back: [0, 0.3, -0.18]
     }
-  };
-
-  const namePos = namePosition === 'center' ? posMap.name.center : (namePosition === 'left' ? posMap.name.left : posMap.name.right);
+  }, [scene, textureUrl]);
 
   return (
     <group>
       <primitive object={scene} />
       
-      {/* Elementos Frontais */}
-      <Text
-        position={namePos as any}
-        fontSize={0.04}
-        color={nameColor}
-        anchorX="center"
-        anchorY="middle"
-      >
-        {name}
-        <meshStandardMaterial attach="material" color={nameColor} polygonOffset polygonOffsetFactor={-1} />
-      </Text>
+      {zones.map((zone) => {
+        const isName = zone.name.toLowerCase().includes('nome');
+        const isNumber = zone.name.toLowerCase().includes('número') || zone.name.toLowerCase().includes('numero');
+        const isShield = zone.name.toLowerCase().includes('escudo');
+        const isLogo = zone.name.toLowerCase().includes('logo') || zone.name.toLowerCase().includes('patrocínio');
 
-      {/* Placeholder do Escudo */}
-      <mesh position={(shieldPosition === 'left' ? posMap.shield.left : posMap.shield.right) as any}>
-        <circleGeometry args={[0.04, 32]} />
-        <meshStandardMaterial color="#FFD700" metalness={0.5} roughness={0.2} polygonOffset polygonOffsetFactor={-1} />
-      </mesh>
+        // Heurística de rotação: se estiver na parte de trás (z < 0), vira 180 graus
+        const defaultRotation: [number, number, number] = zone.position[2] < -0.05 ? [0, Math.PI, 0] : [0, 0, 0];
+        const rotation = zone.rotation || defaultRotation;
 
-      {/* Elementos Traseiros */}
-      <Text
-        position={posMap.name.back as any}
-        rotation={[0, Math.PI, 0]}
-        fontSize={0.05}
-        color={nameColor}
-        anchorX="center"
-        anchorY="middle"
-      >
-        {name}
-        <meshStandardMaterial attach="material" color={nameColor} polygonOffset polygonOffsetFactor={-1} />
-      </Text>
+        if (isName && name) {
+          return (
+            <Text
+              key={zone.id}
+              position={zone.position}
+              fontSize={0.04}
+              color={nameColor}
+              anchorX="center"
+              anchorY="middle"
+              rotation={rotation}
+            >
+              {name}
+              <meshStandardMaterial attach="material" color={nameColor} polygonOffset polygonOffsetFactor={-1} />
+            </Text>
+          );
+        }
 
-      <Text
-        position={posMap.number.back as any}
-        rotation={[0, Math.PI, 0]}
-        fontSize={0.2}
-        color={numberColor}
-        anchorX="center"
-        anchorY="middle"
-      >
-        {number}
-        <meshStandardMaterial attach="material" color={numberColor} polygonOffset polygonOffsetFactor={-1} />
-      </Text>
+        if (isNumber && number) {
+          return (
+            <Text
+              key={zone.id}
+              position={zone.position}
+              fontSize={0.15}
+              color={numberColor}
+              anchorX="center"
+              anchorY="middle"
+              rotation={rotation}
+            >
+              {number}
+              <meshStandardMaterial attach="material" color={numberColor} polygonOffset polygonOffsetFactor={-1} />
+            </Text>
+          );
+        }
+
+        if (isShield || isLogo) {
+          return (
+            <mesh key={zone.id} position={zone.position} rotation={rotation}>
+              <circleGeometry args={[0.04, 32]} />
+              <meshStandardMaterial 
+                color={isShield ? "#FFD700" : "#ffffff"} 
+                metalness={0.5} 
+                roughness={0.2} 
+                polygonOffset 
+                polygonOffsetFactor={-1} 
+              />
+            </mesh>
+          );
+        }
+
+        return null;
+      })}
+
     </group>
   );
 }
@@ -155,8 +146,8 @@ export interface ThreeDViewerRef {
   zoom: (direction: 'in' | 'out') => void;
 }
 
-export const ThreeDViewer = forwardRef<ThreeDViewerRef, { modelUrl?: string; textureUrl?: string; universalUvUrl?: string }>(
-  ({ modelUrl, textureUrl, universalUvUrl }, ref) => {
+export const ThreeDViewer = forwardRef<ThreeDViewerRef, { modelUrl?: string; textureUrl?: string; zones?: Zone[] }>(
+  ({ modelUrl, textureUrl, zones = [] }, ref) => {
     const orbitRef = useRef<any>(null);
 
     useImperativeHandle(ref, () => ({
@@ -240,7 +231,7 @@ export const ThreeDViewer = forwardRef<ThreeDViewerRef, { modelUrl?: string; tex
         <Canvas shadows camera={{ position: [0, 0, 2.0], fov: 45 }}>
           <Suspense fallback={null}>
           <Stage intensity={0.5} environment="city" shadows="contact" adjustCamera={false} preset="rembrandt">
-            <Model url={modelUrl} textureUrl={textureUrl} universalUvUrl={universalUvUrl} />
+            <Model url={modelUrl} textureUrl={textureUrl} zones={zones} />
           </Stage>
           <OrbitControls 
             ref={orbitRef} 

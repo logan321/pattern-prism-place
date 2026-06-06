@@ -40,9 +40,9 @@ const LOCAL_MODELS = [
     pecas: ['Camisa', 'Calção', 'Meião'],
     categoria_id: null,
     created_at: '',
-    universal_uv_svg: null,
   },
 ];
+
 
 
 function cn(...inputs: ClassValue[]) {
@@ -240,6 +240,15 @@ export default function Simulator() {
     staleTime: 1000 * 60 * 5, // 5 minutos
   });
 
+  const { data: uvMatrices } = useQuery({
+    queryKey: ['uv_matrices'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('uv_matrices').select('*');
+      if (error) throw error;
+      return data;
+    }
+  });
+
   const allModels = [...LOCAL_MODELS, ...(models ?? [])];
   const currentModel =
     allModels.find(m => m.id === selectedModel);
@@ -248,11 +257,14 @@ export default function Simulator() {
   const currentPattern = patterns?.find(p => p.id === selectedPattern);
   const modelUrl = currentModel?.glb_url || FALLBACK_MODEL_URL;
 
-  console.log('=== PATTERNS DO BANCO ===', patterns);
-  console.log('=== SELECTED PATTERN ID ===', selectedPattern);
+  // Encontrar as zonas baseadas na UV Matriz vinculada à estampa
+  const activeUVMatriz = uvMatrices?.find(m => m.id === currentPattern?.uv_matriz_id);
+  const currentZones = activeUVMatriz?.zones || [];
+
   console.log('=== CURRENT PATTERN ===', currentPattern);
-  console.log('=== MODEL URL ===', modelUrl);
-  console.log('=== TEXTURE URL ===', currentPattern?.svg_url, currentPattern?.image_url);
+  console.log('=== ACTIVE UV MATRIZ ===', activeUVMatriz);
+  console.log('=== ZONES ===', currentZones);
+
 
   return (
     <>
@@ -428,8 +440,9 @@ export default function Simulator() {
               ref={viewerRef}
               modelUrl={modelUrl} 
               textureUrl={currentPattern?.svg_url || currentPattern?.image_url || undefined}
-              universalUvUrl={currentModel?.universal_uv_svg || undefined}
+              zones={currentZones as any}
             />
+
           </div>
 
 

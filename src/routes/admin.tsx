@@ -16,7 +16,7 @@ interface Estampa {
   id: string;
   moldeId: string;
   nome: string;
-  pngBase64: string;
+  miniaturaBase64: string;
   svgBase64: string;
   cores: { hex: string; nome: string }[];
 }
@@ -36,7 +36,7 @@ function AdminPage() {
   const [step, setStep] = useState(1);
   const [selectedMoldeId, setSelectedMoldeId] = useState("");
   const [estampaNome, setEstampaNome] = useState("");
-  const [estampaPngBase64, setEstampaPngBase64] = useState("");
+  const [estampaMiniaturaBase64, setEstampaMiniaturaBase64] = useState("");
   const [estampaSvgBase64, setEstampaSvgBase64] = useState("");
   const [detectedCores, setDetectedCores] = useState<{ hex: string; nome: string }[]>([]);
 
@@ -125,11 +125,11 @@ function AdminPage() {
         const svgContent = reader.result as string;
         setEstampaSvgBase64(svgContent);
         
-        const matches = svgContent.match(/fill="(#[a-fA-F0-9]{6})"/gi) || [];
+        const matches = svgContent.match(/fill="(#[a-fA-F0-9]{3,6})"/gi) || [];
         const coresUnicas = [...new Set(matches.map(m => {
-          const hexMatch = m.match(/#[a-fA-F0-9]{6}/i);
+          const hexMatch = m.match(/#[a-fA-F0-9]{3,6}/i);
           return hexMatch ? hexMatch[0].toLowerCase() : "";
-        }).filter(Boolean))];
+        }).filter(c => c && c !== '#000000' && c !== '#ffffff' && c !== '#201e1e'))];
         
         setDetectedCores(coresUnicas.map(hex => ({ hex, nome: "" })));
       };
@@ -139,7 +139,7 @@ function AdminPage() {
 
   const handleSaveEstampa = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedMoldeId || !estampaNome || !estampaPngBase64 || !estampaSvgBase64) {
+    if (!selectedMoldeId || !estampaNome || !estampaMiniaturaBase64 || !estampaSvgBase64) {
       alert("Preencha todos os campos");
       return;
     }
@@ -148,7 +148,7 @@ function AdminPage() {
       id: Date.now().toString(),
       moldeId: selectedMoldeId,
       nome: estampaNome,
-      pngBase64: estampaPngBase64,
+      miniaturaBase64: estampaMiniaturaBase64,
       svgBase64: estampaSvgBase64,
       cores: detectedCores
     };
@@ -160,7 +160,7 @@ function AdminPage() {
     // Reset
     setStep(1);
     setEstampaNome("");
-    setEstampaPngBase64("");
+    setEstampaMiniaturaBase64("");
     setEstampaSvgBase64("");
     setDetectedCores([]);
     alert("Estampa salva com sucesso!");
@@ -299,14 +299,14 @@ function AdminPage() {
                 <input
                   type="file"
                   accept="image/png"
-                  onChange={handleEstampaPngUpload}
+                  onChange={handleEstampaMiniaturaUpload}
                   className="mt-1 block w-full text-sm text-gray-500"
                 />
               </div>
               <button
                 type="button"
                 onClick={() => {
-                  if (!selectedMoldeId || !estampaNome || !estampaPngBase64) {
+                  if (!selectedMoldeId || !estampaNome || !estampaMiniaturaBase64) {
                     alert("Preencha todos os campos do Passo 1");
                     return;
                   }
@@ -383,7 +383,7 @@ function AdminPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {estampas.map((e) => (
                   <div key={e.id} className="border rounded p-4 flex flex-col items-center bg-gray-50">
-                    <img src={e.pngBase64} alt={e.nome} className="h-24 w-24 object-contain mb-2 bg-white rounded border" />
+                    <img src={e.miniaturaBase64} alt={e.nome} className="h-24 w-24 object-contain mb-2 bg-white rounded border" />
                     <span className="font-medium text-center text-sm">{e.nome}</span>
                     <span className="text-[10px] text-gray-500 mt-1">
                       Molde: {moldes.find(m => m.id === e.moldeId)?.nome || "Desconhecido"}

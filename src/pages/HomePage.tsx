@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from '@tanstack/react-router';
+import { Link } from 'react-router-dom';
 import { Menu, X, Play, MapPin, CheckCircle2, Cloud, Monitor, Shirt, LayoutPanelTop, MessageSquare } from 'lucide-react';
 // Note: Some social icons might not be in the current lucide-react version or named differently
 // We'll use MessageSquare as placeholder or simple icons if others fail.
@@ -144,7 +144,7 @@ export default function HomePage() {
                   <CardContent className="p-6">
                     <h3 className="text-xl font-bold text-[#333333] mb-2">{item.title}</h3>
                     <p className="text-[#666666] mb-6 text-sm">{item.desc}</p>
-                    <Link to={item.link as any}>
+                    <Link to={item.link}>
                       <Button variant="outline" className="w-full border-[#F26522] text-[#F26522] group-hover:bg-[#F26522] group-hover:text-white transition-all">
                         ACESSAR SIMULADOR
                       </Button>

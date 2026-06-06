@@ -106,12 +106,12 @@ function AdminPage() {
     alert("Molde salvo com sucesso!");
   };
 
-  const handleEstampaPngUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleEstampaMiniaturaUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setEstampaPngBase64(reader.result as string);
+        setEstampaMiniaturaBase64(reader.result as string);
       };
       reader.readAsDataURL(file);
     }

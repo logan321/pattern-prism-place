@@ -1,22 +1,8 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
+import { createRoot } from 'react-dom/client'
+import { RouterProvider } from '@tanstack/react-router'
+import { createRouter } from './router'
+import './index.css'
 
-const App = () => (
-  <div style={{ 
-    display: 'flex', 
-    height: '100vh', 
-    width: '100vw', 
-    justifyContent: 'center', 
-    alignItems: 'center',
-    background: '#f0f0f0',
-    fontFamily: 'sans-serif'
-  }}>
-    <h1>Projeto Zerado - Pronto para recomeçar</h1>
-  </div>
-);
+const router = createRouter()
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-);
+createRoot(document.getElementById('root')!).render(<RouterProvider router={router} />)

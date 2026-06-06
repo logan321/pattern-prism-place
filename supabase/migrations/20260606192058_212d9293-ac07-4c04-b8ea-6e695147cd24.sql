@@ -1,0 +1,1 @@
+ALTER TABLE public.patterns ADD COLUMN svg_url TEXT;

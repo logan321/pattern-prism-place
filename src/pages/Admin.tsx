@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import golaPadreAsset from '../assets/GOLA_PADRE_otimizado.glb.asset.json';
 import { 
   LayoutDashboard, 
   Box, 

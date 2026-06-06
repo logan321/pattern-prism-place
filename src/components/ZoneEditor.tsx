@@ -14,83 +14,76 @@ interface Zone {
   faceIndex?: number;
 }
 
-function uvParaBaricentrico(p: THREE.Vector2, a: THREE.Vector2, b: THREE.Vector2, c: THREE.Vector2) {
-  const v0 = new THREE.Vector2().subVectors(b, a);
-  const v1 = new THREE.Vector2().subVectors(c, a);
-  const v2 = new THREE.Vector2().subVectors(p, a);
-  const d00 = v0.dot(v0);
-  const d01 = v0.dot(v1);
-  const d11 = v1.dot(v1);
-  const d20 = v2.dot(v0);
-  const d21 = v2.dot(v1);
-  const denom = d00 * d11 - d01 * d01;
-  const v = (d11 * d20 - d01 * d21) / denom;
-  const w = (d00 * d21 - d01 * d20) / denom;
-  const u = 1.0 - v - w;
-  return new THREE.Vector3(u, v, w);
+function calcularBaricentrico(p: THREE.Vector2, a: THREE.Vector2, b: THREE.Vector2, c: THREE.Vector2): THREE.Vector3 {
+  const v0 = c.clone().sub(a);
+  const v1 = b.clone().sub(a);
+  const v2 = p.clone().sub(a);
+  const dot00 = v0.dot(v0);
+  const dot01 = v0.dot(v1);
+  const dot02 = v0.dot(v2);
+  const dot11 = v1.dot(v1);
+  const dot12 = v1.dot(v2);
+  const inv = 1 / (dot00 * dot11 - dot01 * dot01);
+  const u = (dot11 * dot02 - dot01 * dot12) * inv;
+  const v = (dot00 * dot12 - dot01 * dot02) * inv;
+  return new THREE.Vector3(1 - u - v, v, u);
 }
 
-function uvParaPosicao3DPrecisa(geometry: THREE.BufferGeometry, faceIndex: number, u: number, v: number) {
-  const pos = geometry.attributes.position;
-  const uvAttr = geometry.attributes.uv;
-  const index = geometry.index;
+function reprojetarMarcacao(marcacao: Zone, camera: THREE.Camera, canvasWidth: number, canvasHeight: number, scene: THREE.Group) {
+  if (!marcacao.uv || !marcacao.meshUuid || marcacao.faceIndex === undefined) return null;
+  
+  const mesh = scene.getObjectByProperty('uuid', marcacao.meshUuid) as THREE.Mesh;
+  if (!mesh) return null;
 
-  if (!index || !uvAttr) return new THREE.Vector3();
+  const geo = mesh.geometry;
+  const posAttr = geo.attributes.position;
+  const uvAttr = geo.attributes.uv;
+  const indexAttr = geo.index!;
 
-  const i0 = index.getX(faceIndex * 3);
-  const i1 = index.getX(faceIndex * 3 + 1);
-  const i2 = index.getX(faceIndex * 3 + 2);
+  const fi = marcacao.faceIndex * 3;
+  const i0 = indexAttr.getX(fi);
+  const i1 = indexAttr.getX(fi + 1);
+  const i2 = indexAttr.getX(fi + 2);
+
+  const p0 = new THREE.Vector3().fromBufferAttribute(posAttr, i0);
+  const p1 = new THREE.Vector3().fromBufferAttribute(p1, i1);
+  const p2 = new THREE.Vector3().fromBufferAttribute(p2, i2);
 
   const uv0 = new THREE.Vector2(uvAttr.getX(i0), uvAttr.getY(i0));
   const uv1 = new THREE.Vector2(uvAttr.getX(i1), uvAttr.getY(i1));
   const uv2 = new THREE.Vector2(uvAttr.getX(i2), uvAttr.getY(i2));
 
-  const p0 = new THREE.Vector3().fromBufferAttribute(pos, i0);
-  const p1 = new THREE.Vector3().fromBufferAttribute(pos, i1);
-  const p2 = new THREE.Vector3().fromBufferAttribute(pos, i2);
+  const bary = calcularBaricentrico(new THREE.Vector2(marcacao.uv.x, marcacao.uv.y), uv0, uv1, uv2);
 
-  const bary = uvParaBaricentrico(new THREE.Vector2(u, v), uv0, uv1, uv2);
-  return new THREE.Vector3()
+  const pos3D = new THREE.Vector3()
     .addScaledVector(p0, bary.x)
     .addScaledVector(p1, bary.y)
     .addScaledVector(p2, bary.z);
+
+  pos3D.applyMatrix4(mesh.matrixWorld);
+
+  const ndc = pos3D.clone().project(camera);
+  if (ndc.z > 1) return null;
+
+  return {
+    x: (ndc.x * 0.5 + 0.5) * canvasWidth,
+    y: (-ndc.y * 0.5 + 0.5) * canvasHeight,
+  };
 }
 
-function ZoneMarker({ zone, scene }: { zone: Zone, scene: THREE.Group }) {
-  const markerRef = useRef<THREE.Group>(null);
-  const [visible, setVisible] = useState(true);
-
-  useFrame(({ camera }) => {
-    if (!markerRef.current || !zone.uv || !zone.meshUuid || zone.faceIndex === undefined) return;
-
-    const mesh = scene.getObjectByProperty('uuid', zone.meshUuid) as THREE.Mesh;
-    if (!mesh || !mesh.geometry) return;
-
-    const localPos = uvParaPosicao3DPrecisa(mesh.geometry, zone.faceIndex, zone.uv.x, zone.uv.y);
-    const worldPos = localPos.applyMatrix4(mesh.matrixWorld);
-    
-    markerRef.current.position.copy(worldPos);
-    
-    // Simple occlusion check
-    const ndc = worldPos.clone().project(camera);
-    setVisible(ndc.z <= 1);
+function HTMLMarkers({ zones, scene, updateMarkerPos }: { zones: Zone[], scene: THREE.Group, updateMarkerPos: (id: string, x: number, y: number, visible: boolean) => void }) {
+  useFrame(({ camera, gl }) => {
+    zones.forEach((zone) => {
+      const pos = reprojetarMarcacao(zone, camera, gl.domElement.clientWidth, gl.domElement.clientHeight, scene);
+      if (pos) {
+        updateMarkerPos(zone.id, pos.x, pos.y, true);
+      } else {
+        updateMarkerPos(zone.id, 0, 0, false);
+      }
+    });
   });
 
-  if (!visible) return null;
-
-  return (
-    <group ref={markerRef}>
-      <mesh>
-        <sphereGeometry args={[0.01, 16, 16]} />
-        <meshStandardMaterial color="#ea580c" emissive="#ea580c" emissiveIntensity={1} depthTest={false} transparent opacity={0.8} />
-      </mesh>
-      <Html distanceFactor={5} position={[0, 0.02, 0]} center>
-        <div className="bg-orange-600 text-white text-[9px] px-1.5 py-0.5 rounded whitespace-nowrap font-bold shadow-lg pointer-events-none">
-          {zone.name}
-        </div>
-      </Html>
-    </group>
-  );
+  return null;
 }
 
 function ModelWithClick({ url, onPointSelect, zones }: { url: string, onPointSelect: (hit: any) => void, zones: Zone[] }) {

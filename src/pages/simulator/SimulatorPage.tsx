@@ -13,7 +13,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ChevronLeft, Share2, Download, Send, Camera } from 'lucide-react';
-import { Link } from '@tanstack/react-router';
+import { Link } from 'react-router-dom';
 
 const COLORS = [
   { name: 'Laranja', hex: '#F26522' },
@@ -62,7 +62,7 @@ export default function SimulatorPage() {
               <ChevronLeft />
             </Button>
           </Link>
-          <span className="text-xl font-bold text-[#F26522]">JumpTec</span>
+          <span className="text-xl font-bold text-[#F26522]">MACRO MASTER</span>
           <span className="text-sm text-gray-500 hidden sm:block">Simulador Futebol Masculino 3D</span>
         </div>
         <div className="flex gap-2">

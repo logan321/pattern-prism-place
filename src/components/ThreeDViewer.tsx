@@ -1,12 +1,22 @@
-import React, { Suspense, useEffect, useRef, useImperativeHandle, forwardRef } from 'react';
+import React, { Suspense, useEffect, useRef, useImperativeHandle, forwardRef, useState } from 'react';
 import { Canvas, useThree } from '@react-three/fiber';
-import { OrbitControls, Stage, useGLTF } from '@react-three/drei';
+import { OrbitControls, Stage, useGLTF, Text, Float } from '@react-three/drei';
 import * as THREE from 'three';
 import { ErrorBoundary } from 'react-error-boundary';
 import { gsap } from 'gsap';
+import { useCustomizerStore } from '../store/useCustomizerStore';
 
 function Model({ url, textureUrl }: { url: string; textureUrl?: string }) {
   const { scene } = useGLTF(url);
+  const { 
+    name, 
+    number, 
+    namePosition, 
+    shieldPosition, 
+    nameColor, 
+    numberColor, 
+    nameFont 
+  } = useCustomizerStore();
 
   useEffect(() => {
     if (!textureUrl) return;
@@ -30,9 +40,7 @@ function Model({ url, textureUrl }: { url: string; textureUrl?: string }) {
             const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
             materials.forEach((mat) => {
               if (mat instanceof THREE.MeshStandardMaterial) {
-                // Limpa textura anterior se existir
                 if (mat.map) mat.map.dispose();
-                
                 mat.map = texture;
                 mat.roughness = 1;
                 mat.metalness = 0;
@@ -60,24 +68,77 @@ function Model({ url, textureUrl }: { url: string; textureUrl?: string }) {
       }
     };
 
-    // Testa se a URL é acessível antes de carregar
-    fetch(textureUrl, { method: 'HEAD' })
-      .then(res => {
-        if (!res.ok) {
-          console.warn('Textura inacessível:', textureUrl, res.status);
-          return;
-        }
-        processTexture();
-      })
-      .catch(err => {
-        console.warn('Erro ao verificar textura:', err);
-        // Fallback para tentar carregar mesmo se o HEAD falhar (alguns storages barram HEAD)
-        processTexture();
-      });
+    processTexture();
   }, [scene, textureUrl]);
 
+  // Positions (Approximated for a standard t-shirt model)
+  const posMap = {
+    name: {
+      left: [-0.2, 0.45, 0.15],
+      right: [0.2, 0.45, 0.15],
+      center: [0, 0.45, 0.15],
+      back: [0, 0.6, -0.15]
+    },
+    shield: {
+      left: [-0.2, 0.35, 0.15],
+      right: [0.2, 0.35, 0.15]
+    },
+    number: {
+      back: [0, 0.3, -0.18]
+    }
+  };
 
-  return <primitive object={scene} />;
+  const namePos = namePosition === 'center' ? posMap.name.center : (namePosition === 'left' ? posMap.name.left : posMap.name.right);
+
+  return (
+    <group>
+      <primitive object={scene} />
+      
+      {/* Front Elements */}
+      <Float speed={1.5} rotationIntensity={0.1} floatIntensity={0.1}>
+        <Text
+          position={namePos as any}
+          fontSize={0.04}
+          color={nameColor}
+          font={nameFont}
+          anchorX="center"
+          anchorY="middle"
+        >
+          {name}
+        </Text>
+      </Float>
+
+      {/* Shield Placeholder */}
+      <mesh position={(shieldPosition === 'left' ? posMap.shield.left : posMap.shield.right) as any}>
+        <circleGeometry args={[0.04, 32]} />
+        <meshStandardMaterial color="#FFD700" metalness={0.5} roughness={0.2} />
+      </mesh>
+
+      {/* Back Elements */}
+      <Text
+        position={posMap.name.back as any}
+        rotation={[0, Math.PI, 0]}
+        fontSize={0.05}
+        color={nameColor}
+        font={nameFont}
+        anchorX="center"
+        anchorY="middle"
+      >
+        {name}
+      </Text>
+
+      <Text
+        position={posMap.number.back as any}
+        rotation={[0, Math.PI, 0]}
+        fontSize={0.2}
+        color={numberColor}
+        anchorX="center"
+        anchorY="middle"
+      >
+        {number}
+      </Text>
+    </group>
+  );
 }
 
 function FallbackError({ error }: { error: any }) {

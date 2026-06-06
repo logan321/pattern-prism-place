@@ -320,17 +320,13 @@ function UVMatrizImportModal({ isOpen, onClose, queryClient, models }: { isOpen:
 export default function Admin() {
   const queryClient = useQueryClient();
 
-  const { data: models, isLoading: modelsLoading } = useQuery({
+  // Buscar modelos do banco E incluir o modelo local se ele não estiver no banco
+  const { data: dbModels, isLoading: modelsLoading } = useQuery({
     queryKey: ['models'],
     queryFn: async () => {
-      console.log('Fetching models...');
       const { data, error } = await supabase.from('modelos').select('*');
-      if (error) {
-        console.error('Error fetching models:', error);
-        throw error;
-      }
+      if (error) throw error;
       
-      console.log('Models found:', data?.length);
       if (!data) return [];
 
       const modelsWithSignedUrls = await Promise.all(data.map(async (m) => {
@@ -349,7 +345,6 @@ export default function Admin() {
           }
           return m;
         } catch (err) {
-          console.error('Error processing model URL:', m.id, err);
           return m;
         }
       }));
@@ -357,6 +352,21 @@ export default function Admin() {
       return modelsWithSignedUrls;
     }
   });
+
+  // Replicar o LOCAL_MODELS do Simulator
+  const LOCAL_MODELS = [
+    {
+      id: 'local-gola-padre',
+      nome: 'Gola Padre (Padrão)',
+      glb_url: '/public/uploads/GOLA_PADRE_otimizado.glb', // Fallback URL
+      thumbnail_url: null,
+      pecas: ['Camisa', 'Calção', 'Meião'],
+      categoria_id: null,
+      created_at: '',
+    },
+  ];
+
+  const models = [...LOCAL_MODELS, ...(dbModels || [])];
   const [activeView, setActiveView] = useState<'models' | 'patterns' | 'config'>('models');
   
   const { data: uvMatrices } = useQuery({

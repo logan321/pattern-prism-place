@@ -8,7 +8,7 @@ export const Scene3D = () => {
     <div className="w-full h-full bg-gray-100 relative">
       <Canvas shadows camera={{ position: [0, 0, 4], fov: 45 }}>
         <Suspense fallback={null}>
-          <Stage environment="city" intensity={0.5} contactShadows={{ opacity: 0.7, blur: 2 }}>
+          <Stage environment="city" intensity={0.5}>
             <UniformModel />
           </Stage>
           <OrbitControls 

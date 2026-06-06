@@ -60,12 +60,21 @@ export default function Admin() {
         .from(bucket)
         .getPublicUrl(uploadData.path);
 
+      const publicUrl = urlData.publicUrl;
+      console.log('URL gerada:', publicUrl);
+
+      // Teste se a URL é acessível antes de salvar
+      const testFetch = await fetch(publicUrl, { method: 'HEAD' });
+      if (!testFetch.ok) {
+        throw new Error(`URL gerada inválida (${testFetch.status}): ${publicUrl}`);
+      }
+
       if (activeView === 'models') {
         const { error: dbError } = await supabase
           .from('modelos')
           .insert({
             nome: file.name,
-            glb_url: urlData.publicUrl,
+            glb_url: publicUrl,
             categoria_id: null,
           } as any);
         if (dbError) {
@@ -77,7 +86,7 @@ export default function Admin() {
           .from('patterns')
           .insert({
             name: file.name,
-            image_url: urlData.publicUrl,
+            image_url: publicUrl,
           });
 
         if (dbError) {

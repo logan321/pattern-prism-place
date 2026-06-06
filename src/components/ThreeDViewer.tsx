@@ -12,15 +12,17 @@ function Model({ url, textureUrl }: { url: string; textureUrl?: string }) {
       const loader = new THREE.TextureLoader();
       loader.load(textureUrl, (texture) => {
         texture.flipY = false;
+        texture.colorSpace = THREE.SRGBColorSpace;
         scene.traverse((child) => {
           if ((child as THREE.Mesh).isMesh) {
             const mesh = child as THREE.Mesh;
-            // Assuming the mesh has a material we want to apply the texture to
-            // This is a simplification; in a real app, we might target specific materials
             if (mesh.material) {
               const material = mesh.material as THREE.MeshStandardMaterial;
-              material.map = texture;
-              material.needsUpdate = true;
+              // Clone the material to avoid affecting other meshes that share it
+              const newMaterial = material.clone();
+              newMaterial.map = texture;
+              newMaterial.needsUpdate = true;
+              mesh.material = newMaterial;
             }
           }
         });

@@ -33,13 +33,13 @@ export default function Admin() {
     try {
       const bucket = activeView === 'models' ? 'models' : 'textures';
       const fileExt = file.name.split('.').pop();
-      const fileName = `${Date.now()}_${file.name}`;
+      const fileName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
       
       const uploadOptions = activeView === 'models' 
         ? {
             cacheControl: '3600',
             upsert: false,
-            contentType: 'model/gltf-binary'
+            contentType: fileExt === 'glb' ? 'model/gltf-binary' : 'model/gltf+json'
           }
         : {
             cacheControl: '3600',
@@ -51,8 +51,8 @@ export default function Admin() {
         .upload(fileName, file, uploadOptions);
 
       if (uploadError) {
-        console.error('Erro no upload:', uploadError.message);
-        throw uploadError;
+        console.error('Erro no upload storage:', uploadError);
+        throw new Error(`Erro no storage: ${uploadError.message}`);
       }
 
       const { data: urlData } = supabase.storage
@@ -65,8 +65,12 @@ export default function Admin() {
           .insert({
             nome: file.name,
             glb_url: urlData.publicUrl,
-          });
-        if (dbError) throw dbError;
+            categoria_id: null,
+          } as any);
+        if (dbError) {
+          console.error('Erro no banco modelos:', dbError);
+          throw new Error(`Erro no banco: ${dbError.message}`);
+        }
       } else {
         const { error: dbError } = await supabase
           .from('patterns')
@@ -75,14 +79,17 @@ export default function Admin() {
             image_url: urlData.publicUrl,
           });
 
-        if (dbError) throw dbError;
+        if (dbError) {
+          console.error('Erro no banco patterns:', dbError);
+          throw new Error(`Erro no banco: ${dbError.message}`);
+        }
       }
 
       queryClient.invalidateQueries({ queryKey: [activeView] });
       alert('Upload concluído com sucesso!');
     } catch (error: any) {
-      console.error('Erro no upload:', error);
-      alert(`Erro no upload: ${error.message}`);
+      console.error('Erro geral no upload:', error);
+      alert(`Erro: ${error.message || 'Erro desconhecido'}`);
     } finally {
       setIsUploading(false);
     }

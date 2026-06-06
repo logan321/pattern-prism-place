@@ -10,6 +10,7 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -115,6 +116,13 @@ export default function Admin() {
   });
 
   return (
+    <>
+      <Helmet>
+        <title>Painel Admin | Macro Master</title>
+        <meta name="description" content="Painel administrativo para gerenciar modelos 3D e padrões de uniformes." />
+        <meta name="robots" content="noindex, nofollow" />
+        <link rel="canonical" href="https://pattern-prism-place.lovable.app/admin" />
+      </Helmet>
     <div className="flex h-screen bg-gray-50 overflow-hidden">
       {/* Admin Sidebar */}
       <aside className="w-64 bg-gray-900 text-white flex flex-col shrink-0">

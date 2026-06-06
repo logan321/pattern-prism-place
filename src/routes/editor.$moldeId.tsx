@@ -1,6 +1,6 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { useState } from "react";
-import { moldes } from "@/data/moldes";
+import { useState, useEffect } from "react";
+import { moldes as staticMoldes } from "@/data/moldes";
 import { ThreeViewer } from "@/components/editor/ThreeViewer";
 
 export const Route = createFileRoute("/editor/$moldeId")({
@@ -8,7 +8,16 @@ export const Route = createFileRoute("/editor/$moldeId")({
     meta: [{ title: "Editor — Simulador de Camisas" }],
   }),
   loader: ({ params }) => {
-    const molde = moldes.find((m) => m.id === params.moldeId);
+    const saved = localStorage.getItem("moldes");
+    const dynamicMoldes = saved ? JSON.parse(saved).map((m: any) => ({
+      id: m.id,
+      nome: m.nome,
+      thumbnail: m.pngUrl,
+      glbUrl: m.glbUrl
+    })) : [];
+    
+    const allMoldes = [...staticMoldes, ...dynamicMoldes];
+    const molde = allMoldes.find((m) => m.id === params.moldeId);
     if (!molde) throw notFound();
     return { molde };
   },

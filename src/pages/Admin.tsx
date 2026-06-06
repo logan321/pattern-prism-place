@@ -213,7 +213,30 @@ export default function Admin() {
     queryFn: async () => {
       const { data, error } = await supabase.from('modelos').select('*');
       if (error) throw error;
-      return data;
+      
+      if (!data) return [];
+
+      const modelsWithSignedUrls = await Promise.all(data.map(async (m) => {
+        try {
+          const getPath = (url: string | null, bucket: string) => {
+            if (!url) return null;
+            const marker = `/public/${bucket}/`;
+            const parts = url.split(marker);
+            return parts.length > 1 ? parts[1] : null;
+          };
+
+          const thumbPath = getPath(m.thumbnail_url, 'textures');
+          if (thumbPath) {
+            const { data: thumbData } = await supabase.storage.from('textures').createSignedUrl(thumbPath, 3600);
+            if (thumbData) return { ...m, thumbnail_url: thumbData.signedUrl };
+          }
+          return m;
+        } catch (err) {
+          return m;
+        }
+      }));
+
+      return modelsWithSignedUrls;
     }
   });
 

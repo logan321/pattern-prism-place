@@ -124,7 +124,45 @@ export default function Simulator() {
     queryFn: async () => {
       const { data, error } = await supabase.from('modelos').select('*');
       if (error) throw error;
-      return data;
+      
+      if (!data) return [];
+
+      const modelsWithSignedUrls = await Promise.all(data.map(async (m) => {
+        try {
+          const getPath = (url: string | null, bucket: string) => {
+            if (!url) return null;
+            const marker = `/public/${bucket}/`;
+            const parts = url.split(marker);
+            return parts.length > 1 ? parts[1] : null;
+          };
+
+          const glbPath = getPath(m.glb_url, 'models');
+          const thumbPath = getPath(m.thumbnail_url, 'textures');
+
+          let signedGlbUrl = m.glb_url;
+          let signedThumbUrl = m.thumbnail_url;
+
+          if (glbPath) {
+            const { data: glbData } = await supabase.storage.from('models').createSignedUrl(glbPath, 3600);
+            if (glbData) signedGlbUrl = glbData.signedUrl;
+          }
+
+          if (thumbPath) {
+            const { data: thumbData } = await supabase.storage.from('textures').createSignedUrl(thumbPath, 3600);
+            if (thumbData) signedThumbUrl = thumbData.signedUrl;
+          }
+
+          return {
+            ...m,
+            glb_url: signedGlbUrl,
+            thumbnail_url: signedThumbUrl
+          };
+        } catch (err) {
+          return m;
+        }
+      }));
+
+      return modelsWithSignedUrls;
     }
   });
 

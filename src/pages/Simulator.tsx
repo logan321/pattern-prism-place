@@ -226,7 +226,7 @@ export default function Simulator() {
 
           <div className="grid grid-cols-2 gap-3">
             {activeTab === 'Modelo' ? (
-              models?.map(model => (
+              allModels.map(model => (
                 <ModelCard 
                   key={model.id} 
                   name={model.nome} 

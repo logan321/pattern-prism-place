@@ -137,8 +137,9 @@ function AdminPage() {
     }
   };
 
-  const handleSaveEstampa = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSaveEstampa = (e?: React.FormEvent | React.MouseEvent) => {
+    if (e) e.preventDefault();
+    
     if (!selectedMoldeId || !estampaNome || !estampaMiniaturaBase64 || !estampaSvgBase64) {
       alert("Preencha todos os campos");
       return;
@@ -153,11 +154,12 @@ function AdminPage() {
       cores: detectedCores
     };
 
-    const updatedEstampas = [...estampas, novaEstampa];
+    const currentEstampas = JSON.parse(localStorage.getItem('estampas') || '[]');
+    const updatedEstampas = [...currentEstampas, novaEstampa];
     localStorage.setItem("estampas", JSON.stringify(updatedEstampas));
     setEstampas(updatedEstampas);
 
-    // Reset
+    // Reset formulário
     setStep(1);
     setEstampaNome("");
     setEstampaMiniaturaBase64("");

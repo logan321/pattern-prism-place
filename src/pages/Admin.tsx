@@ -222,7 +222,29 @@ export default function Admin() {
     queryFn: async () => {
       const { data, error } = await supabase.from('patterns').select('*');
       if (error) throw error;
-      return data;
+      
+      if (!data || data.length === 0) return [];
+
+      const patternsWithSignedUrls = await Promise.all(data.map(async (p) => {
+        try {
+          const getPath = (url: string | null) => {
+            if (!url) return null;
+            const parts = url.split('/public/textures/');
+            return parts.length > 1 ? parts[1] : null;
+          };
+
+          const pngPath = getPath(p.image_url);
+          if (pngPath) {
+            const { data: pngData } = await supabase.storage.from('textures').createSignedUrl(pngPath, 3600);
+            if (pngData) return { ...p, image_url: pngData.signedUrl };
+          }
+          return p;
+        } catch (err) {
+          return p;
+        }
+      }));
+
+      return patternsWithSignedUrls;
     }
   });
 

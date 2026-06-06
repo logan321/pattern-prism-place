@@ -133,7 +133,48 @@ export default function Simulator() {
     queryFn: async () => {
       const { data, error } = await supabase.from('patterns').select('*');
       if (error) throw error;
-      return data;
+      
+      // Se não houver dados, retorna vazio
+      if (!data || data.length === 0) return [];
+
+      // Como os buckets estão privados (workspace restriction), precisamos gerar URLs assinadas
+      const patternsWithSignedUrls = await Promise.all(data.map(async (p) => {
+        try {
+          // Extrai o caminho do arquivo da URL pública (formato: .../public/textures/caminho)
+          const getPath = (url: string | null) => {
+            if (!url) return null;
+            const parts = url.split('/public/textures/');
+            return parts.length > 1 ? parts[1] : null;
+          };
+
+          const pngPath = getPath(p.image_url);
+          const svgPath = getPath(p.svg_url);
+
+          let signedImageUrl = p.image_url;
+          let signedSvgUrl = p.svg_url;
+
+          if (pngPath) {
+            const { data: pngData } = await supabase.storage.from('textures').createSignedUrl(pngPath, 3600);
+            if (pngData) signedImageUrl = pngData.signedUrl;
+          }
+
+          if (svgPath) {
+            const { data: svgData } = await supabase.storage.from('textures').createSignedUrl(svgPath, 3600);
+            if (svgData) signedSvgUrl = svgData.signedUrl;
+          }
+
+          return {
+            ...p,
+            image_url: signedImageUrl,
+            svg_url: signedSvgUrl
+          };
+        } catch (err) {
+          console.error('Erro ao gerar URL assinada para estampa:', p.id, err);
+          return p;
+        }
+      }));
+
+      return patternsWithSignedUrls;
     }
   });
 

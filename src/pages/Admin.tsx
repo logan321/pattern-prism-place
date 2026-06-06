@@ -9,190 +9,148 @@ import {
   Upload,
   ChevronRight,
   X,
-  Settings
+  Settings,
+  Target,
+  Edit3
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '../integrations/supabase/client';
+import ZoneEditor from '../components/ZoneEditor';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '../integrations/supabase/client';
-
 function UVConfigView({ models, queryClient, modelsLoading }: { models: any[] | undefined, queryClient: any, modelsLoading: boolean }) {
-  const [selectedModelId, setSelectedModelId] = useState<string>('');
-  const [isUploading, setIsUploading] = useState(false);
-  
-  const selectedModel = models?.find(m => m.id === selectedModelId);
+  const [selectedMatrizId, setSelectedMatrizId] = useState<string | null>(null);
+  const [editingZonesFor, setEditingZonesFor] = useState<any | null>(null);
 
-  const handleUVUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file || !selectedModelId) return;
+  const { data: uvMatrices, isLoading: matricesLoading } = useQuery({
+    queryKey: ['uv_matrices'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('uv_matrices').select('*, modelos(nome, glb_url)');
+      if (error) throw error;
+      return data;
+    }
+  });
 
-    setIsUploading(true);
+  const handleDeleteMatriz = async (id: string) => {
+    if (!window.confirm('Excluir esta UV Matriz?')) return;
+    const { error } = await supabase.from('uv_matrices').delete().eq('id', id);
+    if (error) alert(error.message);
+    else queryClient.invalidateQueries({ queryKey: ['uv_matrices'] });
+  };
+
+  const handleSaveZones = async (zones: any[]) => {
     try {
-      const fileName = `universal_uv_${Date.now()}_${file.name}`;
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('textures')
-        .upload(fileName, file, { contentType: 'image/svg+xml' });
-
-      if (uploadError) throw uploadError;
-
-      const { data: urlData } = supabase.storage.from('textures').getPublicUrl(uploadData.path);
+      const { error } = await supabase
+        .from('uv_matrices')
+        .update({ zones } as any)
+        .eq('id', editingZonesFor.id);
       
-      const { error: updateError } = await supabase
-        .from('modelos')
-        .update({ universal_uv_svg: urlData.publicUrl } as any)
-        .eq('id', selectedModelId);
-
-      if (updateError) throw updateError;
-
-      queryClient.invalidateQueries({ queryKey: ['models'] });
-      alert('UV Universal atualizada com sucesso!');
+      if (error) throw error;
+      
+      queryClient.invalidateQueries({ queryKey: ['uv_matrices'] });
+      alert('Zonas salvas com sucesso!');
+      setEditingZonesFor(null);
     } catch (err: any) {
-      alert('Erro: ' + err.message);
-    } finally {
-      setIsUploading(false);
+      alert('Erro ao salvar: ' + err.message);
     }
   };
 
   return (
-    <div className="bg-white rounded-2xl p-8 border border-gray-100 shadow-sm">
-      <div className="max-w-2xl">
-        <label className="block text-sm font-bold text-gray-700 mb-2 uppercase">Selecionar Modelo para Configurar</label>
-        <div className="grid grid-cols-1 gap-3 mb-8">
-          {modelsLoading ? (
-            <p className="text-gray-400 text-sm">Carregando modelos...</p>
-          ) : models?.length === 0 ? (
-            <p className="text-orange-600 text-sm font-medium">Nenhum modelo encontrado. Adicione um modelo na aba "Modelos 3D" primeiro.</p>
-          ) : (
-            <div className="flex flex-wrap gap-3">
-              {models?.map(m => (
-                <button
-                  key={m.id}
-                  onClick={() => setSelectedModelId(m.id)}
-                  className={cn(
-                    "px-4 py-2 rounded-xl text-sm font-bold transition-all border",
-                    selectedModelId === m.id 
-                      ? "bg-orange-600 text-white border-orange-600 shadow-md" 
-                      : "bg-white text-gray-600 border-gray-200 hover:border-orange-300"
-                  )}
-                >
-                  {m.nome}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
+    <div className="space-y-6">
+      <div className="bg-white rounded-2xl p-8 border border-gray-100 shadow-sm">
+        <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center">
+          <Target className="w-5 h-5 mr-2 text-orange-600" />
+          UV Matrizes Cadastradas
+        </h3>
 
-        {selectedModelId && (
-          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
-            <div className="p-6 bg-orange-50 rounded-2xl border border-orange-100">
-              <h4 className="font-bold text-orange-900 mb-2">Importar UV Matriz Universal (SVG)</h4>
-              <p className="text-sm text-orange-700 mb-4">
-                Este SVG será usado como a matriz de marcação para os textos e escudos deste modelo específico ({selectedModel?.nome}).
-              </p>
-              
-              <div className="flex flex-col gap-4">
-                <div className="flex items-center space-x-4">
+        {matricesLoading ? (
+          <p className="text-gray-400 text-sm">Carregando matrizes...</p>
+        ) : uvMatrices?.length === 0 ? (
+          <div className="text-center py-12 border-2 border-dashed border-gray-100 rounded-xl">
+            <p className="text-gray-400 text-sm">Nenhuma matriz cadastrada ainda.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {uvMatrices?.map((m: any) => (
+              <div key={m.id} className="p-4 border border-gray-100 rounded-xl hover:shadow-md transition-all group relative">
+                <div className="flex justify-between items-start mb-2">
+                  <div>
+                    <h4 className="font-bold text-gray-800">{m.name}</h4>
+                    <p className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">
+                      Modelo: {m.modelos?.nome || 'N/A'}
+                    </p>
+                  </div>
                   <button 
-                    onClick={() => document.getElementById('uv-upload')?.click()}
-                    disabled={isUploading}
-                    className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-2.5 rounded-xl font-bold flex items-center space-x-2 transition-all shadow-md disabled:opacity-50"
+                    onClick={() => handleDeleteMatriz(m.id)}
+                    className="text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"
                   >
-                    <Upload className="w-4 h-4" />
-                    <span>{isUploading ? 'Enviando...' : 'Selecionar e Importar SVG Matriz'}</span>
+                    <Trash2 className="w-4 h-4" />
                   </button>
-                  <input 
-                    id="uv-upload" 
-                    type="file" 
-                    accept=".svg" 
-                    className="hidden" 
-                    onChange={handleUVUpload} 
-                  />
                 </div>
-                <p className="text-[10px] text-orange-600 italic">* Ao selecionar o arquivo, ele será enviado automaticamente para o modelo selecionado.</p>
-              </div>
 
-              {selectedModel?.universal_uv_svg && (
-                <div className="mt-6 pt-6 border-t border-orange-200">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-bold text-orange-800 uppercase">SVG Matriz Atual:</span>
-                    <a 
-                      href={selectedModel.universal_uv_svg} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-orange-600 font-bold text-xs hover:underline flex items-center"
-                    >
-                      Visualizar <ChevronRight className="w-3 h-3 ml-1" />
-                    </a>
-                  </div>
-                  <div className="bg-white p-3 rounded-lg border border-orange-100 overflow-hidden">
-                    <p className="text-[10px] text-gray-400 truncate">{selectedModel.universal_uv_svg}</p>
-                  </div>
+                <div className="flex items-center space-x-3 mt-4">
+                  <button 
+                    onClick={() => setEditingZonesFor(m)}
+                    className="flex-1 bg-gray-50 hover:bg-orange-50 text-gray-700 hover:text-orange-700 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center space-x-2 border border-gray-100 hover:border-orange-200"
+                  >
+                    <Edit3 className="w-3.5 h-3.5" />
+                    <span>Editar Zonas 3D</span>
+                  </button>
                 </div>
-              )}
-            </div>
-            
-            <div className="p-6 bg-gray-50 rounded-2xl border border-gray-100">
-              <h4 className="font-bold text-gray-900 mb-2">Como Funciona</h4>
-              <ul className="text-sm text-gray-500 space-y-2 list-disc list-inside">
-                <li>O SVG deve conter camadas com IDs específicos para cada item.</li>
-                <li>As marcações serão aplicadas automaticamente sobre qualquer estampa escolhida.</li>
-                <li>O sistema usará este SVG para gerar a textura final combinada.</li>
-              </ul>
-            </div>
+              </div>
+            ))}
           </div>
         )}
       </div>
+
+      {editingZonesFor && (
+        <ZoneEditor 
+          modelUrl={editingZonesFor.modelos?.glb_url}
+          initialZones={editingZonesFor.zones || []}
+          onSave={handleSaveZones}
+          onClose={() => setEditingZonesFor(null)}
+        />
+      )}
     </div>
   );
 }
 
-function UVMatrizImportModal({ isOpen, onClose, queryClient }: { isOpen: boolean, onClose: () => void, queryClient: any }) {
+function UVMatrizImportModal({ isOpen, onClose, queryClient, models }: { isOpen: boolean, onClose: () => void, queryClient: any, models: any[] | undefined }) {
   const [name, setName] = useState('');
-  const [file, setFile] = useState<File | null>(null);
+  const [modelId, setModelId] = useState('');
   const [isUploading, setIsUploading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !file) {
-      alert('Por favor, preencha o nome e selecione o arquivo SVG.');
+    if (!name || !modelId) {
+      alert('Por favor, preencha todos os campos.');
       return;
     }
 
     setIsUploading(true);
     try {
-      const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9.]/g, '_');
-      const fileName = `uv_matriz_${Date.now()}_${sanitizedFileName}`;
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('textures')
-        .upload(fileName, file, { contentType: 'image/svg+xml' });
-
-      if (uploadError) throw uploadError;
-
-      const { data: urlData } = supabase.storage.from('textures').getPublicUrl(uploadData.path);
-      
       const { error: dbError } = await supabase
-        .from('modelos')
+        .from('uv_matrices')
         .insert({
-          nome: name,
-          universal_uv_svg: urlData.publicUrl,
-          glb_url: '', // Campo obrigatório no banco, deixamos vazio até subir o GLB
-          categoria_id: null,
+          name: name,
+          modelo_id: modelId,
+          zones: []
         } as any);
 
       if (dbError) throw dbError;
 
-      queryClient.invalidateQueries({ queryKey: ['models'] });
-      alert('UV Matriz importada com sucesso! Agora você pode adicionar o arquivo .glb a este registro.');
+      queryClient.invalidateQueries({ queryKey: ['uv_matrices'] });
+      alert('UV Matriz criada com sucesso! Agora configure as zonas 3D.');
       onClose();
       setName('');
-      setFile(null);
+      setModelId('');
     } catch (err: any) {
       alert('Erro: ' + err.message);
     } finally {
@@ -206,54 +164,51 @@ function UVMatrizImportModal({ isOpen, onClose, queryClient }: { isOpen: boolean
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
         <div className="p-6 border-b border-gray-100 flex items-center justify-between">
-          <h3 className="text-xl font-bold text-gray-900">Importar UV Matriz</h3>
+          <h3 className="text-xl font-bold text-gray-900">Nova UV Matriz</h3>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
             <X className="w-5 h-5" />
           </button>
         </div>
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Nome do Modelo/Matriz</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Nome da Matriz</label>
             <input 
               type="text" 
               value={name} 
               onChange={e => setName(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none"
-              placeholder="Ex: Matriz Camisa Gola V"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none text-sm"
+              placeholder="Ex: Gola Padre Masculina"
               required
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Arquivo SVG da Matriz</label>
-            <label className="flex flex-col items-center justify-center h-32 border-2 border-dashed border-gray-200 rounded-xl hover:bg-gray-50 cursor-pointer transition-colors">
-              {file ? (
-                <span className="text-xs text-orange-600 font-medium">{file.name}</span>
-              ) : (
-                <>
-                  <Upload className="w-8 h-8 text-gray-300 mb-2" />
-                  <span className="text-[10px] text-gray-400">Selecionar SVG</span>
-                </>
-              )}
-              <input 
-                type="file" 
-                className="hidden" 
-                accept=".svg"
-                onChange={e => setFile(e.target.files?.[0] || null)}
-              />
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Vincular ao Modelo 3D</label>
+            <select 
+              value={modelId}
+              onChange={e => setModelId(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none text-sm bg-white"
+              required
+            >
+              <option value="">Selecione um modelo...</option>
+              {models?.map(m => (
+                <option key={m.id} value={m.id}>{m.nome}</option>
+              ))}
+            </select>
           </div>
+          
           <button 
             type="submit" 
             disabled={isUploading}
             className="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 rounded-xl transition-all shadow-md disabled:opacity-50"
           >
-            {isUploading ? 'Importando...' : 'Importar Matriz'}
+            {isUploading ? 'Criando...' : 'Criar Matriz'}
           </button>
         </form>
       </div>
     </div>
   );
 }
+
 
 export default function Admin() {
   const queryClient = useQueryClient();

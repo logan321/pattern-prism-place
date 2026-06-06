@@ -177,7 +177,7 @@ export default function Simulator() {
         {/* Main Sidebar */}
         <aside className="w-20 bg-white border-r flex flex-col shadow-sm z-10">
           <SidebarItem icon={Shirt} label="Modelo" active={activeTab === 'Modelo'} onClick={() => setActiveTab('Modelo')} />
-          <SidebarItem icon={Palette} label="Cores" active={activeTab === 'Cores'} onClick={() => setActiveTab('Cores')} />
+          <SidebarItem icon={Palette} label="Estampas" active={activeTab === 'Cores'} onClick={() => setActiveTab('Cores')} />
           <SidebarItem icon={Scissors} label="Acabamentos" active={activeTab === 'Acabamentos'} onClick={() => setActiveTab('Acabamentos')} />
           <SidebarItem icon={Type} label="Nome/Número" active={activeTab === 'Nome/Número'} onClick={() => setActiveTab('Nome/Número')} />
           <SidebarItem icon={Shield} label="Escudo" active={activeTab === 'Escudo'} onClick={() => setActiveTab('Escudo')} />

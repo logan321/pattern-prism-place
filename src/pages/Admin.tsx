@@ -145,20 +145,41 @@ export default function Admin() {
     if (!window.confirm('Tem certeza que deseja excluir este item?')) return;
 
     try {
-      // 1. Deletar do Storage
-      const fileName = filePath.split('/').pop();
-      if (fileName) {
+      // 1. Deletar do Banco e obter URLs primeiro
+      const table = bucket === 'models' ? 'modelos' : 'patterns';
+      const { data: itemToDelete, error: fetchError } = await supabase
+        .from(table)
+        .select('*')
+        .eq('id', id)
+        .single();
+      
+      if (fetchError) throw fetchError;
+
+      // 2. Deletar do Storage
+      const filesToRemove: string[] = [];
+      if (bucket === 'models') {
+        const glbName = itemToDelete.glb_url?.split('/').pop();
+        if (glbName) filesToRemove.push(glbName);
+        const thumbName = itemToDelete.thumbnail_url?.split('/').pop();
+        if (thumbName) filesToRemove.push(thumbName);
+      } else {
+        const imgName = itemToDelete.image_url?.split('/').pop();
+        if (imgName) filesToRemove.push(imgName);
+        const svgName = itemToDelete.svg_url?.split('/').pop();
+        if (svgName) filesToRemove.push(svgName);
+      }
+
+      if (filesToRemove.length > 0) {
         const { error: storageError } = await supabase.storage
           .from(bucket)
-          .remove([fileName]);
+          .remove(filesToRemove);
         
         if (storageError) {
           console.warn('Erro ao deletar do storage:', storageError);
         }
       }
 
-      // 2. Deletar do Banco
-      const table = bucket === 'models' ? 'modelos' : 'patterns';
+      // 3. Deletar do Banco
       const { error: dbError } = await supabase
         .from(table)
         .delete()

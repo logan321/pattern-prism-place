@@ -71,6 +71,7 @@ function FallbackError({ error }: { error: any }) {
 }
 
 export function ThreeDViewer({ modelUrl, textureUrl }: { modelUrl?: string; textureUrl?: string }) {
+  console.log('=== THREEDVIEWER PROPS ===', { modelUrl, textureUrl });
   if (!modelUrl) {
     return (
       <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-500">

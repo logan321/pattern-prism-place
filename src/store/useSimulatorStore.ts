@@ -4,7 +4,8 @@ export interface Template {
   id: string;
   name: string;
   image: string;
-  type: 'gola_padre' | 'gola_o' | 'v_neck' | string;
+  type: string;
+  glb_url?: string;
 }
 
 export interface Design {
@@ -21,6 +22,7 @@ interface SimulatorState {
   selectedDesign: Design | null;
   
   // Actions
+  setTemplates: (templates: Template[]) => void;
   addTemplate: (template: Template) => void;
   addDesign: (design: Design) => void;
   selectTemplate: (template: Template) => void;
@@ -28,15 +30,14 @@ interface SimulatorState {
 }
 
 export const useSimulatorStore = create<SimulatorState>((set) => ({
-  templates: [
-    { id: '1', name: 'Gola Padre', image: '/uploads/colado-1780761035664.png', type: 'gola_padre' },
-  ],
+  templates: [],
   designs: [
     { id: 'd1', name: 'Design 1', thumbnail: '/uploads/colado-1780761035664.png', uvMap: '/placeholder-uv.png' },
   ],
   selectedTemplate: null,
   selectedDesign: null,
 
+  setTemplates: (templates) => set({ templates }),
   addTemplate: (template) => set((state) => ({ templates: [...state.templates, template] })),
   addDesign: (design) => set((state) => ({ designs: [...state.designs, design] })),
   selectTemplate: (template) => set({ selectedTemplate: template }),

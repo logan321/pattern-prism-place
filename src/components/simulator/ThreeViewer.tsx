@@ -3,47 +3,61 @@ import { OrbitControls, Stage, PerspectiveCamera, Environment, ContactShadows } 
 import { Suspense, useMemo } from 'react'
 import * as THREE from 'three'
 import { useSimulatorStore } from '../../store/useSimulatorStore'
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
 
 function ShirtModel() {
-  const { selectedDesign } = useSimulatorStore()
+  const { selectedDesign, selectedTemplate } = useSimulatorStore()
   
+  // Carrega o arquivo GLB dinamicamente se houver um template selecionado com glb_url
+  const glb = useLoader(
+    GLTFLoader, 
+    selectedTemplate?.glb_url || '/camisa_default.glb' // Precisamos de um default ou fallback
+  ).clone()
+
   // Carrega o UV Map se houver um design selecionado
   const texture = useLoader(
     THREE.TextureLoader, 
     selectedDesign?.uvMap || '/placeholder-uv.png'
   )
 
-  const material = useMemo(() => {
-    return new THREE.MeshStandardMaterial({
-      map: texture,
-      roughness: 0.4,
-      metalness: 0.1,
-      transparent: true,
-      side: THREE.DoubleSide
-    })
-  }, [texture])
+  // Inverter textura se necessário (comum em exports de CLO3D)
+  texture.flipY = false;
 
-  return (
-    <mesh position={[0, 0, 0]} castShadow receiveShadow material={material}>
-      <boxGeometry args={[1, 1.5, 0.4]} />
-    </mesh>
-  )
+  useMemo(() => {
+    glb.scene.traverse((child) => {
+      if ((child as THREE.Mesh).isMesh) {
+        const mesh = child as THREE.Mesh;
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+        
+        // Aplica o material com a estampa em todas as partes da malha
+        mesh.material = new THREE.MeshStandardMaterial({
+          map: texture,
+          roughness: 0.3,
+          metalness: 0.05,
+          side: THREE.DoubleSide
+        });
+      }
+    });
+  }, [glb, texture]);
+
+  return <primitive object={glb.scene} />
 }
 
 export function ThreeViewer() {
   return (
     <div className="w-full h-full bg-gradient-to-b from-gray-100 to-gray-200">
       <Canvas shadows dpr={[1, 2]}>
-        <PerspectiveCamera makeDefault position={[0, 0, 5]} fov={45} />
+        <PerspectiveCamera makeDefault position={[0, 0.5, 3]} fov={35} />
         <Suspense fallback={null}>
-          <Stage intensity={0.5} environment="city" adjustCamera={false}>
+          <Stage intensity={0.6} environment="city" adjustCamera={true}>
             <ShirtModel />
           </Stage>
           <Environment preset="city" />
           <ContactShadows 
-            opacity={0.3} 
+            opacity={0.4} 
             scale={10} 
-            blur={2} 
+            blur={2.5} 
             far={10} 
             resolution={256} 
             color="#000000" 
@@ -78,4 +92,3 @@ export function ThreeViewer() {
     </div>
   )
 }
-

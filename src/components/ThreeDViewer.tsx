@@ -1,6 +1,6 @@
 import React, { Suspense, useEffect, useRef, useImperativeHandle, forwardRef, useState } from 'react';
 import { Canvas, useThree } from '@react-three/fiber';
-import { OrbitControls, Stage, useGLTF, Text, Float } from '@react-three/drei';
+import { OrbitControls, Stage, useGLTF, Text, Float, Center } from '@react-three/drei';
 import * as THREE from 'three';
 import { ErrorBoundary } from 'react-error-boundary';
 import { gsap } from 'gsap';
@@ -8,15 +8,13 @@ import { useCustomizerStore } from '../store/useCustomizerStore';
 
 function Model({ url, textureUrl }: { url: string; textureUrl?: string }) {
   const { scene } = useGLTF(url);
-  const { 
-    name, 
-    number, 
-    namePosition, 
-    shieldPosition, 
-    nameColor, 
-    numberColor, 
-    nameFont 
-  } = useCustomizerStore();
+  const name = useCustomizerStore(state => state.name);
+  const number = useCustomizerStore(state => state.number);
+  const namePosition = useCustomizerStore(state => state.namePosition);
+  const shieldPosition = useCustomizerStore(state => state.shieldPosition);
+  const nameColor = useCustomizerStore(state => state.nameColor);
+  const numberColor = useCustomizerStore(state => state.numberColor);
+  const nameFont = useCustomizerStore(state => state.nameFont);
 
   useEffect(() => {
     if (!textureUrl) return;
@@ -100,9 +98,9 @@ function Model({ url, textureUrl }: { url: string; textureUrl?: string }) {
           position={namePos as any}
           fontSize={0.04}
           color={nameColor}
-          font={nameFont}
           anchorX="center"
           anchorY="middle"
+          depthOffset={-1}
         >
           {name}
         </Text>
@@ -120,9 +118,9 @@ function Model({ url, textureUrl }: { url: string; textureUrl?: string }) {
         rotation={[0, Math.PI, 0]}
         fontSize={0.05}
         color={nameColor}
-        font={nameFont}
         anchorX="center"
         anchorY="middle"
+        depthOffset={-1}
       >
         {name}
       </Text>
@@ -134,6 +132,7 @@ function Model({ url, textureUrl }: { url: string; textureUrl?: string }) {
         color={numberColor}
         anchorX="center"
         anchorY="middle"
+        depthOffset={-1}
       >
         {number}
       </Text>
@@ -241,7 +240,9 @@ export const ThreeDViewer = forwardRef<ThreeDViewerRef, { modelUrl?: string; tex
         <Canvas shadows camera={{ position: [0, 0, 2.0], fov: 45 }}>
           <Suspense fallback={null}>
           <Stage intensity={0.5} environment="city" shadows="contact" adjustCamera={false} preset="rembrandt">
-            <Model url={modelUrl} textureUrl={textureUrl} />
+            <Center top>
+              <Model url={modelUrl} textureUrl={textureUrl} />
+            </Center>
           </Stage>
           <OrbitControls 
             ref={orbitRef} 

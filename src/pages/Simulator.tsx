@@ -372,7 +372,7 @@ export default function Simulator() {
                   <label className="text-[10px] font-bold text-gray-500 uppercase">Nome</label>
                   <input 
                     type="text" 
-                    value={useCustomizerStore.getState().name}
+                    value={useCustomizerStore(state => state.name)}
                     onChange={(e) => useCustomizerStore.getState().setName(e.target.value)}
                     className="w-full border rounded p-2 text-sm"
                     placeholder="DIGITE O NOME"
@@ -382,7 +382,7 @@ export default function Simulator() {
                   <label className="text-[10px] font-bold text-gray-500 uppercase">Número</label>
                   <input 
                     type="text" 
-                    value={useCustomizerStore.getState().number}
+                    value={useCustomizerStore(state => state.number)}
                     onChange={(e) => useCustomizerStore.getState().setNumber(e.target.value)}
                     className="w-full border rounded p-2 text-sm"
                     placeholder="00"

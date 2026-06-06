@@ -23,7 +23,7 @@ function cn(...inputs: ClassValue[]) {
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../integrations/supabase/client';
 
-function UVConfigView({ models, queryClient }: { models: any[] | undefined, queryClient: any }) {
+function UVConfigView({ models, queryClient, modelsLoading }: { models: any[] | undefined, queryClient: any, modelsLoading: boolean }) {
   const [selectedModelId, setSelectedModelId] = useState<string>('');
   const [isUploading, setIsUploading] = useState(false);
   

@@ -17,8 +17,6 @@ function Model({ url, textureUrl, universalUvUrl }: { url: string; textureUrl?: 
   const nameFont = useCustomizerStore(state => state.nameFont);
 
   useEffect(() => {
-    if (!textureUrl) return;
-
     const applyTexture = (imageSrc: string) => {
       const textureLoader = new THREE.TextureLoader();
       textureLoader.crossOrigin = 'anonymous';
@@ -47,27 +45,31 @@ function Model({ url, textureUrl, universalUvUrl }: { url: string; textureUrl?: 
             });
           }
         });
-      }, undefined, (err) => {
-        console.error('Erro ao carregar textura via TextureLoader:', err);
       });
     };
 
-    const processTexture = () => {
-      if (textureUrl.endsWith('.svg') || textureUrl.includes('svg')) {
-        fetch(textureUrl)
-          .then(r => r.blob())
-          .then(blob => {
-            const blobUrl = URL.createObjectURL(blob);
-            applyTexture(blobUrl);
-          })
-          .catch(err => console.error('Erro ao processar SVG:', err));
-      } else {
-        applyTexture(textureUrl);
+    const processAndCombine = async () => {
+      if (!textureUrl) return;
+      
+      // Se não houver UV universal, aplica a textura normalmente
+      if (!universalUvUrl) {
+        if (textureUrl.endsWith('.svg') || textureUrl.includes('svg')) {
+          fetch(textureUrl).then(r => r.blob()).then(blob => applyTexture(URL.createObjectURL(blob)));
+        } else {
+          applyTexture(textureUrl);
+        }
+        return;
       }
+
+      // Se houver UV universal, precisamos combinar
+      console.log('Combinando UV universal com estampa...');
+      // Implementação futura: Canvas para combinar SVG matriz com textura de fundo
+      // Por enquanto, apenas aplicamos a textura da estampa
+      applyTexture(textureUrl);
     };
 
-    processTexture();
-  }, [scene, textureUrl]);
+    processAndCombine();
+  }, [scene, textureUrl, universalUvUrl]);
 
   // Positions (Approximated for a standard t-shirt model)
   const posMap = {

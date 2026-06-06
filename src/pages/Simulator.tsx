@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { 
   Shirt, 
   Palette, 
@@ -26,6 +26,7 @@ import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { useCustomizerStore } from '../store/useCustomizerStore';
 import { ThreeDViewer, type ThreeDViewerRef } from '../components/ThreeDViewer';
+import { CustomizerModel } from '../components/CustomizerModel';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../integrations/supabase/client';
 import golaPadreAsset from '../assets/GOLA_PADRE_otimizado.glb.asset.json';
@@ -365,6 +366,52 @@ export default function Simulator() {
                   onClick={() => setSelectedPattern(pattern.id)}
                 />
               ))
+            ) : activeTab === 'Nome/Número' ? (
+              <div className="col-span-2 space-y-4">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-gray-500 uppercase">Nome</label>
+                  <input 
+                    type="text" 
+                    value={useCustomizerStore.getState().name}
+                    onChange={(e) => useCustomizerStore.getState().setName(e.target.value)}
+                    className="w-full border rounded p-2 text-sm"
+                    placeholder="DIGITE O NOME"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-gray-500 uppercase">Número</label>
+                  <input 
+                    type="text" 
+                    value={useCustomizerStore.getState().number}
+                    onChange={(e) => useCustomizerStore.getState().setNumber(e.target.value)}
+                    className="w-full border rounded p-2 text-sm"
+                    placeholder="00"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-gray-500 uppercase">Formação</label>
+                  <div className="grid grid-cols-1 gap-2">
+                    <button 
+                      onClick={() => useCustomizerStore.getState().setFormation('left-shield')}
+                      className="text-[10px] border p-2 rounded hover:bg-orange-50"
+                    >
+                      NOME DIR / ESCUDO ESQ
+                    </button>
+                    <button 
+                      onClick={() => useCustomizerStore.getState().setFormation('right-shield')}
+                      className="text-[10px] border p-2 rounded hover:bg-orange-50"
+                    >
+                      NOME ESQ / ESCUDO DIR
+                    </button>
+                    <button 
+                      onClick={() => useCustomizerStore.getState().setFormation('center-name')}
+                      className="text-[10px] border p-2 rounded hover:bg-orange-50"
+                    >
+                      NOME CENTRAL
+                    </button>
+                  </div>
+                </div>
+              </div>
             ) : (
               <div className="col-span-2 text-center py-8 text-gray-400 text-xs">
                 Em breve disponível

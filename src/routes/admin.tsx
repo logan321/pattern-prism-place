@@ -10,20 +10,45 @@ interface Molde {
   nome: string;
   pngBase64: string;
   glbNome: string;
+interface Estampa {
+  id: string;
+  moldeId: string;
+  nome: string;
+  pngBase64: string;
+  svgBase64: string;
+  cores: { hex: string; nome: string }[];
 }
 
 function AdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState("");
+  
+  // Moldes state
   const [nome, setNome] = useState("");
   const [pngBase64, setPngBase64] = useState("");
   const [glbNome, setGlbNome] = useState("");
   const [moldes, setMoldes] = useState<Molde[]>([]);
 
+  // Estampas state
+  const [estampas, setEstampas] = useState<Estampa[]>([]);
+  const [step, setStep] = useState(1);
+  const [selectedMoldeId, setSelectedMoldeId] = useState("");
+  const [estampaNome, setEstampaNome] = useState("");
+  const [estampaPngBase64, setEstampaPngBase64] = useState("");
+  const [estampaSvgBase64, setEstampaSvgBase64] = useState("");
+  const [detectedCores, setDetectedCores] = useState<{ hex: string; nome: string }[]>([]);
+
   useEffect(() => {
-    const saved = localStorage.getItem("moldes");
-    if (saved) {
-      setMoldes(JSON.parse(saved));
+    const savedMoldes = localStorage.getItem("moldes");
+    if (savedMoldes) {
+      const parsed = JSON.parse(savedMoldes);
+      setMoldes(parsed);
+      if (parsed.length > 0) setSelectedMoldeId(parsed[0].id);
+    }
+    
+    const savedEstampas = localStorage.getItem("estampas");
+    if (savedEstampas) {
+      setEstampas(JSON.parse(savedEstampas));
     }
   }, []);
 
@@ -77,6 +102,66 @@ function AdminPage() {
     if (glbInput) glbInput.value = "";
     
     alert("Molde salvo com sucesso!");
+  };
+
+  const handleEstampaPngUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setEstampaPngBase64(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSvgUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const svgContent = reader.result as string;
+        setEstampaSvgBase64(svgContent);
+        
+        const matches = svgContent.match(/fill="(#[a-fA-F0-9]{6})"/gi) || [];
+        const coresUnicas = [...new Set(matches.map(m => {
+          const hexMatch = m.match(/#[a-fA-F0-9]{6}/i);
+          return hexMatch ? hexMatch[0].toLowerCase() : "";
+        }).filter(Boolean))];
+        
+        setDetectedCores(coresUnicas.map(hex => ({ hex, nome: "" })));
+      };
+      reader.readAsText(file);
+    }
+  };
+
+  const handleSaveEstampa = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedMoldeId || !estampaNome || !estampaPngBase64 || !estampaSvgBase64) {
+      alert("Preencha todos os campos");
+      return;
+    }
+
+    const novaEstampa: Estampa = {
+      id: Date.now().toString(),
+      moldeId: selectedMoldeId,
+      nome: estampaNome,
+      pngBase64: estampaPngBase64,
+      svgBase64: estampaSvgBase64,
+      cores: detectedCores
+    };
+
+    const updatedEstampas = [...estampas, novaEstampa];
+    localStorage.setItem("estampas", JSON.stringify(updatedEstampas));
+    setEstampas(updatedEstampas);
+
+    // Reset
+    setStep(1);
+    setEstampaNome("");
+    setEstampaPngBase64("");
+    setEstampaSvgBase64("");
+    setDetectedCores([]);
+    alert("Estampa salva com sucesso!");
   };
 
   if (!isAuthenticated) {
@@ -172,6 +257,133 @@ function AdminPage() {
                   <img src={m.pngBase64} alt={m.nome} className="h-32 w-32 object-contain mb-2 bg-gray-100 rounded" />
                   <span className="font-medium text-center">{m.nome}</span>
                   {m.glbNome && <span className="text-xs text-gray-500 mt-1">GLB: {m.glbNome}</span>}
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+        </section>
+
+        <section className="bg-white p-6 rounded shadow-md mt-8 mb-8">
+          <h2 className="text-xl font-semibold mb-4">Seção Estampas</h2>
+          
+          {step === 1 ? (
+            <div className="space-y-4">
+              <h3 className="font-medium">Passo 1: Dados Básicos</h3>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Escolher Molde</label>
+                <select 
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                  value={selectedMoldeId}
+                  onChange={(e) => setSelectedMoldeId(e.target.value)}
+                >
+                  {moldes.map(m => (
+                    <option key={m.id} value={m.id}>{m.nome}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Nome da Estampa</label>
+                <input
+                  type="text"
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                  value={estampaNome}
+                  onChange={(e) => setEstampaNome(e.target.value)}
+                  placeholder="Ex: Estampa Floral"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Upload de PNG (Thumbnail)</label>
+                <input
+                  type="file"
+                  accept="image/png"
+                  onChange={handleEstampaPngUpload}
+                  className="mt-1 block w-full text-sm text-gray-500"
+                />
+              </div>
+              <button
+                onClick={() => {
+                  if (!estampaNome || !estampaPngBase64) {
+                    alert("Preencha o nome e a thumbnail");
+                    return;
+                  }
+                  setStep(2);
+                }}
+                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 font-medium"
+              >
+                Próximo
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <h3 className="font-medium">Passo 2: SVG e Cores</h3>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Upload de SVG (UV Map)</label>
+                <input
+                  type="file"
+                  accept=".svg"
+                  onChange={handleSvgUpload}
+                  className="mt-1 block w-full text-sm text-gray-500"
+                />
+              </div>
+
+              {detectedCores.length > 0 && (
+                <div className="space-y-3 border-t pt-4">
+                  <p className="text-sm font-medium">Cores detectadas (Regiões):</p>
+                  {detectedCores.map((cor, index) => (
+                    <div key={cor.hex} className="flex items-center gap-3">
+                      <div 
+                        className="w-8 h-8 rounded border shadow-sm" 
+                        style={{ backgroundColor: cor.hex }}
+                      />
+                      <span className="text-xs font-mono">{cor.hex}</span>
+                      <input
+                        type="text"
+                        placeholder="Nome da região"
+                        className="flex-1 border border-gray-300 rounded-md p-1 text-sm"
+                        value={cor.nome}
+                        onChange={(e) => {
+                          const newCores = [...detectedCores];
+                          newCores[index].nome = e.target.value;
+                          setDetectedCores(newCores);
+                        }}
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setStep(1)}
+                  className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 font-medium"
+                >
+                  Voltar
+                </button>
+                <button
+                  onClick={handleSaveEstampa}
+                  className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 font-medium"
+                >
+                  Salvar Estampa
+                </button>
+              </div>
+            </div>
+          )}
+        </section>
+
+        <section className="bg-white p-6 rounded shadow-md mb-8">
+          <h2 className="text-xl font-semibold mb-4">Estampas Salvas</h2>
+          {estampas.length === 0 ? (
+            <p className="text-gray-500">Nenhuma estampa cadastrada.</p>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {estampas.map((e) => (
+                <div key={e.id} className="border rounded p-4 flex flex-col items-center">
+                  <img src={e.pngBase64} alt={e.nome} className="h-32 w-32 object-contain mb-2 bg-gray-100 rounded" />
+                  <span className="font-medium text-center">{e.nome}</span>
+                  <span className="text-xs text-gray-500">
+                    Molde: {moldes.find(m => m.id === e.moldeId)?.nome || "Desconhecido"}
+                  </span>
                 </div>
               ))}
             </div>

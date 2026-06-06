@@ -270,11 +270,37 @@ export default function ZoneEditor({ modelUrl, initialZones = [], onSave, onClos
           <Canvas camera={{ position: [0, 0, 2], fov: 45 }}>
             <Suspense fallback={null}>
               <Stage intensity={0.5} environment="city" shadows="contact" adjustCamera={false}>
-                <ModelWithClick url={modelUrl} onPointSelect={handlePointSelect} zones={zones} />
+                <ModelWithClick 
+                  url={modelUrl} 
+                  onPointSelect={handlePointSelect} 
+                  zones={zones} 
+                  updateMarkerPos={updateMarkerPos}
+                />
               </Stage>
               <OrbitControls makeDefault />
             </Suspense>
           </Canvas>
+
+          {/* Marcadores HTML sobre o Canvas */}
+          {zones.map((m) => (
+            m.visivel && (
+              <div
+                key={m.id}
+                style={{
+                  position: 'absolute',
+                  left: (m.screenX || 0) - 10,
+                  top: (m.screenY || 0) - 10,
+                  width: 20,
+                  height: 20,
+                  borderRadius: '50%',
+                  background: 'orange',
+                  border: '2px solid white',
+                  pointerEvents: 'none',
+                  zIndex: 10,
+                }}
+              />
+            )
+          ))}
           
           <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex space-x-4">
             <div className="bg-gray-900/80 backdrop-blur px-4 py-2 rounded-full border border-gray-700">

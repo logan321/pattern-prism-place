@@ -104,41 +104,65 @@ export const ThreeDViewer = forwardRef<ThreeDViewerRef, { modelUrl?: string; tex
         if (!orbitRef.current) return;
         
         const controls = orbitRef.current;
-        const currentDistance = controls.object.position.length();
-        const targetPos = new THREE.Vector3();
+        const currentDistance = controls.getDistance();
+        
+        let targetTheta = 0;
+        let targetPhi = Math.PI / 2; // Nível do horizonte (frontal)
         
         switch (view) {
-          case 'front': targetPos.set(0, 0, currentDistance); break;
-          case 'back': targetPos.set(0, 0, -currentDistance); break;
-          case 'left': targetPos.set(-currentDistance, 0, 0); break;
-          case 'right': targetPos.set(currentDistance, 0, 0); break;
+          case 'front': targetTheta = 0; break;
+          case 'back': targetTheta = Math.PI; break;
+          case 'left': targetTheta = -Math.PI / 2; break;
+          case 'right': targetTheta = Math.PI / 2; break;
         }
 
-        gsap.to(controls.object.position, {
-          x: targetPos.x,
-          y: targetPos.y,
-          z: targetPos.z,
+        const proxy = { 
+          theta: controls.getAzimuthalAngle(), 
+          phi: controls.getPolarAngle(),
+          distance: currentDistance 
+        };
+
+        // Calcula o caminho mais curto para a rotação
+        let endTheta = targetTheta;
+        const diff = endTheta - proxy.theta;
+        if (diff > Math.PI) endTheta -= 2 * Math.PI;
+        if (diff < -Math.PI) endTheta += 2 * Math.PI;
+
+        gsap.to(proxy, {
+          theta: endTheta,
+          phi: targetPhi,
           duration: 0.8,
           ease: 'power2.inOut',
-          onUpdate: () => controls.update()
+          onUpdate: () => {
+            const sinPhi = Math.sin(proxy.phi);
+            const x = proxy.distance * sinPhi * Math.sin(proxy.theta);
+            const y = proxy.distance * Math.cos(proxy.phi);
+            const z = proxy.distance * sinPhi * Math.cos(proxy.theta);
+            controls.object.position.set(x, y, z);
+            controls.update();
+          }
         });
       },
       zoom: (direction) => {
         const controls = orbitRef.current;
-        const currentDistance = controls.object.position.length();
-        const factor = direction === 'in' ? 0.85 : 1.15;
-        const newDistance = currentDistance * factor;
-
-        // Limites de segurança para não afastar demais nem entrar no modelo
-        if (newDistance < 1.8 || newDistance > 7) return;
+        if (!controls) return;
         
-        gsap.to(controls.object.position, {
-          x: controls.object.position.x * factor,
-          y: controls.object.position.y * factor,
-          z: controls.object.position.z * factor,
+        const currentDistance = controls.getDistance();
+        const factor = direction === 'in' ? 0.85 : 1.15;
+        const newDistance = Math.min(Math.max(currentDistance * factor, 1.2), 5);
+        
+        const proxy = { distance: currentDistance };
+        gsap.to(proxy, {
+          distance: newDistance,
           duration: 0.5,
           ease: 'power2.out',
-          onUpdate: () => controls.update()
+          onUpdate: () => {
+            const distance = controls.getDistance();
+            if (distance === 0) return;
+            const ratio = proxy.distance / distance;
+            controls.object.position.multiplyScalar(ratio);
+            controls.update();
+          }
         });
       }
     }));
@@ -153,12 +177,18 @@ export const ThreeDViewer = forwardRef<ThreeDViewerRef, { modelUrl?: string; tex
 
     return (
       <ErrorBoundary FallbackComponent={FallbackError}>
-        <Canvas shadows camera={{ position: [0, 0, 2.8], fov: 40 }}>
+        <Canvas shadows camera={{ position: [0, 0, 2.0], fov: 45 }}>
           <Suspense fallback={null}>
           <Stage intensity={0.5} environment="city" shadows="contact" adjustCamera={false} preset="rembrandt">
             <Model url={modelUrl} textureUrl={textureUrl} />
           </Stage>
-          <OrbitControls ref={orbitRef} makeDefault minDistance={1.5} maxDistance={8} />
+          <OrbitControls 
+            ref={orbitRef} 
+            makeDefault 
+            minDistance={1.0} 
+            maxDistance={6} 
+            enablePan={false}
+          />
           </Suspense>
         </Canvas>
       </ErrorBoundary>

@@ -188,7 +188,7 @@ function UVConfigView({ models, queryClient, modelsLoading }: { models: any[] | 
 
       {editingZonesFor && (
         <ZoneEditor 
-          modelUrl={editingZonesFor.modelos?.glb_url}
+          modelUrl={editingZonesFor.modelUrl}
           initialZones={editingZonesFor.zones || []}
           onSave={handleSaveZones}
           onClose={() => setEditingZonesFor(null)}

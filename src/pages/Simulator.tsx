@@ -440,8 +440,9 @@ export default function Simulator() {
               ref={viewerRef}
               modelUrl={modelUrl} 
               textureUrl={currentPattern?.svg_url || currentPattern?.image_url || undefined}
-              universalUvUrl={currentModel?.universal_uv_svg || undefined}
+              zones={currentZones as any}
             />
+
           </div>
 
 

@@ -92,7 +92,8 @@ const PatternCard = ({ name, active, onClick, imageUrl }: { name: string, active
           alt={name} 
           className="w-full h-full object-cover"
           onError={(e) => {
-            (e.target as HTMLImageElement).src = 'https://placehold.co/100x100?text=No+Preview';
+            console.error('Erro ao carregar miniatura da estampa:', imageUrl);
+            (e.target as HTMLImageElement).src = 'https://placehold.co/100x100?text=Erro+Img';
           }}
         />
       ) : (
@@ -131,9 +132,11 @@ export default function Simulator() {
         try {
           const getPath = (url: string | null, bucket: string) => {
             if (!url) return null;
+            // Se já for uma URL assinada (contém token), não tenta extrair o path
+            if (url.includes('token=')) return null;
             const marker = `/public/${bucket}/`;
             const parts = url.split(marker);
-            return parts.length > 1 ? parts[1] : null;
+            return parts.length > 1 ? parts[1].split('?')[0] : null;
           };
 
           const glbPath = getPath(m.glb_url, 'models');

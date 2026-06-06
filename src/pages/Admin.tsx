@@ -28,11 +28,12 @@ function cn(...inputs: ClassValue[]) {
 function UVConfigView({ models, queryClient, modelsLoading }: { models: any[] | undefined, queryClient: any, modelsLoading: boolean }) {
   const [selectedMatrizId, setSelectedMatrizId] = useState<string | null>(null);
   const [editingZonesFor, setEditingZonesFor] = useState<any | null>(null);
+  const [selectedModelId, setSelectedModelId] = useState<string>('');
 
   const { data: uvMatrices, isLoading: matricesLoading } = useQuery({
     queryKey: ['uv_matrices'],
     queryFn: async () => {
-      const { data, error } = await supabase.from('uv_matrices').select('*, modelos(nome, glb_url)');
+      const { data, error } = await supabase.from('uv_matrices').select('*');
       if (error) throw error;
       return data;
     }
@@ -45,17 +46,29 @@ function UVConfigView({ models, queryClient, modelsLoading }: { models: any[] | 
     else queryClient.invalidateQueries({ queryKey: ['uv_matrices'] });
   };
 
+  const handleOpenEditor = (matriz: any) => {
+    if (!selectedModelId) {
+      alert('Por favor, selecione um modelo 3D na lista acima primeiro!');
+      return;
+    }
+    const model = models?.find(m => m.id === selectedModelId);
+    setEditingZonesFor({ ...matriz, modelUrl: model?.glb_url });
+  };
+
   const handleSaveZones = async (zones: any[]) => {
     try {
       const { error } = await supabase
         .from('uv_matrices')
-        .update({ zones } as any)
+        .update({ 
+          zones,
+          modelo_id: selectedModelId 
+        } as any)
         .eq('id', editingZonesFor.id);
       
       if (error) throw error;
       
       queryClient.invalidateQueries({ queryKey: ['uv_matrices'] });
-      alert('Zonas salvas com sucesso!');
+      alert('Zonas salvas e UV Matriz vinculada ao modelo com sucesso!');
       setEditingZonesFor(null);
     } catch (err: any) {
       alert('Erro ao salvar: ' + err.message);
@@ -168,8 +181,8 @@ function UVMatrizImportModal({ isOpen, onClose, queryClient, models }: { isOpen:
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !modelId) {
-      alert('Por favor, preencha todos os campos.');
+    if (!name) {
+      alert('Por favor, preencha o nome.');
       return;
     }
 
@@ -179,17 +192,15 @@ function UVMatrizImportModal({ isOpen, onClose, queryClient, models }: { isOpen:
         .from('uv_matrices')
         .insert({
           name: name,
-          modelo_id: modelId,
           zones: []
         } as any);
 
       if (dbError) throw dbError;
 
       queryClient.invalidateQueries({ queryKey: ['uv_matrices'] });
-      alert('UV Matriz criada com sucesso! Agora configure as zonas 3D.');
+      alert('UV Matriz criada com sucesso! Agora você pode vinculá-la a um modelo 3D no editor de zonas.');
       onClose();
       setName('');
-      setModelId('');
     } catch (err: any) {
       alert('Erro: ' + err.message);
     } finally {
@@ -220,20 +231,9 @@ function UVMatrizImportModal({ isOpen, onClose, queryClient, models }: { isOpen:
               required
             />
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Vincular ao Modelo 3D</label>
-            <select 
-              value={modelId}
-              onChange={e => setModelId(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none text-sm bg-white"
-              required
-            >
-              <option value="">Selecione um modelo...</option>
-              {models?.map(m => (
-                <option key={m.id} value={m.id}>{m.nome}</option>
-              ))}
-            </select>
-          </div>
+          <p className="text-xs text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-100">
+            Crie apenas o nome da matriz aqui. O vínculo com o modelo 3D e a configuração de zonas são feitos no <strong>Editor de Zonas 3D</strong>.
+          </p>
           
           <button 
             type="submit" 

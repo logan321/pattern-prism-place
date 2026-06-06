@@ -14,7 +14,290 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      categorias: {
+        Row: {
+          created_at: string | null
+          genero: string | null
+          id: string
+          nome: string
+        }
+        Insert: {
+          created_at?: string | null
+          genero?: string | null
+          id?: string
+          nome: string
+        }
+        Update: {
+          created_at?: string | null
+          genero?: string | null
+          id?: string
+          nome?: string
+        }
+        Relationships: []
+      }
+      fontes: {
+        Row: {
+          created_at: string | null
+          font_family: string
+          id: string
+          nome: string
+        }
+        Insert: {
+          created_at?: string | null
+          font_family: string
+          id?: string
+          nome: string
+        }
+        Update: {
+          created_at?: string | null
+          font_family?: string
+          id?: string
+          nome?: string
+        }
+        Relationships: []
+      }
+      lojistas: {
+        Row: {
+          created_at: string | null
+          facebook_pixel_id: string | null
+          id: string
+          logo_url: string | null
+          nome: string
+          slug: string
+          updated_at: string | null
+          whatsapp: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          facebook_pixel_id?: string | null
+          id?: string
+          logo_url?: string | null
+          nome: string
+          slug: string
+          updated_at?: string | null
+          whatsapp?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          facebook_pixel_id?: string | null
+          id?: string
+          logo_url?: string | null
+          nome?: string
+          slug?: string
+          updated_at?: string | null
+          whatsapp?: string | null
+        }
+        Relationships: []
+      }
+      modelos: {
+        Row: {
+          categoria_id: string | null
+          created_at: string | null
+          glb_url: string
+          id: string
+          nome: string
+          pecas: Json | null
+          thumbnail_url: string | null
+        }
+        Insert: {
+          categoria_id?: string | null
+          created_at?: string | null
+          glb_url: string
+          id?: string
+          nome: string
+          pecas?: Json | null
+          thumbnail_url?: string | null
+        }
+        Update: {
+          categoria_id?: string | null
+          created_at?: string | null
+          glb_url?: string
+          id?: string
+          nome?: string
+          pecas?: Json | null
+          thumbnail_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "modelos_categoria_id_fkey"
+            columns: ["categoria_id"]
+            isOneToOne: false
+            referencedRelation: "categorias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orcamentos: {
+        Row: {
+          created_at: string | null
+          dados_contato: Json
+          id: string
+          resumo_uniforme: Json
+          status: string | null
+          usuario_id: string | null
+          whatsapp_link: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          dados_contato: Json
+          id?: string
+          resumo_uniforme: Json
+          status?: string | null
+          usuario_id?: string | null
+          whatsapp_link?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          dados_contato?: Json
+          id?: string
+          resumo_uniforme?: Json
+          status?: string | null
+          usuario_id?: string | null
+          whatsapp_link?: string | null
+        }
+        Relationships: []
+      }
+      simulacoes: {
+        Row: {
+          configuracao: Json
+          created_at: string | null
+          id: string
+          nome: string
+          thumbnail_url: string | null
+          updated_at: string | null
+          usuario_id: string | null
+        }
+        Insert: {
+          configuracao: Json
+          created_at?: string | null
+          id?: string
+          nome: string
+          thumbnail_url?: string | null
+          updated_at?: string | null
+          usuario_id?: string | null
+        }
+        Update: {
+          configuracao?: Json
+          created_at?: string | null
+          id?: string
+          nome?: string
+          thumbnail_url?: string | null
+          updated_at?: string | null
+          usuario_id?: string | null
+        }
+        Relationships: []
+      }
+      tipos_gola: {
+        Row: {
+          created_at: string | null
+          id: string
+          nome: string
+          thumbnail_url: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          nome: string
+          thumbnail_url?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          nome?: string
+          thumbnail_url?: string | null
+        }
+        Relationships: []
+      }
+      tipos_manga: {
+        Row: {
+          created_at: string | null
+          id: string
+          nome: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          nome: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          nome?: string
+        }
+        Relationships: []
+      }
+      tipos_punho: {
+        Row: {
+          created_at: string | null
+          id: string
+          nome: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          nome: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          nome?: string
+        }
+        Relationships: []
+      }
+      uploads_imagem: {
+        Row: {
+          created_at: string | null
+          id: string
+          tipo: string | null
+          url: string
+          usuario_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          tipo?: string | null
+          url: string
+          usuario_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          tipo?: string | null
+          url?: string
+          usuario_id?: string | null
+        }
+        Relationships: []
+      }
+      usuarios: {
+        Row: {
+          cidade: string | null
+          created_at: string | null
+          estado: string | null
+          id: string
+          nome: string
+          telefone: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          cidade?: string | null
+          created_at?: string | null
+          estado?: string | null
+          id: string
+          nome: string
+          telefone?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          cidade?: string | null
+          created_at?: string | null
+          estado?: string | null
+          id?: string
+          nome?: string
+          telefone?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

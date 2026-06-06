@@ -1,8 +1,17 @@
 import { useState } from 'react'
-import { Palette, Layers, Shirt, Type, Image as ImageIcon } from 'lucide-react'
+import { Palette, Layers, Shirt, Type, Image as ImageIcon, Check } from 'lucide-react'
+import { useSimulatorStore } from '../../store/useSimulatorStore'
 
 export function CustomizerPanel() {
   const [activeTab, setActiveTab] = useState('model')
+  const { 
+    templates, 
+    designs, 
+    selectedTemplate, 
+    selectedDesign, 
+    selectTemplate, 
+    selectDesign 
+  } = useSimulatorStore()
 
   const tabs = [
     { id: 'model', icon: Shirt, label: 'Modelo' },
@@ -13,20 +22,20 @@ export function CustomizerPanel() {
   ]
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full bg-white">
       {/* Navegação por abas lateral/topo */}
-      <div className="flex border-b border-gray-200 overflow-x-auto">
+      <div className="flex border-b border-gray-200 overflow-x-auto scrollbar-hide">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex-1 flex flex-col items-center py-4 px-2 min-w-[70px] transition-colors ${
+            className={`flex-1 flex flex-col items-center py-4 px-2 min-w-[70px] transition-all ${
               activeTab === tab.id 
-                ? 'text-orange-600 border-b-2 border-orange-600 bg-orange-50/50' 
-                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                ? 'text-orange-600 border-b-2 border-orange-600 bg-orange-50/30' 
+                : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
             }`}
           >
-            <tab.icon className="w-5 h-5 mb-1" />
+            <tab.icon className={`w-5 h-5 mb-1 ${activeTab === tab.id ? 'scale-110' : ''} transition-transform`} />
             <span className="text-[10px] font-bold uppercase tracking-wider">{tab.label}</span>
           </button>
         ))}
@@ -35,19 +44,34 @@ export function CustomizerPanel() {
       {/* Conteúdo da aba */}
       <div className="flex-1 p-6 overflow-y-auto">
         {activeTab === 'model' && (
-          <div className="space-y-6">
-            <h3 className="text-sm font-bold text-gray-900">Estilos de Camisa</h3>
+          <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-bold text-gray-900 uppercase tracking-tight">Estilos de Camisa</h3>
+              <span className="text-[10px] text-gray-500 font-medium bg-gray-100 px-2 py-1 rounded-full">
+                {templates.length} DISPONÍVEIS
+              </span>
+            </div>
             <div className="grid grid-cols-2 gap-4">
-              {[1, 2, 3, 4].map((i) => (
+              {templates.map((template) => (
                 <button 
-                  key={i}
-                  className="group relative aspect-[3/4] bg-gray-100 rounded-xl border-2 border-transparent hover:border-orange-500 transition-all overflow-hidden"
+                  key={template.id}
+                  onClick={() => selectTemplate(template)}
+                  className={`group relative aspect-[3/4] rounded-xl border-2 transition-all overflow-hidden ${
+                    selectedTemplate?.id === template.id 
+                      ? 'border-orange-500 ring-2 ring-orange-500/20 shadow-lg' 
+                      : 'border-gray-100 hover:border-gray-300 bg-gray-50'
+                  }`}
                 >
-                  <div className="absolute inset-0 flex items-center justify-center text-gray-400 text-xs italic p-4 text-center">
-                    PNG do Modelo {i}
-                  </div>
-                  <div className="absolute bottom-0 inset-x-0 bg-white/90 p-2 text-[10px] font-bold text-center">
-                    Gola V Slim
+                  <img src={template.image} alt={template.name} className="w-full h-full object-contain p-2" />
+                  {selectedTemplate?.id === template.id && (
+                    <div className="absolute top-2 right-2 bg-orange-500 text-white rounded-full p-1 shadow-sm">
+                      <Check className="w-3 h-3" />
+                    </div>
+                  )}
+                  <div className={`absolute bottom-0 inset-x-0 p-2 text-[10px] font-bold text-center transition-colors ${
+                    selectedTemplate?.id === template.id ? 'bg-orange-500 text-white' : 'bg-white/90 text-gray-700'
+                  }`}>
+                    {template.name}
                   </div>
                 </button>
               ))}
@@ -56,16 +80,34 @@ export function CustomizerPanel() {
         )}
 
         {activeTab === 'print' && (
-          <div className="space-y-6">
-            <h3 className="text-sm font-bold text-gray-900">Estampas Disponíveis</h3>
+          <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-bold text-gray-900 uppercase tracking-tight">Estampas e Cores</h3>
+              <span className="text-[10px] text-gray-500 font-medium bg-gray-100 px-2 py-1 rounded-full">
+                {designs.length} DESIGNS
+              </span>
+            </div>
             <div className="grid grid-cols-3 gap-3">
-              {[1, 2, 3, 4, 5, 6].map((i) => (
+              {designs.map((design) => (
                 <button 
-                  key={i}
-                  className="aspect-square bg-gray-200 rounded-lg border-2 border-transparent hover:border-orange-500 transition-all overflow-hidden"
+                  key={design.id}
+                  onClick={() => selectDesign(design)}
+                  className={`group relative aspect-square rounded-lg border-2 transition-all overflow-hidden ${
+                    selectedDesign?.id === design.id 
+                      ? 'border-orange-500 ring-2 ring-orange-500/20 shadow-md scale-[0.98]' 
+                      : 'border-transparent bg-gray-100 hover:bg-gray-200'
+                  }`}
                 >
-                  <div className="w-full h-full flex items-center justify-center text-[10px] text-gray-500">
-                    UV {i}
+                  <img src={design.thumbnail} alt={design.name} className="w-full h-full object-cover" />
+                  {selectedDesign?.id === design.id && (
+                    <div className="absolute inset-0 bg-orange-500/10 border border-orange-500/30 flex items-center justify-center">
+                      <div className="bg-orange-500 text-white rounded-full p-0.5 shadow-sm">
+                        <Check className="w-3 h-3" />
+                      </div>
+                    </div>
+                  )}
+                  <div className="absolute bottom-0 inset-x-0 bg-black/40 backdrop-blur-[2px] py-1 text-[8px] text-white font-medium text-center truncate px-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    {design.name}
                   </div>
                 </button>
               ))}
@@ -73,20 +115,25 @@ export function CustomizerPanel() {
           </div>
         )}
 
-        {/* Outras abas em breve */}
         {['colors', 'logos', 'text'].includes(activeTab) && (
-          <div className="flex flex-col items-center justify-center h-40 text-gray-400">
-            <p className="text-sm italic">Opções em desenvolvimento...</p>
+          <div className="flex flex-col items-center justify-center h-64 text-gray-400 space-y-4 animate-in zoom-in-95 duration-500">
+            <div className="w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center">
+              {activeTab === 'colors' && <Palette className="w-6 h-6 text-gray-300" />}
+              {activeTab === 'logos' && <ImageIcon className="w-6 h-6 text-gray-300" />}
+              {activeTab === 'text' && <Type className="w-6 h-6 text-gray-300" />}
+            </div>
+            <p className="text-xs font-medium italic tracking-wide">Módulo em desenvolvimento...</p>
           </div>
         )}
       </div>
 
       {/* Rodapé do painel */}
-      <div className="p-4 border-t border-gray-200">
-        <button className="w-full py-3 bg-gray-900 text-white rounded-lg font-bold text-sm hover:bg-gray-800 transition-colors">
-          Continuar para Pedido
+      <div className="p-4 border-t border-gray-100 bg-gray-50/30">
+        <button className="w-full py-4 bg-orange-600 text-white rounded-xl font-bold text-xs uppercase tracking-[0.1em] hover:bg-orange-700 active:scale-[0.98] transition-all shadow-lg shadow-orange-600/20">
+          Finalizar Personalização
         </button>
       </div>
     </div>
   )
 }
+

@@ -1,22 +1,39 @@
-import { Canvas } from '@react-three/fiber'
+import { Canvas, useLoader } from '@react-three/fiber'
 import { OrbitControls, Stage, PerspectiveCamera, Environment, ContactShadows } from '@react-three/drei'
-import { Suspense } from 'react'
+import { Suspense, useMemo } from 'react'
+import * as THREE from 'three'
+import { useSimulatorStore } from '../../store/useSimulatorStore'
 
 function ShirtModel() {
-  // Placeholder para o modelo 3D da camisa
-  // Em um projeto real, usaríamos useGLTF('url-do-clo3d.glb')
+  const { selectedDesign } = useSimulatorStore()
+  
+  // Carrega o UV Map se houver um design selecionado
+  const texture = useLoader(
+    THREE.TextureLoader, 
+    selectedDesign?.uvMap || '/placeholder-uv.png'
+  )
+
+  const material = useMemo(() => {
+    return new THREE.MeshStandardMaterial({
+      map: texture,
+      roughness: 0.4,
+      metalness: 0.1,
+      transparent: true,
+      side: THREE.DoubleSide
+    })
+  }, [texture])
+
   return (
-    <mesh position={[0, 0, 0]} castShadow receiveShadow>
+    <mesh position={[0, 0, 0]} castShadow receiveShadow material={material}>
       <boxGeometry args={[1, 1.5, 0.4]} />
-      <meshStandardMaterial color="white" roughness={0.3} />
     </mesh>
   )
 }
 
 export function ThreeViewer() {
   return (
-    <div className="w-full h-full">
-      <Canvas shadows>
+    <div className="w-full h-full bg-gradient-to-b from-gray-100 to-gray-200">
+      <Canvas shadows dpr={[1, 2]}>
         <PerspectiveCamera makeDefault position={[0, 0, 5]} fov={45} />
         <Suspense fallback={null}>
           <Stage intensity={0.5} environment="city" adjustCamera={false}>
@@ -24,9 +41,9 @@ export function ThreeViewer() {
           </Stage>
           <Environment preset="city" />
           <ContactShadows 
-            opacity={0.4} 
+            opacity={0.3} 
             scale={10} 
-            blur={2.4} 
+            blur={2} 
             far={10} 
             resolution={256} 
             color="#000000" 
@@ -37,18 +54,28 @@ export function ThreeViewer() {
           minPolarAngle={Math.PI / 4} 
           maxPolarAngle={Math.PI / 1.5} 
           makeDefault 
+          autoRotate={false}
         />
       </Canvas>
       
-      {/* Indicador de carregamento ou controles flutuantes podem ir aqui */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-4">
-        <button className="bg-white/80 backdrop-blur shadow-sm px-4 py-2 rounded-full text-xs font-medium text-gray-700 hover:bg-white transition-colors border border-gray-200">
-          Frente
-        </button>
-        <button className="bg-white/80 backdrop-blur shadow-sm px-4 py-2 rounded-full text-xs font-medium text-gray-700 hover:bg-white transition-colors border border-gray-200">
-          Costas
-        </button>
+      <div className="absolute top-6 left-6">
+        <div className="bg-white/90 backdrop-blur-md px-4 py-3 rounded-2xl shadow-xl border border-white/50 animate-in fade-in slide-in-from-left-4 duration-500">
+          <p className="text-[10px] font-bold text-orange-600 uppercase tracking-widest mb-1">Visualização 3D Realista</p>
+          <p className="text-xs text-gray-500">Arraste para girar • Scroll para zoom</p>
+        </div>
+      </div>
+
+      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-3">
+        {['Frente', 'Lado', 'Costas'].map((view) => (
+          <button 
+            key={view}
+            className="bg-white/80 hover:bg-white backdrop-blur shadow-lg px-6 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-wider text-gray-700 transition-all border border-white/50 active:scale-95"
+          >
+            {view}
+          </button>
+        ))}
       </div>
     </div>
   )
 }
+

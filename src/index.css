@@ -1,10 +1,16 @@
 @import "tailwindcss";
 
+@theme {
+  --color-orange-500: #ff6b00;
+  --color-orange-600: #e65a00;
+  --color-orange-700: #cc5000;
+}
+
 :root {
-  --background: oklch(0.98 0 0);
+  --background: oklch(0.99 0 0);
   --foreground: oklch(0.15 0 0);
-  --primary: oklch(0.65 0.2 35);
-  --primary-foreground: oklch(0.98 0 0);
+  --primary: #ff6b00;
+  --primary-foreground: white;
   --muted: oklch(0.96 0 0);
   --muted-foreground: oklch(0.45 0 0);
   --border: oklch(0.92 0 0);
@@ -14,4 +20,15 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+

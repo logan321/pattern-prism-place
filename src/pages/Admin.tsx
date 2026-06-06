@@ -23,7 +23,7 @@ function cn(...inputs: ClassValue[]) {
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../integrations/supabase/client';
 
-function UVConfigView({ models, queryClient }: { models: any[] | undefined, queryClient: any }) {
+function UVConfigView({ models, queryClient, modelsLoading }: { models: any[] | undefined, queryClient: any, modelsLoading: boolean }) {
   const [selectedModelId, setSelectedModelId] = useState<string>('');
   const [isUploading, setIsUploading] = useState(false);
   
@@ -63,25 +63,38 @@ function UVConfigView({ models, queryClient }: { models: any[] | undefined, quer
   return (
     <div className="bg-white rounded-2xl p-8 border border-gray-100 shadow-sm">
       <div className="max-w-2xl">
-        <label className="block text-sm font-bold text-gray-700 mb-2 uppercase">Selecionar Modelo</label>
-        <select 
-          value={selectedModelId} 
-          onChange={(e) => setSelectedModelId(e.target.value)}
-          className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 outline-none mb-6"
-        >
-          <option value="">Selecione um modelo...</option>
-          {models?.map(m => (
-            <option key={m.id} value={m.id}>{m.nome}</option>
-          ))}
-        </select>
+        <label className="block text-sm font-bold text-gray-700 mb-2 uppercase">Selecionar Modelo para Configurar</label>
+        <div className="grid grid-cols-1 gap-3 mb-8">
+          {modelsLoading ? (
+            <p className="text-gray-400 text-sm">Carregando modelos...</p>
+          ) : models?.length === 0 ? (
+            <p className="text-orange-600 text-sm font-medium">Nenhum modelo encontrado. Adicione um modelo na aba "Modelos 3D" primeiro.</p>
+          ) : (
+            <div className="flex flex-wrap gap-3">
+              {models?.map(m => (
+                <button
+                  key={m.id}
+                  onClick={() => setSelectedModelId(m.id)}
+                  className={cn(
+                    "px-4 py-2 rounded-xl text-sm font-bold transition-all border",
+                    selectedModelId === m.id 
+                      ? "bg-orange-600 text-white border-orange-600 shadow-md" 
+                      : "bg-white text-gray-600 border-gray-200 hover:border-orange-300"
+                  )}
+                >
+                  {m.nome}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
 
         {selectedModelId && (
-          <div className="space-y-6">
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
             <div className="p-6 bg-orange-50 rounded-2xl border border-orange-100">
-              <h4 className="font-bold text-orange-900 mb-2">Importar UV Universal (SVG)</h4>
+              <h4 className="font-bold text-orange-900 mb-2">Importar UV Matriz Universal (SVG)</h4>
               <p className="text-sm text-orange-700 mb-4">
-                Este SVG será usado como matriz para posicionar textos, escudos e uploads. 
-                Ele deve conter as marcações corretas para o mapeamento UV do modelo.
+                Este SVG será usado como a matriz de marcação para os textos e escudos deste modelo específico ({selectedModel?.nome}).
               </p>
               
               <div className="flex items-center space-x-4">
@@ -104,28 +117,31 @@ function UVConfigView({ models, queryClient }: { models: any[] | undefined, quer
 
               {selectedModel?.universal_uv_svg && (
                 <div className="mt-6 pt-6 border-t border-orange-200">
-                  <span className="text-xs font-bold text-orange-800 uppercase block mb-2">Arquivo Atual:</span>
-                  <div className="flex items-center justify-between bg-white p-3 rounded-lg border border-orange-100">
-                    <span className="text-sm text-gray-600 truncate mr-4">{selectedModel.universal_uv_svg}</span>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-bold text-orange-800 uppercase">SVG Matriz Atual:</span>
                     <a 
                       href={selectedModel.universal_uv_svg} 
                       target="_blank" 
                       rel="noopener noreferrer"
-                      className="text-orange-600 font-bold text-xs hover:underline"
+                      className="text-orange-600 font-bold text-xs hover:underline flex items-center"
                     >
-                      Ver SVG
+                      Visualizar <ChevronRight className="w-3 h-3 ml-1" />
                     </a>
+                  </div>
+                  <div className="bg-white p-3 rounded-lg border border-orange-100 overflow-hidden">
+                    <p className="text-[10px] text-gray-400 truncate">{selectedModel.universal_uv_svg}</p>
                   </div>
                 </div>
               )}
             </div>
             
             <div className="p-6 bg-gray-50 rounded-2xl border border-gray-100">
-              <h4 className="font-bold text-gray-900 mb-2">Ajuste de Posição</h4>
-              <p className="text-sm text-gray-500">
-                Após importar o SVG matriz, as marcações serão aplicadas automaticamente a todas as estampas.
-                Em breve você poderá ajustar as coordenadas diretamente no visualizador 3D.
-              </p>
+              <h4 className="font-bold text-gray-900 mb-2">Como Funciona</h4>
+              <ul className="text-sm text-gray-500 space-y-2 list-disc list-inside">
+                <li>O SVG deve conter camadas com IDs específicos para cada item.</li>
+                <li>As marcações serão aplicadas automaticamente sobre qualquer estampa escolhida.</li>
+                <li>O sistema usará este SVG para gerar a textura final combinada.</li>
+              </ul>
             </div>
           </div>
         )}
@@ -135,11 +151,49 @@ function UVConfigView({ models, queryClient }: { models: any[] | undefined, quer
 }
 
 export default function Admin() {
+  const queryClient = useQueryClient();
+
+  const { data: models, isLoading: modelsLoading } = useQuery({
+    queryKey: ['models'],
+    queryFn: async () => {
+      console.log('Fetching models...');
+      const { data, error } = await supabase.from('modelos').select('*');
+      if (error) {
+        console.error('Error fetching models:', error);
+        throw error;
+      }
+      
+      console.log('Models found:', data?.length);
+      if (!data) return [];
+
+      const modelsWithSignedUrls = await Promise.all(data.map(async (m) => {
+        try {
+          const getPath = (url: string | null, bucket: string) => {
+            if (!url) return null;
+            const marker = `/public/${bucket}/`;
+            const parts = url.split(marker);
+            return parts.length > 1 ? parts[1] : null;
+          };
+
+          const thumbPath = getPath(m.thumbnail_url, 'textures');
+          if (thumbPath) {
+            const { data: thumbData } = await supabase.storage.from('textures').createSignedUrl(thumbPath, 3600);
+            if (thumbData) return { ...m, thumbnail_url: thumbData.signedUrl };
+          }
+          return m;
+        } catch (err) {
+          console.error('Error processing model URL:', m.id, err);
+          return m;
+        }
+      }));
+
+      return modelsWithSignedUrls;
+    }
+  });
   const [activeView, setActiveView] = useState<'models' | 'patterns' | 'config'>('models');
   const [isUploading, setIsUploading] = useState(false);
   const [showPatternModal, setShowPatternModal] = useState(false);
   const [patternData, setPatternData] = useState({ name: '', png: null as File | null, svg: null as File | null });
-  const queryClient = useQueryClient();
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -320,37 +374,6 @@ export default function Admin() {
 
 
 
-  const { data: models, isLoading: modelsLoading } = useQuery({
-    queryKey: ['models'],
-    queryFn: async () => {
-      const { data, error } = await supabase.from('modelos').select('*');
-      if (error) throw error;
-      
-      if (!data) return [];
-
-      const modelsWithSignedUrls = await Promise.all(data.map(async (m) => {
-        try {
-          const getPath = (url: string | null, bucket: string) => {
-            if (!url) return null;
-            const marker = `/public/${bucket}/`;
-            const parts = url.split(marker);
-            return parts.length > 1 ? parts[1] : null;
-          };
-
-          const thumbPath = getPath(m.thumbnail_url, 'textures');
-          if (thumbPath) {
-            const { data: thumbData } = await supabase.storage.from('textures').createSignedUrl(thumbPath, 3600);
-            if (thumbData) return { ...m, thumbnail_url: thumbData.signedUrl };
-          }
-          return m;
-        } catch (err) {
-          return m;
-        }
-      }));
-
-      return modelsWithSignedUrls;
-    }
-  });
 
   const { data: patterns, isLoading: patternsLoading } = useQuery({
     queryKey: ['patterns'],
@@ -581,7 +604,7 @@ export default function Admin() {
                )}
             </div>
           ) : (
-            <UVConfigView models={models} queryClient={queryClient} />
+            <UVConfigView models={models} queryClient={queryClient} modelsLoading={modelsLoading} />
           )}
         </div>
       </main>

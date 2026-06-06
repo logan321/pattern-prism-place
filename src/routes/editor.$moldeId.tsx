@@ -84,7 +84,7 @@ function EditorPage() {
 
         {/* 3D viewer */}
         <main className="relative flex-1 bg-muted">
-          <ThreeViewer />
+          <ThreeViewer glbUrl={(molde as any).glbUrl} />
           <div className="absolute bottom-6 left-1/2 flex -translate-x-1/2 gap-2 rounded-full border border-border bg-card/95 p-1 shadow-md backdrop-blur">
             {(["frente", "costas", "lateral"] as View[]).map((v) => (
               <button

@@ -31,34 +31,48 @@ export default function Admin() {
 
     setIsUploading(true);
     try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
       const bucket = activeView === 'models' ? 'models' : 'textures';
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}_${file.name}`;
       
+      const uploadOptions = activeView === 'models' 
+        ? {
+            cacheControl: '3600',
+            upsert: false,
+            contentType: 'model/gltf-binary'
+          }
+        : {
+            cacheControl: '3600',
+            upsert: false
+          };
+
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from(bucket)
-        .upload(fileName, file);
+        .upload(fileName, file, uploadOptions);
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error('Erro no upload:', uploadError.message);
+        throw uploadError;
+      }
 
-      const { data: { publicUrl } } = supabase.storage
+      const { data: urlData } = supabase.storage
         .from(bucket)
-        .getPublicUrl(fileName);
+        .getPublicUrl(uploadData.path);
 
       if (activeView === 'models') {
         const { error: dbError } = await supabase
           .from('modelos')
           .insert({
-            nome: file.name.replace(`.${fileExt}`, ''),
-            glb_url: publicUrl,
+            nome: file.name,
+            glb_url: urlData.publicUrl,
           });
         if (dbError) throw dbError;
       } else {
         const { error: dbError } = await supabase
           .from('patterns')
           .insert({
-            name: file.name.replace(`.${fileExt}`, ''),
-            image_url: publicUrl,
+            name: file.name,
+            image_url: urlData.publicUrl,
           });
 
         if (dbError) throw dbError;

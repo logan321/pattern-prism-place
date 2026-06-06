@@ -129,7 +129,9 @@ export default function Simulator() {
 
   const allModels = [...LOCAL_MODELS, ...(models ?? [])];
   const currentModel =
-    allModels.find(m => m.id === selectedModel) ?? LOCAL_MODELS[0];
+    allModels.find(m => m.id === selectedModel);
+  
+  const FALLBACK_MODEL_URL = golaPadreAsset.url;
   const currentPattern = patterns?.find(p => p.id === selectedPattern);
 
 
@@ -255,14 +257,14 @@ export default function Simulator() {
 
         {/* Preview Area */}
         <main className="flex-1 relative bg-gray-200">
-          {/* 3D Mockup Container */}
           <div className="absolute inset-0">
             {(() => {
-              console.log('modelUrl sendo passada pro ThreeDViewer:', currentModel?.glb_url);
+              const modelUrl = currentModel?.glb_url || FALLBACK_MODEL_URL;
+              console.log('modelUrl sendo passada pro ThreeDViewer:', modelUrl);
               console.log('textureUrl sendo passada pro ThreeDViewer:', currentPattern?.svg_url || currentPattern?.image_url);
               return (
                 <ThreeDViewer 
-                  modelUrl={currentModel?.glb_url} 
+                  modelUrl={modelUrl} 
                   textureUrl={currentPattern?.svg_url || currentPattern?.image_url || undefined}
                 />
               );

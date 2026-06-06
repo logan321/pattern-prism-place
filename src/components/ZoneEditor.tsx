@@ -178,12 +178,12 @@ export default function ZoneEditor({ modelUrl, initialZones = [], onSave, onClos
         <div className="w-80 bg-gray-900 border-r border-gray-800 p-6 flex flex-col">
           <div className="mb-8">
             <h4 className="text-gray-400 text-[10px] font-bold uppercase mb-4">Adicionar Nova Zona</h4>
-            {selectedUV ? (
+            {selectedHit ? (
               <div className="space-y-4 animate-in fade-in slide-in-from-top-2">
                 <div className="bg-orange-600/10 border border-orange-600/20 p-3 rounded-lg">
-                  <p className="text-orange-500 text-[10px] font-bold">PONTO SELECIONADO (UV)</p>
-                  <p className="text-white text-xs truncate font-mono">
-                    U: {selectedUV.uv.x.toFixed(3)}, V: {selectedUV.uv.y.toFixed(3)}
+                  <p className="text-orange-500 text-[10px] font-bold">MESH: {selectedHit.object.name || 'Sem nome'}</p>
+                  <p className="text-white text-[10px] truncate font-mono">
+                    U: {selectedHit.uv.x.toFixed(3)}, V: {selectedHit.uv.y.toFixed(3)}
                   </p>
                 </div>
                 <input 

@@ -84,7 +84,44 @@ function AdminPage() {
   };
 
   if (!isAuthenticated) {
-...
+    return (
+      <div className="flex flex-col items-center justify-center h-screen bg-gray-100 p-4">
+        <form onSubmit={handleLogin} className="bg-white p-8 rounded shadow-md w-full max-w-sm">
+          <h2 className="text-2xl font-bold mb-4 text-center">Admin Login</h2>
+          <input
+            type="password"
+            placeholder="Senha"
+            className="w-full border p-2 mb-4 rounded"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+          <button type="submit" className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700">
+            Entrar
+          </button>
+        </form>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50 p-8">
+      <div className="max-w-4xl mx-auto">
+        <h1 className="text-3xl font-bold mb-8">Admin - Moldes</h1>
+        
+        <section className="bg-white p-6 rounded shadow-md mb-8">
+          <h2 className="text-xl font-semibold mb-4">Adicionar Novo Molde</h2>
+          <form onSubmit={handleSaveMolde} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Nome do molde</label>
+              <input
+                type="text"
+                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                value={nome}
+                onChange={(e) => setNome(e.target.value)}
+                placeholder="Ex: Camisa Polo"
+              />
+            </div>
+            <div>
               <label className="block text-sm font-medium text-gray-700">Upload de PNG</label>
               <input
                 id="png-upload"
@@ -137,7 +174,8 @@ function AdminPage() {
               {moldes.map((m) => (
                 <div key={m.id} className="border rounded p-4 flex flex-col items-center">
                   <img src={m.pngBase64} alt={m.nome} className="h-32 w-32 object-contain mb-2 bg-gray-100 rounded" />
-                  <span className="font-medium">{m.nome}</span>
+                  <span className="font-medium text-center">{m.nome}</span>
+                  {m.glbBase64 && <span className="text-xs text-green-600">✓ Possui 3D</span>}
                 </div>
               ))}
             </div>

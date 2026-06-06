@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { MeshoptDecoder } from "three/examples/jsm/libs/meshopt_decoder.module.js";
 
 /**
  * Vanilla Three.js viewer with manual render loop.
@@ -40,6 +41,7 @@ export function ThreeViewer() {
 
     // Load GLB model
     const loader = new GLTFLoader();
+    loader.setMeshoptDecoder(MeshoptDecoder);
     let model: THREE.Group | null = null;
 
     loader.load(
@@ -53,8 +55,7 @@ export function ThreeViewer() {
         const center = box.getCenter(new THREE.Vector3());
         const size = box.getSize(new THREE.Vector3());
 
-        const maxDim = Math.max(size.x, size.y, size.z);
-        const scale = 3 / maxDim; // Scale to fit nicely
+        const scale = 2.4 / Math.max(size.x, size.y, size.z);
         model.scale.setScalar(scale);
 
         // Reposition to center

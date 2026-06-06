@@ -167,7 +167,8 @@ function UVMatrizImportModal({ isOpen, onClose, queryClient }: { isOpen: boolean
 
     setIsUploading(true);
     try {
-      const fileName = `uv_matriz_${Date.now()}_${file.name}`;
+      const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9.]/g, '_');
+      const fileName = `uv_matriz_${Date.now()}_${sanitizedFileName}`;
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('textures')
         .upload(fileName, file, { contentType: 'image/svg+xml' });

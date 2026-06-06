@@ -55,7 +55,7 @@ export default function HomePage() {
             <a href="/clientes" style={{ color: '#333', textDecoration: 'none' }}>Clientes</a>
             <a href="/#contato" style={{ color: '#333', textDecoration: 'none' }}>Contato</a>
             <a href="/simulador/futebol_masculino_3d">
-              <Button style={{ padding: '10px 20px', backgroundColor: '#F26522', color: 'white', border: 'none', borderRadius: '8px' }}>
+              <Button style={{ padding: '10px 20px' }}>
                 Acessar Simulador
               </Button>
             </a>

@@ -21,6 +21,9 @@ import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { useCustomizerStore } from '../store/useCustomizerStore';
 import { ThreeDViewer } from '../components/ThreeDViewer';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '../integrations/supabase/client';
+
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -39,7 +42,7 @@ const SidebarItem = ({ icon: Icon, label, active, onClick }: { icon: any, label:
   </button>
 );
 
-const ModelCard = ({ id, active, onClick }: { id: string, active?: boolean, onClick: () => void }) => (
+const ModelCard = ({ name, active, onClick, thumbnail }: { name: string, active?: boolean, onClick: () => void, thumbnail?: string | null }) => (
   <div 
     onClick={onClick}
     className={cn(
@@ -47,12 +50,36 @@ const ModelCard = ({ id, active, onClick }: { id: string, active?: boolean, onCl
       active ? "border-orange-500 ring-1 ring-orange-500" : "border-gray-200"
     )}
   >
-    <div className="w-full aspect-square bg-blue-50 rounded mb-2 flex items-center justify-center">
-      <Shirt className="w-12 h-12 text-blue-400" />
+    <div className="w-full aspect-square bg-blue-50 rounded mb-2 flex items-center justify-center overflow-hidden">
+      {thumbnail ? (
+        <img src={thumbnail} alt={name} className="w-full h-full object-cover" />
+      ) : (
+        <Shirt className="w-12 h-12 text-blue-400" />
+      )}
     </div>
-    <span className="text-[10px] text-gray-500">Cod. Modelo: {id}</span>
+    <span className="text-[10px] text-gray-500 truncate w-full text-center">{name}</span>
   </div>
 );
+
+const PatternCard = ({ name, active, onClick, imageUrl }: { name: string, active?: boolean, onClick: () => void, imageUrl: string | null }) => (
+  <div 
+    onClick={onClick}
+    className={cn(
+      "border rounded-lg p-1 cursor-pointer transition-all hover:shadow-md bg-white flex flex-col items-center",
+      active ? "border-orange-500 ring-1 ring-orange-500" : "border-gray-200"
+    )}
+  >
+    <div className="w-full aspect-square bg-gray-100 rounded mb-1 overflow-hidden">
+      {imageUrl ? (
+        <img src={imageUrl} alt={name} className="w-full h-full object-cover" />
+      ) : (
+        <Palette className="w-8 h-8 text-gray-300 m-auto mt-2" />
+      )}
+    </div>
+    <span className="text-[8px] text-gray-500 truncate w-full text-center">{name}</span>
+  </div>
+);
+
 
 export default function Simulator() {
   const { 
@@ -63,8 +90,32 @@ export default function Simulator() {
     syncShirtShorts, 
     setSyncShirtShorts,
     selectedModel,
-    setSelectedModel
+    setSelectedModel,
+    selectedPattern,
+    setSelectedPattern
   } = useCustomizerStore();
+
+  const { data: models } = useQuery({
+    queryKey: ['models'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('modelos').select('*');
+      if (error) throw error;
+      return data;
+    }
+  });
+
+  const { data: patterns } = useQuery({
+    queryKey: ['patterns'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('patterns').select('*');
+      if (error) throw error;
+      return data;
+    }
+  });
+
+  const currentModel = models?.find(m => m.id === selectedModel);
+  const currentPattern = patterns?.find(p => p.id === selectedPattern);
+
 
   return (
     <div className="flex flex-col h-screen bg-[#f0f0f0] font-sans overflow-hidden">
@@ -146,14 +197,31 @@ export default function Simulator() {
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            {["250", "249", "248", "247", "246", "245", "244", "243"].map(id => (
-              <ModelCard 
-                key={id} 
-                id={id} 
-                active={selectedModel === id} 
-                onClick={() => setSelectedModel(id)} 
-              />
-            ))}
+            {activeTab === 'Modelo' ? (
+              models?.map(model => (
+                <ModelCard 
+                  key={model.id} 
+                  name={model.nome} 
+                  thumbnail={model.thumbnail_url}
+                  active={selectedModel === model.id} 
+                  onClick={() => setSelectedModel(model.id)} 
+                />
+              ))
+            ) : activeTab === 'Cores' ? (
+              patterns?.map(pattern => (
+                <PatternCard 
+                  key={pattern.id}
+                  name={pattern.name}
+                  imageUrl={pattern.image_url}
+                  active={selectedPattern === pattern.id}
+                  onClick={() => setSelectedPattern(pattern.id)}
+                />
+              ))
+            ) : (
+              <div className="col-span-2 text-center py-8 text-gray-400 text-xs">
+                Em breve disponível
+              </div>
+            )}
           </div>
         </aside>
 
@@ -162,9 +230,11 @@ export default function Simulator() {
           {/* 3D Mockup Container */}
           <div className="absolute inset-0">
             <ThreeDViewer 
-              modelUrl={selectedModel === '250' ? '/uploads/shirt-placeholder.glb' : undefined} 
+              modelUrl={currentModel?.glb_url} 
+              textureUrl={currentPattern?.image_url || undefined}
             />
           </div>
+
           
           {/* Top Actions */}
           <div className="absolute top-6 right-6 flex space-x-3 z-10">

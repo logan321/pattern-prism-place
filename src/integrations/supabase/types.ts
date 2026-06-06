@@ -190,6 +190,7 @@ export type Database = {
           nome: string
           pecas: Json | null
           thumbnail_url: string | null
+          universal_uv_svg: string | null
         }
         Insert: {
           categoria_id?: string | null
@@ -199,6 +200,7 @@ export type Database = {
           nome: string
           pecas?: Json | null
           thumbnail_url?: string | null
+          universal_uv_svg?: string | null
         }
         Update: {
           categoria_id?: string | null
@@ -208,6 +210,7 @@ export type Database = {
           nome?: string
           pecas?: Json | null
           thumbnail_url?: string | null
+          universal_uv_svg?: string | null
         }
         Relationships: [
           {

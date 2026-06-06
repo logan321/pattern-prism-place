@@ -15,7 +15,7 @@ interface CustomizerState {
 }
 
 export const useCustomizerStore = create<CustomizerState>((set) => ({
-  selectedModel: '250',
+  selectedModel: null,
   selectedPattern: null,
   syncShirtShorts: true,
   activeTab: 'Modelo',

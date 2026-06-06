@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Link } from '@tanstack/react-router';
 import { Menu, X, Play, MapPin, CheckCircle2, Cloud, Monitor, Shirt, LayoutPanelTop, MessageSquare } from 'lucide-react';
-// Note: Some social icons might not be in the current lucide-react version or named differently
-// We'll use MessageSquare as placeholder or simple icons if others fail.
-
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { motion, AnimatePresence } from 'framer-motion';
+
+// Temporary fallback for Link if not in a router context
+const Link = ({ children, to, ...props }: any) => <a href={to} {...props}>{children}</a>;
+
 
 export default function HomePage() {
   const [isScrolled, setIsScrolled] = useState(false);

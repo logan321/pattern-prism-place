@@ -604,7 +604,7 @@ export default function Admin() {
                )}
             </div>
           ) : (
-            <UVConfigView models={models} queryClient={queryClient} />
+            <UVConfigView models={models} queryClient={queryClient} modelsLoading={modelsLoading} />
           )}
         </div>
       </main>

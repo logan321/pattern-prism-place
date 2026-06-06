@@ -6,7 +6,7 @@ import { ErrorBoundary } from 'react-error-boundary';
 import { gsap } from 'gsap';
 import { useCustomizerStore } from '../store/useCustomizerStore';
 
-function Model({ url, textureUrl, universalUvUrl }: { url: string; textureUrl?: string; universalUvUrl?: string }) {
+function Model({ url, textureUrl, zones = [] }: { url: string; textureUrl?: string; zones?: any[] }) {
   const { scene } = useGLTF(url);
   const name = useCustomizerStore(state => state.name);
   const number = useCustomizerStore(state => state.number);

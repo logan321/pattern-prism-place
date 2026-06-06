@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 
 const Button = ({ children, style, className, ...props }: any) => (
   <button 
@@ -44,13 +43,13 @@ export default function HomePage() {
           <nav style={{ display: 'flex', gap: '30px', alignItems: 'center' }}>
             <a href="/#simuladores" style={{ color: '#333', textDecoration: 'none' }}>Simuladores</a>
             <a href="/#servicos" style={{ color: '#333', textDecoration: 'none' }}>Serviços</a>
-            <Link to="/clientes" style={{ color: '#333', textDecoration: 'none' }}>Clientes</Link>
+            <a href="/clientes" style={{ color: '#333', textDecoration: 'none' }}>Clientes</a>
             <a href="/#contato" style={{ color: '#333', textDecoration: 'none' }}>Contato</a>
-            <Link to="/simulador/futebol_masculino_3d">
+            <a href="/simulador/futebol_masculino_3d">
               <Button style={{ padding: '10px 20px', backgroundColor: '#F26522', color: 'white', border: 'none', borderRadius: '8px' }}>
                 Acessar Simulador
               </Button>
-            </Link>
+            </a>
           </nav>
         </div>
       </header>

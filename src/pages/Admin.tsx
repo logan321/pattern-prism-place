@@ -340,23 +340,25 @@ export default function Admin() {
                     : 'Configure o mapa UV universal para posicionamento de textos e escudos.'}
               </p>
             </div>
-            <button 
-              onClick={() => activeView === 'models' ? document.getElementById('file-upload-input')?.click() : setShowPatternModal(true)}
-              className={cn(
-                "bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg font-bold flex items-center space-x-2 transition-all shadow-sm cursor-pointer",
-                isUploading && "opacity-50 cursor-not-allowed"
-              )}>
-              <Plus className="w-4 h-4" />
-              <span>{isUploading ? 'Enviando...' : activeView === 'models' ? 'Novo Modelo' : 'Nova Estampa'}</span>
-              <input 
-                id="file-upload-input"
-                type="file" 
-                className="hidden" 
-                onChange={handleFileUpload} 
-                disabled={isUploading}
-                accept={activeView === 'models' ? '.glb,.gltf' : 'image/*'}
-              />
-            </button>
+            {activeView !== 'config' && (
+              <button 
+                onClick={() => activeView === 'models' ? document.getElementById('file-upload-input')?.click() : setShowPatternModal(true)}
+                className={cn(
+                  "bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg font-bold flex items-center space-x-2 transition-all shadow-sm cursor-pointer",
+                  isUploading && "opacity-50 cursor-not-allowed"
+                )}>
+                <Plus className="w-4 h-4" />
+                <span>{isUploading ? 'Enviando...' : activeView === 'models' ? 'Novo Modelo' : 'Nova Estampa'}</span>
+                <input 
+                  id="file-upload-input"
+                  type="file" 
+                  className="hidden" 
+                  onChange={handleFileUpload} 
+                  disabled={isUploading}
+                  accept={activeView === 'models' ? '.glb,.gltf' : 'image/*'}
+                />
+              </button>
+            )}
 
           </div>
 

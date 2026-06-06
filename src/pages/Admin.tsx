@@ -114,10 +114,14 @@ export default function Admin() {
       const pngUrl = supabase.storage.from('textures').getPublicUrl(pngUpload.path).data.publicUrl;
 
       // 2. Upload SVG
-      const svgName = `texture_${Date.now()}_${patternData.svg.name}`;
+      const svgName = `uv_${Date.now()}_${patternData.svg.name}`;
       const { data: svgUpload, error: svgError } = await supabase.storage
         .from('textures')
-        .upload(svgName, patternData.svg, { contentType: 'image/svg+xml' });
+        .upload(svgName, patternData.svg, { 
+          contentType: 'image/svg+xml',
+          cacheControl: '3600',
+          upsert: false 
+        });
       if (svgError) throw svgError;
       const svgUrl = supabase.storage.from('textures').getPublicUrl(svgUpload.path).data.publicUrl;
 

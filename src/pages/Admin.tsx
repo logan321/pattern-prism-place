@@ -97,22 +97,25 @@ function UVConfigView({ models, queryClient, modelsLoading }: { models: any[] | 
                 Este SVG será usado como a matriz de marcação para os textos e escudos deste modelo específico ({selectedModel?.nome}).
               </p>
               
-              <div className="flex items-center space-x-4">
-                <button 
-                  onClick={() => document.getElementById('uv-upload')?.click()}
-                  disabled={isUploading}
-                  className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-2.5 rounded-xl font-bold flex items-center space-x-2 transition-all shadow-md disabled:opacity-50"
-                >
-                  <Upload className="w-4 h-4" />
-                  <span>{isUploading ? 'Enviando...' : 'Selecionar SVG Matriz'}</span>
-                </button>
-                <input 
-                  id="uv-upload" 
-                  type="file" 
-                  accept=".svg" 
-                  className="hidden" 
-                  onChange={handleUVUpload} 
-                />
+              <div className="flex flex-col gap-4">
+                <div className="flex items-center space-x-4">
+                  <button 
+                    onClick={() => document.getElementById('uv-upload')?.click()}
+                    disabled={isUploading}
+                    className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-2.5 rounded-xl font-bold flex items-center space-x-2 transition-all shadow-md disabled:opacity-50"
+                  >
+                    <Upload className="w-4 h-4" />
+                    <span>{isUploading ? 'Enviando...' : 'Selecionar e Importar SVG Matriz'}</span>
+                  </button>
+                  <input 
+                    id="uv-upload" 
+                    type="file" 
+                    accept=".svg" 
+                    className="hidden" 
+                    onChange={handleUVUpload} 
+                  />
+                </div>
+                <p className="text-[10px] text-orange-600 italic">* Ao selecionar o arquivo, ele será enviado automaticamente para o modelo selecionado.</p>
               </div>
 
               {selectedModel?.universal_uv_svg && (

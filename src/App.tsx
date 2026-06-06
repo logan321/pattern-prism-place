@@ -1,20 +1,18 @@
+import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import HomePage from './pages/HomePage';
 import SimulatorPage from './pages/simulator/SimulatorPage';
 
-function App() {
+export default function App() {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/simulador/futebol_masculino_3d" element={<SimulatorPage />} />
-        {/* Placeholder for other routes */}
-        <Route path="/clientes" element={<HomePage />} />
-        <Route path="/institucional_simulador" element={<HomePage />} />
-        <Route path="/anuncios" element={<HomePage />} />
+        <Route path="/clientes" element={<div>Clientes Page</div>} />
+        <Route path="/institucional_simulador" element={<div>Institucional Page</div>} />
+        <Route path="/anuncios" element={<div>Anuncios Page</div>} />
       </Routes>
     </BrowserRouter>
   );
 }
-
-export default App;

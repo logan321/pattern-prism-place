@@ -1,8 +1,9 @@
-import React, { Suspense, useEffect } from 'react';
-import { Canvas } from '@react-three/fiber';
+import React, { Suspense, useEffect, useRef, useImperativeHandle, forwardRef } from 'react';
+import { Canvas, useThree } from '@react-three/fiber';
 import { OrbitControls, Stage, useGLTF } from '@react-three/drei';
 import * as THREE from 'three';
 import { ErrorBoundary } from 'react-error-boundary';
+import { gsap } from 'gsap';
 
 function Model({ url, textureUrl }: { url: string; textureUrl?: string }) {
   const { scene } = useGLTF(url);
@@ -89,26 +90,73 @@ function FallbackError({ error }: { error: any }) {
   );
 }
 
-export function ThreeDViewer({ modelUrl, textureUrl }: { modelUrl?: string; textureUrl?: string }) {
-  console.log('=== THREEDVIEWER PROPS ===', { modelUrl, textureUrl });
-  if (!modelUrl) {
+export interface ThreeDViewerRef {
+  setView: (view: 'front' | 'back' | 'left' | 'right') => void;
+  zoom: (direction: 'in' | 'out') => void;
+}
+
+export const ThreeDViewer = forwardRef<ThreeDViewerRef, { modelUrl?: string; textureUrl?: string }>(
+  ({ modelUrl, textureUrl }, ref) => {
+    const orbitRef = useRef<any>(null);
+
+    useImperativeHandle(ref, () => ({
+      setView: (view) => {
+        if (!orbitRef.current) return;
+        
+        const controls = orbitRef.current;
+        const targetPos = new THREE.Vector3();
+        
+        switch (view) {
+          case 'front': targetPos.set(0, 0, 5); break;
+          case 'back': targetPos.set(0, 0, -5); break;
+          case 'left': targetPos.set(-5, 0, 0); break;
+          case 'right': targetPos.set(5, 0, 0); break;
+        }
+
+        gsap.to(controls.object.position, {
+          x: targetPos.x,
+          y: targetPos.y,
+          z: targetPos.z,
+          duration: 1,
+          ease: 'power2.inOut',
+          onUpdate: () => controls.update()
+        });
+      },
+      zoom: (direction) => {
+        if (!orbitRef.current) return;
+        const controls = orbitRef.current;
+        const factor = direction === 'in' ? 0.8 : 1.2;
+        
+        gsap.to(controls.object.position, {
+          x: controls.object.position.x * factor,
+          y: controls.object.position.y * factor,
+          z: controls.object.position.z * factor,
+          duration: 0.5,
+          ease: 'power2.out',
+          onUpdate: () => controls.update()
+        });
+      }
+    }));
+
+    if (!modelUrl) {
+      return (
+        <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-500">
+          Selecione um modelo para visualizar
+        </div>
+      );
+    }
+
     return (
-      <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-500">
-        Selecione um modelo para visualizar
-      </div>
+      <ErrorBoundary FallbackComponent={FallbackError}>
+        <Canvas shadows camera={{ position: [0, 0, 5], fov: 45 }}>
+          <Suspense fallback={null}>
+            <Stage intensity={0.5} environment="city" shadows="contact" adjustCamera={1.5} preset="rembrandt">
+              <Model url={modelUrl} textureUrl={textureUrl} />
+            </Stage>
+            <OrbitControls ref={orbitRef} makeDefault minDistance={2} maxDistance={10} />
+          </Suspense>
+        </Canvas>
+      </ErrorBoundary>
     );
   }
-
-  return (
-    <ErrorBoundary FallbackComponent={FallbackError}>
-      <Canvas shadows camera={{ position: [0, 0, 4], fov: 45 }}>
-        <Suspense fallback={null}>
-          <Stage intensity={0.5} environment="city" shadows="contact" adjustCamera={1.5} preset="rembrandt">
-            <Model url={modelUrl} textureUrl={textureUrl} />
-          </Stage>
-          <OrbitControls makeDefault />
-        </Suspense>
-      </Canvas>
-    </ErrorBoundary>
-  );
-}
+);

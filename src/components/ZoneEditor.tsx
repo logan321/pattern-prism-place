@@ -131,10 +131,12 @@ function ModelWithClick({ url, onPointSelect, zones }: { url: string, onPointSel
         object={scene} 
         onClick={(e: any) => {
           e.stopPropagation();
-          const hit = e.intersections[0];
-          if (hit && hit.uv && hit.object) {
-            console.log('Hit Mesh:', hit.object.name, 'UUID:', hit.object.uuid);
-            onPointSelect(hit);
+          // Filter only the 'Cloth' mesh intersections as requested
+          const clothHit = e.intersections.find((hit: any) => hit.object.name === 'Cloth');
+          
+          if (clothHit && clothHit.uv) {
+            console.log('Hit Cloth Mesh:', clothHit.object.name, 'UUID:', clothHit.object.uuid);
+            onPointSelect(clothHit);
           }
         }}
       />

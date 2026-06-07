@@ -173,13 +173,7 @@ export default function Simulator() {
           }
 
           if (thumbPath) {
-            const { data: thumbData } = await supabase.storage.from('textures').createSignedUrl(thumbPath, 3600, {
-              transform: {
-                width: 200,
-                height: 200,
-                resize: 'contain'
-              }
-            });
+            const { data: thumbData } = await supabase.storage.from('textures').createSignedUrl(thumbPath, 3600);
             if (thumbData) signedThumbUrl = thumbData.signedUrl;
           }
 
@@ -223,13 +217,7 @@ export default function Simulator() {
           let signedSvgUrl = p.svg_url;
 
           if (pngPath) {
-            const { data: pngData } = await supabase.storage.from('textures').createSignedUrl(pngPath, 3600, {
-              transform: {
-                width: 200,
-                height: 200,
-                resize: 'contain'
-              }
-            });
+            const { data: pngData } = await supabase.storage.from('textures').createSignedUrl(pngPath, 3600);
             if (pngData) signedImageUrl = pngData.signedUrl;
           }
 

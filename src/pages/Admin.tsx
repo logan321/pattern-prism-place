@@ -68,8 +68,8 @@ function UVConfigView({ models, queryClient, modelsLoading, onOpenMatrizModal }:
       const { error } = await supabase
         .from('uv_matrices')
         .update({ 
-          zones,
-          modelo_id: null 
+          zones
+          // modelo_id: null // Removido para não perder o vínculo com o modelo ao salvar as zonas
         } as any)
         .eq('id', selectedMatrizId);
       

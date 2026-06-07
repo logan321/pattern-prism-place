@@ -98,13 +98,14 @@ function Model({
     const getZona = (posId: string | null) => {
       if (!posId) return null;
       // Normalizar IDs e nomes para comparação (remover hifens e converter para minúsculo)
-      const normalize = (s: string) => s.toLowerCase().replace(/-/g, '');
+      const normalize = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
       const normPosId = normalize(posId);
       
-      return zones?.find(z => 
-        normalize(z.id) === normPosId || 
-        normalize(z.name) === normPosId
-      );
+      return zones?.find(z => {
+        if (!z.id && !z.name) return false;
+        return normalize(z.id || '') === normPosId || 
+               normalize(z.name || '') === normPosId;
+      });
     };
 
     const logoZone   = getZona(regras.logo);

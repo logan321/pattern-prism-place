@@ -1,6 +1,6 @@
-import React, { useState, useRef, Suspense, useEffect } from 'react';
+import React, { useState, useRef, Suspense, useEffect, useMemo } from 'react';
 import { Canvas, useThree } from '@react-three/fiber';
-import { OrbitControls, Stage, useGLTF, Html } from '@react-three/drei';
+import { OrbitControls, Stage, useGLTF } from '@react-three/drei';
 import * as THREE from 'three';
 import { X, Save, Plus, Trash2 } from 'lucide-react';
 
@@ -8,65 +8,90 @@ interface Zone {
   id: string;
   name: string;
   position: [number, number, number];
-  rotation?: [number, number, number];
+  uv?: [number, number]; // Armazenar coordenadas UV
 }
 
-function ModelWithClick({ url, onPointSelect, zones }: { url: string, onPointSelect: (point: THREE.Vector3) => void, zones: Zone[] }) {
+function ModelWithUVClick({ url, onPointSelect, zones }: { 
+  url: string, 
+  onPointSelect: (point: THREE.Vector3, uv: THREE.Vector2) => void, 
+  zones: Zone[] 
+}) {
   const { scene } = useGLTF(url);
-  const { camera } = useThree();
+  const [texture, setTexture] = useState<THREE.CanvasTexture | null>(null);
+  
+  // Criar uma textura de canvas para desenhar as marcações
+  const canvasRef = useRef(document.createElement('canvas'));
+  
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    canvas.width = 2048; // Alta resolução para precisão UV
+    canvas.height = 2048;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // Limpar fundo (transparente ou cor base)
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Desenhar cada zona baseada em suas coordenadas UV
+    zones.forEach((zone) => {
+      if (zone.uv) {
+        const x = zone.uv[0] * canvas.width;
+        const y = (1 - zone.uv[1]) * canvas.height; // Inverter Y para coordenadas de canvas
+
+        // Desenhar um círculo vibrante
+        ctx.beginPath();
+        ctx.arc(x, y, 15, 0, Math.PI * 2);
+        ctx.fillStyle = '#ea580c';
+        ctx.fill();
+        
+        // Borda branca para destaque
+        ctx.strokeStyle = 'white';
+        ctx.lineWidth = 4;
+        ctx.stroke();
+
+        // Texto da zona diretamente na textura
+        ctx.font = 'bold 24px Arial';
+        ctx.fillStyle = 'white';
+        ctx.textAlign = 'center';
+        ctx.fillText(zone.name, x, y - 25);
+      }
+    });
+
+    const newTexture = new THREE.CanvasTexture(canvas);
+    newTexture.flipY = false;
+    setTexture(newTexture);
+  }, [zones]);
 
   useEffect(() => {
-    if (scene) {
+    if (scene && texture) {
       scene.traverse((child) => {
         if ((child as THREE.Mesh).isMesh) {
-          child.castShadow = true;
-          child.receiveShadow = true;
+          const mesh = child as THREE.Mesh;
+          // Aplicar a textura de marcação como um overlay ou mapa principal
+          // Aqui aplicamos como emissive para que as marcas "brilhem" sobre a textura original
+          if (mesh.material instanceof THREE.MeshStandardMaterial) {
+            mesh.material.emissiveMap = texture;
+            mesh.material.emissive = new THREE.Color(0xffffff);
+            mesh.material.emissiveIntensity = 1;
+            mesh.material.needsUpdate = true;
+          }
         }
       });
     }
-  }, [scene]);
+  }, [scene, texture]);
   
   return (
-    <group>
-      <primitive 
-        object={scene} 
-        onClick={(e: any) => {
-          e.stopPropagation();
-          // e.point é a coordenada absoluta no mundo 3D onde o clique atingiu a geometria
-          onPointSelect(e.point);
-        }}
-      />
-      {zones.map((zone) => {
-        // Calcular direção para que o "adesivo" (marcador) fique voltado para a câmera
-        // ou simplesmente usar um sprite/mesh circular que sempre encara a câmera
-        return (
-          <group key={zone.id} position={zone.position}>
-            {/* Marcador Visual que faz parte da cena 3D */}
-            <mesh>
-              <sphereGeometry args={[0.015, 16, 16]} />
-              <meshStandardMaterial 
-                color="#ea580c" 
-                emissive="#ea580c" 
-                emissiveIntensity={2} 
-                toneMapped={false}
-              />
-            </mesh>
-            
-            {/* Um anel ao redor para dar profundidade */}
-            <mesh rotation={[Math.PI / 2, 0, 0]}>
-              <torusGeometry args={[0.02, 0.002, 16, 32]} />
-              <meshStandardMaterial color="#ffffff" opacity={0.5} transparent />
-            </mesh>
-
-            <Html distanceFactor={2} position={[0, 0.04, 0]} center zIndexRange={[0, 10]}>
-              <div className="bg-orange-600 text-white text-[10px] px-2 py-0.5 rounded whitespace-nowrap font-bold shadow-lg pointer-events-none select-none border border-orange-400/50">
-                {zone.name}
-              </div>
-            </Html>
-          </group>
-        );
-      })}
-    </group>
+    <primitive 
+      object={scene} 
+      onClick={(e: any) => {
+        e.stopPropagation();
+        if (e.uv) {
+          // e.point: coordenadas do mundo
+          // e.uv: coordenadas UV do mesh no ponto de impacto
+          onPointSelect(e.point, e.uv);
+        }
+      }}
+    />
   );
 }
 
@@ -77,20 +102,25 @@ export default function ZoneEditor({ modelUrl, initialZones = [], onSave, onClos
   onClose: () => void 
 }) {
   const [zones, setZones] = useState<Zone[]>(initialZones);
-  const [selectedPoint, setSelectedPoint] = useState<THREE.Vector3 | null>(null);
+  const [selectedData, setSelectedData] = useState<{ pos: THREE.Vector3, uv: THREE.Vector2 } | null>(null);
   const [newZoneName, setNewZoneName] = useState('');
 
+  const handlePointSelect = (pos: THREE.Vector3, uv: THREE.Vector2) => {
+    setSelectedData({ pos, uv });
+  };
+
   const handleAddZone = () => {
-    if (!selectedPoint || !newZoneName) return;
+    if (!selectedData || !newZoneName) return;
     
     const newZone: Zone = {
       id: Math.random().toString(36).substr(2, 9),
       name: newZoneName,
-      position: [selectedPoint.x, selectedPoint.y, selectedPoint.z]
+      position: [selectedData.pos.x, selectedData.pos.y, selectedData.pos.z],
+      uv: [selectedData.uv.x, selectedData.uv.y]
     };
     
     setZones([...zones, newZone]);
-    setSelectedPoint(null);
+    setSelectedData(null);
     setNewZoneName('');
   };
 
@@ -99,11 +129,11 @@ export default function ZoneEditor({ modelUrl, initialZones = [], onSave, onClos
   };
 
   return (
-    <div className="fixed inset-0 bg-black/90 z-[60] flex flex-col">
+    <div className="fixed inset-0 bg-black/95 z-[60] flex flex-col font-sans">
       <div className="p-4 bg-gray-900 border-b border-gray-800 flex items-center justify-between">
         <div>
-          <h3 className="text-white font-bold text-lg">Editor de Zonas 3D</h3>
-          <p className="text-gray-400 text-xs">Clique no modelo para marcar uma nova zona de estampa</p>
+          <h3 className="text-white font-bold text-lg">Editor de Zonas UV (Marcação Real)</h3>
+          <p className="text-gray-400 text-xs">As marcas são renderizadas diretamente na textura do modelo usando coordenadas UV.</p>
         </div>
         <div className="flex items-center space-x-4">
           <button 
@@ -120,81 +150,85 @@ export default function ZoneEditor({ modelUrl, initialZones = [], onSave, onClos
       </div>
 
       <div className="flex-1 flex overflow-hidden">
-        {/* Sidebar de Zonas */}
+        {/* Sidebar */}
         <div className="w-80 bg-gray-900 border-r border-gray-800 p-6 flex flex-col">
           <div className="mb-8">
-            <h4 className="text-gray-400 text-[10px] font-bold uppercase mb-4">Adicionar Nova Zona</h4>
-            {selectedPoint ? (
+            <h4 className="text-gray-400 text-[10px] font-bold uppercase mb-4 tracking-widest">Nova Zona na Malha</h4>
+            {selectedData ? (
               <div className="space-y-4 animate-in fade-in slide-in-from-top-2">
-                <div className="bg-orange-600/10 border border-orange-600/20 p-3 rounded-lg">
-                  <p className="text-orange-500 text-[10px] font-bold">PONTO SELECIONADO</p>
-                  <p className="text-white text-xs truncate font-mono">
-                    {selectedPoint.x.toFixed(3)}, {selectedPoint.y.toFixed(3)}, {selectedPoint.z.toFixed(3)}
-                  </p>
+                <div className="bg-orange-600/10 border border-orange-600/20 p-4 rounded-xl">
+                  <p className="text-orange-500 text-[10px] font-bold uppercase mb-2">Coordenadas UV Detectadas</p>
+                  <div className="grid grid-cols-2 gap-2 text-white font-mono text-xs">
+                    <div>U: {selectedData.uv.x.toFixed(4)}</div>
+                    <div>V: {selectedData.uv.y.toFixed(4)}</div>
+                  </div>
                 </div>
                 <input 
                   type="text"
-                  placeholder="Nome da Zona (ex: Escudo)"
-                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm outline-none focus:ring-1 focus:ring-orange-500"
+                  placeholder="Ex: Escudo, Logo Manga, etc."
+                  className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white text-sm outline-none focus:ring-2 focus:ring-orange-500 transition-all"
                   value={newZoneName}
                   onChange={e => setNewZoneName(e.target.value)}
+                  autoFocus
                 />
                 <button 
                   onClick={handleAddZone}
-                  className="w-full bg-white text-black font-bold py-2 rounded-lg text-sm flex items-center justify-center space-x-2"
+                  className="w-full bg-white text-black font-bold py-3 rounded-xl text-sm flex items-center justify-center space-x-2 hover:bg-gray-100 transition-all"
                 >
                   <Plus className="w-4 h-4" />
-                  <span>Confirmar Zona</span>
+                  <span>Gravar na Textura</span>
                 </button>
               </div>
             ) : (
-              <div className="bg-gray-800/50 border border-gray-700 border-dashed p-6 rounded-xl text-center">
-                <p className="text-gray-500 text-xs italic">Clique em qualquer parte do modelo 3D para selecionar a posição da zona.</p>
+              <div className="bg-gray-800/30 border-2 border-gray-700 border-dashed p-8 rounded-2xl text-center">
+                <p className="text-gray-500 text-xs italic leading-relaxed">Clique em qualquer parte da camisa 3D para capturar a coordenada UV exata.</p>
               </div>
             )}
           </div>
 
-          <div className="flex-1 overflow-y-auto">
-            <h4 className="text-gray-400 text-[10px] font-bold uppercase mb-4">Zonas Mapeadas ({zones.length})</h4>
-            <div className="space-y-2">
+          <div className="flex-1 overflow-y-auto custom-scrollbar">
+            <h4 className="text-gray-400 text-[10px] font-bold uppercase mb-4 tracking-widest">Zonas Gravadas ({zones.length})</h4>
+            <div className="space-y-3">
               {zones.map(zone => (
-                <div key={zone.id} className="bg-gray-800 rounded-lg p-3 flex items-center justify-between group">
+                <div key={zone.id} className="bg-gray-800/50 border border-gray-700 rounded-xl p-4 flex items-center justify-between group hover:bg-gray-800 transition-all">
                   <div>
-                    <p className="text-white font-bold text-xs">{zone.name}</p>
-                    <p className="text-gray-500 text-[10px] font-mono">XYZ: {zone.position.map(p => p.toFixed(2)).join(', ')}</p>
+                    <p className="text-white font-bold text-sm">{zone.name}</p>
+                    <p className="text-gray-500 text-[10px] font-mono mt-1">UV: {zone.uv?.[0].toFixed(3)}, {zone.uv?.[1].toFixed(3)}</p>
                   </div>
                   <button 
                     onClick={() => removeZone(zone.id)}
-                    className="text-gray-500 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"
+                    className="text-gray-500 hover:text-red-500 p-2 rounded-lg transition-all"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
               ))}
               {zones.length === 0 && (
-                <p className="text-gray-600 text-center text-xs py-8">Nenhuma zona marcada ainda.</p>
+                <div className="text-gray-600 text-center text-xs py-12">Nenhuma zona vinculada ao UV Map ainda.</div>
               )}
             </div>
           </div>
         </div>
 
         {/* 3D Canvas */}
-        <div className="flex-1 bg-[#111] relative">
+        <div className="flex-1 bg-[#0a0a0a] relative">
           <Canvas shadows camera={{ position: [0, 0.5, 2], fov: 40 }} dpr={[1, 2]}>
             <Suspense fallback={null}>
               <ambientLight intensity={0.5} />
               <pointLight position={[10, 10, 10]} intensity={1} />
               <Stage intensity={0.5} environment="city" shadows="contact" adjustCamera={false}>
-                <ModelWithClick url={modelUrl} onPointSelect={setSelectedPoint} zones={zones} />
+                <ModelWithUVClick url={modelUrl} onPointSelect={handlePointSelect} zones={zones} />
               </Stage>
-              <OrbitControls makeDefault minDistance={0.1} maxDistance={10} />
+              <OrbitControls makeDefault minDistance={0.5} maxDistance={5} enablePan={false} />
             </Suspense>
           </Canvas>
           
-          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex space-x-4">
-            <div className="bg-gray-900/80 backdrop-blur px-4 py-2 rounded-full border border-gray-700">
-              <p className="text-white text-xs font-medium">Use o botão esquerdo para girar e clique para marcar</p>
+          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center space-y-3 pointer-events-none">
+            <div className="bg-gray-900/90 backdrop-blur-md px-6 py-2.5 rounded-full border border-gray-700 shadow-2xl flex items-center space-x-3">
+              <div className="w-2 h-2 rounded-full bg-orange-500 animate-pulse" />
+              <p className="text-white text-xs font-bold tracking-tight uppercase">Modo de Mapeamento UV Ativo</p>
             </div>
+            <p className="text-gray-500 text-[10px] font-medium">As marcações seguem a topologia exata exportada do CLO3D</p>
           </div>
         </div>
       </div>

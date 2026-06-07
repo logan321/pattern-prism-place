@@ -56,6 +56,15 @@ function UVConfigView({ models, queryClient, modelsLoading, onOpenMatrizModal }:
     }
   });
 
+  React.useEffect(() => {
+    if (selectedMatrizId && uvMatrices) {
+      const matriz = (uvMatrices as any[]).find(m => m.id === selectedMatrizId);
+      if (matriz?.modelo_id) {
+        setSelectedModelId(matriz.modelo_id);
+      }
+    }
+  }, [selectedMatrizId, uvMatrices]);
+
   const handleDeleteMatriz = async (id: string) => {
     if (!window.confirm('Excluir esta UV Matriz?')) return;
     const { error } = await supabase.from('uv_matrices').delete().eq('id', id);
@@ -77,11 +86,15 @@ function UVConfigView({ models, queryClient, modelsLoading, onOpenMatrizModal }:
 
   const handleSaveZones = async (zones: any[]) => {
     try {
+      // Validate if selectedModelId is a valid UUID
+      const isUUID = (str: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
+      const modelo_id = selectedModelId && isUUID(selectedModelId) ? selectedModelId : null;
+
       const { error } = await supabase
         .from('uv_matrices')
         .update({ 
           zones,
-          modelo_id: selectedModelId || null
+          modelo_id
         } as any)
         .eq('id', selectedMatrizId);
       

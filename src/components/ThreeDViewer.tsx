@@ -59,20 +59,40 @@ function Model({ url, textureUrl, zones = [] }: { url: string; textureUrl?: stri
     });
 
     // Desenhar Nome e Número
+    // Primeiro tenta encontrar zonas específicas para nome/número
+    const nameZone = zones.find(z => z.name.toUpperCase() === 'NOME');
+    const numberZone = zones.find(z => z.name.toUpperCase() === 'NÚMERO' || z.name.toUpperCase() === 'NUMERO');
+
     if (name) {
       ctx.font = `bold 120px ${nameFont}`;
       ctx.fillStyle = nameColor;
       ctx.textAlign = 'center';
-      // Posicionamento estimado para as costas na UV
-      ctx.fillText(name.toUpperCase(), canvas.width * 0.5, canvas.height * 0.2);
+      
+      let x = canvas.width * 0.5;
+      let y = canvas.height * 0.2;
+      
+      if (nameZone?.uv) {
+        x = nameZone.uv[0] * canvas.width;
+        y = (1 - nameZone.uv[1]) * canvas.height;
+      }
+      
+      ctx.fillText(name.toUpperCase(), x, y);
     }
 
     if (number) {
       ctx.font = `bold 300px ${nameFont}`;
       ctx.fillStyle = numberColor;
       ctx.textAlign = 'center';
-      // Posicionamento estimado para as costas na UV
-      ctx.fillText(number, canvas.width * 0.5, canvas.height * 0.45);
+      
+      let x = canvas.width * 0.5;
+      let y = canvas.height * 0.45;
+      
+      if (numberZone?.uv) {
+        x = numberZone.uv[0] * canvas.width;
+        y = (1 - numberZone.uv[1]) * canvas.height;
+      }
+      
+      ctx.fillText(number, x, y);
     }
 
     const texture = new THREE.CanvasTexture(canvas);

@@ -68,8 +68,8 @@ function UVConfigView({ models, queryClient, modelsLoading, onOpenMatrizModal }:
       const { error } = await supabase
         .from('uv_matrices')
         .update({ 
-          zones,
-          modelo_id: null 
+          zones
+          // modelo_id: null // Removido para não perder o vínculo com o modelo ao salvar as zonas
         } as any)
         .eq('id', selectedMatrizId);
       
@@ -557,7 +557,8 @@ export default function Admin() {
             name: patternData.name,
             image_url: pngUrl,
             svg_url: svgUrl,
-            uv_matriz_id: patternData.uvMatrizId || null
+            uv_matriz_id: patternData.uvMatrizId || null,
+            updated_at: new Date().toISOString()
           } as any)
           .eq('id', editingPattern.id);
         if (dbError) throw dbError;
@@ -569,7 +570,8 @@ export default function Admin() {
             name: patternData.name,
             image_url: pngUrl,
             svg_url: svgUrl,
-            uv_matriz_id: patternData.uvMatrizId || null
+            uv_matriz_id: patternData.uvMatrizId || null,
+            created_at: new Date().toISOString()
           } as any);
         if (dbError) throw dbError;
         alert('Estampa cadastrada com sucesso!');

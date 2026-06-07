@@ -173,13 +173,7 @@ export default function Simulator() {
           }
 
           if (thumbPath) {
-            const { data: thumbData } = await supabase.storage.from('textures').createSignedUrl(thumbPath, 3600, {
-              transform: {
-                width: 200,
-                height: 200,
-                resize: 'contain'
-              }
-            });
+            const { data: thumbData } = await supabase.storage.from('textures').createSignedUrl(thumbPath, 3600);
             if (thumbData) signedThumbUrl = thumbData.signedUrl;
           }
 
@@ -223,13 +217,7 @@ export default function Simulator() {
           let signedSvgUrl = p.svg_url;
 
           if (pngPath) {
-            const { data: pngData } = await supabase.storage.from('textures').createSignedUrl(pngPath, 3600, {
-              transform: {
-                width: 200,
-                height: 200,
-                resize: 'contain'
-              }
-            });
+            const { data: pngData } = await supabase.storage.from('textures').createSignedUrl(pngPath, 3600);
             if (pngData) signedImageUrl = pngData.signedUrl;
           }
 
@@ -271,7 +259,17 @@ export default function Simulator() {
   const modelUrl = currentModel?.glb_url || FALLBACK_MODEL_URL;
 
   // Encontrar as zonas baseadas na UV Matriz vinculada à estampa
-  const activeUVMatriz = React.useMemo(() => uvMatrices?.find(m => m.id === currentPattern?.uv_matriz_id), [uvMatrices, currentPattern]);
+  const activeUVMatriz = React.useMemo(() => {
+    if (!currentPattern) return null;
+    let matriz = uvMatrices?.find(m => m.id === currentPattern?.uv_matriz_id);
+    
+    // Fallback: Se a estampa não tiver matriz vinculada, procura a primeira matriz que tenha zonas definidas
+    if (!matriz && uvMatrices) {
+      matriz = uvMatrices.find(m => Array.isArray(m.zones) && (m.zones as any[]).length > 0);
+    }
+    
+    return matriz;
+  }, [uvMatrices, currentPattern]);
   
   // Converter as zonas para o formato esperado pelo viewer
   const currentZones = React.useMemo(() => {
@@ -416,6 +414,11 @@ export default function Simulator() {
               ))
             ) : activeTab === 'Nome/Número' ? (
               <div className="col-span-2 space-y-4">
+                {!activeUVMatriz && (
+                  <div className="bg-amber-50 border border-amber-200 p-2 rounded text-[10px] text-amber-700 font-medium">
+                    ⚠️ Esta estampa não possui uma Matriz UV vinculada. As marcações podem não aparecer corretamente.
+                  </div>
+                )}
                 <div className="space-y-3">
                   <label className="text-[10px] font-bold text-gray-500 uppercase">Formação de Escudo e Nome</label>
                   <div className="grid grid-cols-2 gap-2">

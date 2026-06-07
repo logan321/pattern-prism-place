@@ -50,7 +50,7 @@ function Model({
           const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
           materials.forEach((mat) => {
             if (mat instanceof THREE.MeshStandardMaterial || mat instanceof THREE.MeshPhysicalMaterial) {
-              mat.emissive = new THREE.Color(0xffffff);
+              mat.emissive = new THREE.Color(0x000000);
               mat.emissiveIntensity = 0;
               mat.needsUpdate = true;
             }
@@ -82,8 +82,10 @@ function Model({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    if (zones.length > 0) {
+    if (zones && zones.length > 0) {
       console.log('ThreeDViewer: Desenhando zonas no canvas:', zones.map(z => z.id));
+    } else {
+      console.log('ThreeDViewer: Nenhuma zona para desenhar.');
     }
 
     // console.log('DRAW zones:', zones);
@@ -98,13 +100,14 @@ function Model({
     const getZona = (posId: string | null) => {
       if (!posId) return null;
       // Normalizar IDs e nomes para comparação (remover hifens e converter para minúsculo)
-      const normalize = (s: string) => s.toLowerCase().replace(/-/g, '');
+      const normalize = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
       const normPosId = normalize(posId);
       
-      return zones?.find(z => 
-        normalize(z.id) === normPosId || 
-        normalize(z.name) === normPosId
-      );
+      return zones?.find(z => {
+        if (!z.id && !z.name) return false;
+        return normalize(z.id || '') === normPosId || 
+               normalize(z.name || '') === normPosId;
+      });
     };
 
     const logoZone   = getZona(regras.logo);

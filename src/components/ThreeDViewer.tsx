@@ -65,6 +65,7 @@ function Model({ url, textureUrl, zones = [] }: { url: string; textureUrl?: stri
 
   useEffect(() => {
     const applyTexture = (imageSrc: string) => {
+      console.log("Iniciando aplicação de textura:", imageSrc);
       const textureLoader = new THREE.TextureLoader();
       textureLoader.crossOrigin = 'anonymous';
       
@@ -81,16 +82,19 @@ function Model({ url, textureUrl, zones = [] }: { url: string; textureUrl?: stri
           const mesh = child as THREE.Mesh;
           if (mesh.isMesh && mesh.material) {
             const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+            console.log("Mesh encontrado:", mesh.name, "Materials count:", materials.length);
             materials.forEach((mat) => {
+              console.log("Processando material:", mat.type);
               if (mat instanceof THREE.MeshStandardMaterial) {
+                // mat.color.set('#ff0000'); // Teste visual
+                
                 if (mat.map) mat.map.dispose();
                 mat.map = texture;
                 
-                // Aplicar a textura de UV como emissive se existir
                 if (uvTexture) {
                   mat.emissiveMap = uvTexture;
                   mat.emissive = new THREE.Color(0xffffff);
-                  mat.emissiveIntensity = 1;
+                  mat.emissiveIntensity = 2.0;
                 } else {
                   mat.emissiveMap = null;
                   mat.emissive = new THREE.Color(0x000000);
@@ -100,10 +104,14 @@ function Model({ url, textureUrl, zones = [] }: { url: string; textureUrl?: stri
                 mat.roughness = 1;
                 mat.metalness = 0;
                 mat.needsUpdate = true;
+              } else {
+                if ('color' in mat) (mat as any).color.set('#ff0000');
               }
             });
           }
         });
+      }, undefined, (err) => {
+        console.error("Erro ao carregar textura:", err);
       });
     };
 
@@ -115,51 +123,11 @@ function Model({ url, textureUrl, zones = [] }: { url: string; textureUrl?: stri
       }
     }
   }, [scene, textureUrl, uvTexture]);
+
   const name = useCustomizerStore(state => state.name);
   const number = useCustomizerStore(state => state.number);
   const nameColor = useCustomizerStore(state => state.nameColor);
   const numberColor = useCustomizerStore(state => state.numberColor);
-
-  useEffect(() => {
-    const applyTexture = (imageSrc: string) => {
-      const textureLoader = new THREE.TextureLoader();
-      textureLoader.crossOrigin = 'anonymous';
-      
-      textureLoader.load(imageSrc, (texture) => {
-        texture.flipY = false;
-        texture.colorSpace = THREE.SRGBColorSpace;
-        texture.generateMipmaps = true;
-        texture.minFilter = THREE.LinearMipmapLinearFilter;
-        texture.magFilter = THREE.LinearFilter;
-        texture.anisotropy = 16;
-        texture.needsUpdate = true;
-
-        scene.traverse((child) => {
-          const mesh = child as THREE.Mesh;
-          if (mesh.isMesh && mesh.material) {
-            const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
-            materials.forEach((mat) => {
-              if (mat instanceof THREE.MeshStandardMaterial) {
-                if (mat.map) mat.map.dispose();
-                mat.map = texture;
-                mat.roughness = 1;
-                mat.metalness = 0;
-                mat.needsUpdate = true;
-              }
-            });
-          }
-        });
-      });
-    };
-
-    if (textureUrl) {
-      if (textureUrl.endsWith('.svg') || textureUrl.includes('svg')) {
-        fetch(textureUrl).then(r => r.blob()).then(blob => applyTexture(URL.createObjectURL(blob)));
-      } else {
-        applyTexture(textureUrl);
-      }
-    }
-  }, [scene, textureUrl]);
 
   return (
     <group>

@@ -451,6 +451,66 @@ export type Database = {
         }
         Relationships: []
       }
+      template_zones: {
+        Row: {
+          created_at: string
+          height_percent: number
+          id: string
+          name: string
+          normal_3d: Json | null
+          patch_only: boolean | null
+          path_data: Json | null
+          position_3d: Json | null
+          rotation: number
+          rotation_3d: number | null
+          shared: boolean | null
+          side: string
+          size_3d: number | null
+          template_id: string
+          width_percent: number
+          x_percent: number
+          y_percent: number
+        }
+        Insert: {
+          created_at?: string
+          height_percent?: number
+          id?: string
+          name: string
+          normal_3d?: Json | null
+          patch_only?: boolean | null
+          path_data?: Json | null
+          position_3d?: Json | null
+          rotation?: number
+          rotation_3d?: number | null
+          shared?: boolean | null
+          side: string
+          size_3d?: number | null
+          template_id: string
+          width_percent?: number
+          x_percent?: number
+          y_percent?: number
+        }
+        Update: {
+          created_at?: string
+          height_percent?: number
+          id?: string
+          name?: string
+          normal_3d?: Json | null
+          patch_only?: boolean | null
+          path_data?: Json | null
+          position_3d?: Json | null
+          rotation?: number
+          rotation_3d?: number | null
+          shared?: boolean | null
+          side?: string
+          size_3d?: number | null
+          template_id?: string
+          width_percent?: number
+          x_percent?: number
+          y_percent?: number
+        }
+        Relationships: []
+      }
       tipos_gola: {
         Row: {
           created_at: string | null

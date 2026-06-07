@@ -1,0 +1,1 @@
+ALTER TABLE public.template_zones ADD COLUMN IF NOT EXISTS patch_only BOOLEAN DEFAULT false;

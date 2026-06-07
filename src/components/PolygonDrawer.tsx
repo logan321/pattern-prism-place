@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Save, Undo, Trash2, Maximize, RotateCcw, X, ZoomIn, ZoomOut, Move } from 'lucide-react';
+import { Save, Undo, Trash2, Maximize, RotateCcw, X, ZoomIn, ZoomOut, Move, PenTool, Target } from 'lucide-react';
 
 interface Point {
   x: number;
@@ -293,5 +293,3 @@ export default function PolygonDrawer({
   );
 }
 
-// Add PenTool to lucide-react imports if it's missing from the file context but we'll use icon names correctly
-import { PenTool } from 'lucide-react';

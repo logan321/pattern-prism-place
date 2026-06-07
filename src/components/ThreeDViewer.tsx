@@ -84,19 +84,17 @@ function Model({ url, textureUrl, zones = [] }: { url: string; textureUrl?: stri
             console.log("Mesh encontrado:", mesh.name, "Material:", mesh.material.type);
             const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
             materials.forEach((mat) => {
+              console.log("Processando material:", mat.type);
               if (mat instanceof THREE.MeshStandardMaterial) {
-                // TESTE TEMPORÁRIO: Cor vermelha intensa
-                // mat.color.set('#ff0000'); 
+                // mat.color.set('#ff0000'); // Teste visual
                 
                 if (mat.map) mat.map.dispose();
                 mat.map = texture;
                 
-                // Aplicar a textura de UV como emissive se existir
                 if (uvTexture) {
-                  console.log("Aplicando uvTexture ao emissiveMap do material:", mat.name || 'unnamed');
                   mat.emissiveMap = uvTexture;
                   mat.emissive = new THREE.Color(0xffffff);
-                  mat.emissiveIntensity = 2.0; // Aumentado para teste
+                  mat.emissiveIntensity = 2.0;
                 } else {
                   mat.emissiveMap = null;
                   mat.emissive = new THREE.Color(0x000000);
@@ -107,8 +105,6 @@ function Model({ url, textureUrl, zones = [] }: { url: string; textureUrl?: stri
                 mat.metalness = 0;
                 mat.needsUpdate = true;
               } else {
-                console.log("Material não é MeshStandardMaterial:", mat.type);
-                // Forçar cor vermelha se não for Standard para identificar
                 if ('color' in mat) (mat as any).color.set('#ff0000');
               }
             });
@@ -127,6 +123,11 @@ function Model({ url, textureUrl, zones = [] }: { url: string; textureUrl?: stri
       }
     }
   }, [scene, textureUrl, uvTexture]);
+
+  const name = useCustomizerStore(state => state.name);
+  const number = useCustomizerStore(state => state.number);
+  const nameColor = useCustomizerStore(state => state.nameColor);
+  const numberColor = useCustomizerStore(state => state.numberColor);
 
   return (
     <group>

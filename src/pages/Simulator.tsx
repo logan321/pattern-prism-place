@@ -265,24 +265,30 @@ export default function Simulator() {
     }
   });
 
-  const allModels = [...LOCAL_MODELS, ...(models ?? [])];
-  const currentModel =
-    allModels.find(m => m.id === selectedModel);
+  const allModels = React.useMemo(() => [...LOCAL_MODELS, ...(models ?? [])], [models]);
+  const currentModel = React.useMemo(() => allModels.find(m => m.id === selectedModel), [allModels, selectedModel]);
   
   const FALLBACK_MODEL_URL = golaPadreAsset.url;
-  const currentPattern = patterns?.find(p => p.id === selectedPattern);
+  const currentPattern = React.useMemo(() => patterns?.find(p => p.id === selectedPattern), [patterns, selectedPattern]);
   const modelUrl = currentModel?.glb_url || FALLBACK_MODEL_URL;
 
   // Encontrar as zonas baseadas na UV Matriz vinculada à estampa
-  const activeUVMatriz = uvMatrices?.find(m => m.id === currentPattern?.uv_matriz_id);
+  const activeUVMatriz = React.useMemo(() => uvMatrices?.find(m => m.id === currentPattern?.uv_matriz_id), [uvMatrices, currentPattern]);
+  
   // Converter as zonas para o formato esperado pelo viewer
-  const rawZones = activeUVMatriz?.zones as any[] || [];
-  const currentZones = rawZones.map(z => ({
-    id: z.id,
-    name: z.name,
-    uv: z.uv || [0, 0],
-    position: z.position || [0, 0, 0]
-  }));
+  const currentZones = React.useMemo(() => {
+    const rawZones = activeUVMatriz?.zones as any[] || [];
+    return rawZones.map(z => ({
+      id: z.id,
+      name: z.name,
+      uv: z.uv || [0, 0],
+      position: z.position || [0, 0, 0]
+    }));
+  }, [activeUVMatriz]);
+
+  const textureUrl = React.useMemo(() => 
+    currentPattern?.svg_url || currentPattern?.image_url || undefined
+  , [currentPattern]);
 
   console.log('=== CURRENT PATTERN ===', currentPattern);
   console.log('=== ACTIVE UV MATRIZ ===', activeUVMatriz);
@@ -405,7 +411,7 @@ export default function Simulator() {
                 />
               ))
             ) : activeTab === 'Cores' ? (
-              patterns?.map(pattern => (
+              patterns?.filter(p => p.image_url).map(pattern => (
                 <PatternCard 
                   key={pattern.id}
                   name={pattern.name}
@@ -577,7 +583,7 @@ export default function Simulator() {
             <ThreeDViewer 
               ref={viewerRef}
               modelUrl={modelUrl} 
-              textureUrl={currentPattern?.svg_url || currentPattern?.image_url || undefined}
+              textureUrl={textureUrl}
               zones={currentZones as any}
             />
 

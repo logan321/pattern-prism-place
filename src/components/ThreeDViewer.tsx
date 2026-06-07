@@ -16,8 +16,26 @@ interface Zone {
 
 function Model({ url, textureUrl, zones = [] }: { url: string; textureUrl?: string; zones?: Zone[] }) {
   const { scene } = useGLTF(url);
-  const clonedScene = React.useMemo(() => scene.clone(), [scene, url]);
-  const [uvTexture, setUvTexture] = useState<THREE.CanvasTexture | null>(null);
+  const clonedScene = React.useMemo(() => {
+    const clone = scene.clone();
+    // Preparar materiais para aceitar emissive (overlay)
+    clone.traverse((child) => {
+      if ((child as THREE.Mesh).isMesh) {
+        const mesh = child as THREE.Mesh;
+        if (mesh.material) {
+          const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+          materials.forEach((mat) => {
+            if (mat instanceof THREE.MeshStandardMaterial || mat instanceof THREE.MeshPhysicalMaterial) {
+              mat.emissive = new THREE.Color(0xffffff);
+              mat.emissiveIntensity = 0; // Começa desligado
+            }
+          });
+        }
+      }
+    });
+    return clone;
+  }, [scene]);
+
   const canvasRef = useRef<HTMLCanvasElement>(document.createElement('canvas'));
   
   const name = useCustomizerStore(state => state.name);
@@ -29,22 +47,24 @@ function Model({ url, textureUrl, zones = [] }: { url: string; textureUrl?: stri
   const shieldPosition = useCustomizerStore(state => state.shieldPosition);
   const shieldUrl = useCustomizerStore(state => state.shieldUrl);
 
+  // 1. Efeito para desenhar o Overlay (Nome/Número/Escudo) no Canvas
   useEffect(() => {
+    let isMounted = true;
     const drawOnCanvas = async () => {
       const canvas = canvasRef.current;
-      canvas.width = 2048;
-      canvas.height = 2048;
+      if (canvas.width !== 2048) {
+        canvas.width = 2048;
+        canvas.height = 2048;
+      }
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       
       const getCoord = (uv: [number, number]): [number, number] => {
-        // Inverter V (Y) para o padrão de canvas se necessário, ou manter conforme a matriz exportada
         return [uv[0] * canvas.width, (1 - uv[1]) * canvas.height];
       };
 
-      // Zonas prioritárias da UV Matriz
       const effectiveZones = zones && zones.length > 0 ? zones : [
         { name: 'PEITO DIREITO', uv: [0.35, 0.65] },
         { name: 'PEITO ESQUERDO', uv: [0.65, 0.65] },
@@ -63,11 +83,10 @@ function Model({ url, textureUrl, zones = [] }: { url: string; textureUrl?: stri
       const zoneNomeTopo = findZone('NOME TOPO') || findZone('TOPO');
       const zoneNumeroCentro = findZone('NUMERO CENTRO') || findZone('NÚMERO CENTRO') || findZone('NUMERO') || findZone('NÚMERO');
 
-      // 1. Escudo
+      // Escudo
       const targetShieldZone = shieldPosition === 'left' ? zonePeitoEsquerdo : zonePeitoDireito;
       if (targetShieldZone?.uv) {
         const [sx, sy] = getCoord(targetShieldZone.uv as [number, number]);
-        
         if (shieldUrl) {
           try {
             const img = new Image();
@@ -77,13 +96,13 @@ function Model({ url, textureUrl, zones = [] }: { url: string; textureUrl?: stri
               img.onerror = reject;
               img.src = shieldUrl;
             });
-            const size = 180; // Aumentado para melhor visibilidade no UV
+            if (!isMounted) return;
+            const size = 180;
             ctx.drawImage(img, sx - size / 2, sy - size / 2, size, size);
           } catch (e) {
             console.error("Erro ao carregar escudo:", e);
           }
         } else {
-          // Marcador visual do Escudo (Círculo Vermelho/Branco como solicitado)
           ctx.beginPath();
           ctx.arc(sx, sy, 60, 0, Math.PI * 2);
           ctx.fillStyle = 'white';
@@ -91,7 +110,6 @@ function Model({ url, textureUrl, zones = [] }: { url: string; textureUrl?: stri
           ctx.strokeStyle = '#ff0000';
           ctx.lineWidth = 8;
           ctx.stroke();
-          
           ctx.font = 'bold 24px Arial';
           ctx.fillStyle = '#ff0000';
           ctx.textAlign = 'center';
@@ -100,7 +118,7 @@ function Model({ url, textureUrl, zones = [] }: { url: string; textureUrl?: stri
         }
       }
 
-      // 2. Nome
+      // Nome
       if (name) {
         let targetZone = zoneNomeTopo;
         if (namePosition === 'right') targetZone = zonePeitoDireito;
@@ -112,106 +130,85 @@ function Model({ url, textureUrl, zones = [] }: { url: string; textureUrl?: stri
           ctx.fillStyle = nameColor;
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
-          
-          // Ajuste fino: se estiver no peito e tiver escudo, deslocar para baixo/cima
           const offset = (namePosition === 'right' || namePosition === 'left') ? 100 : 0;
           ctx.fillText(name.toUpperCase(), tx, ty + offset);
         }
       }
 
-      // 3. Número
-      if (number) {
-        if (zoneNumeroCentro?.uv) {
-          const [nx, ny] = getCoord(zoneNumeroCentro.uv as [number, number]);
-          ctx.font = `bold 350px ${nameFont}`;
-          ctx.fillStyle = numberColor;
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText(number, nx, ny);
-        }
+      // Número
+      if (number && zoneNumeroCentro?.uv) {
+        const [nx, ny] = getCoord(zoneNumeroCentro.uv as [number, number]);
+        ctx.font = `bold 350px ${nameFont}`;
+        ctx.fillStyle = numberColor;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(number, nx, ny);
       }
 
-      const texture = new THREE.CanvasTexture(canvas);
-      texture.flipY = false;
-      texture.needsUpdate = true;
-      setUvTexture(texture);
+      const uvTexture = new THREE.CanvasTexture(canvas);
+      uvTexture.flipY = false;
+      uvTexture.needsUpdate = true;
+
+      clonedScene.traverse((child) => {
+        if ((child as THREE.Mesh).isMesh) {
+          const mesh = child as THREE.Mesh;
+          const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+          materials.forEach((mat) => {
+            if (mat instanceof THREE.MeshStandardMaterial || mat instanceof THREE.MeshPhysicalMaterial) {
+              if (mat.emissiveMap) mat.emissiveMap.dispose();
+              mat.emissiveMap = uvTexture;
+              mat.emissiveIntensity = 1.5;
+              mat.needsUpdate = true;
+            }
+          });
+        }
+      });
     };
 
     drawOnCanvas();
-  }, [zones, name, number, nameColor, numberColor, nameFont, namePosition, shieldPosition, shieldUrl]);
+    return () => { isMounted = false; };
+  }, [zones, name, number, nameColor, numberColor, nameFont, namePosition, shieldPosition, shieldUrl, clonedScene]);
 
+  // 2. Efeito para carregar a Estampa Principal (textureUrl)
   useEffect(() => {
-    const applyTexture = (imageSrc: string) => {
-      console.log("Iniciando aplicação de textura:", imageSrc);
-      const textureLoader = new THREE.TextureLoader();
-      textureLoader.crossOrigin = 'anonymous';
-      
-      textureLoader.load(imageSrc, (texture) => {
-        texture.flipY = false;
-        texture.colorSpace = THREE.SRGBColorSpace;
-        texture.generateMipmaps = true;
-        texture.minFilter = THREE.LinearMipmapLinearFilter;
-        texture.magFilter = THREE.LinearFilter;
-        texture.anisotropy = 16;
-        texture.needsUpdate = true;
+    if (!textureUrl) return;
+
+    const loader = new THREE.TextureLoader();
+    loader.crossOrigin = 'anonymous';
+
+    const loadAndApply = (url: string) => {
+      loader.load(url, (tex) => {
+        tex.flipY = false;
+        tex.colorSpace = THREE.SRGBColorSpace;
+        tex.needsUpdate = true;
 
         clonedScene.traverse((child) => {
-          const mesh = child as THREE.Mesh;
-          if (mesh.isMesh && mesh.material) {
+          if ((child as THREE.Mesh).isMesh) {
+            const mesh = child as THREE.Mesh;
             const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
-            console.log("Mesh encontrado:", mesh.name, "Materials count:", materials.length);
             materials.forEach((mat) => {
-              console.log("Processando material:", mat.type, "em mesh:", mesh.name);
               if (mat instanceof THREE.MeshStandardMaterial || mat instanceof THREE.MeshPhysicalMaterial) {
-                // Forçar a textura principal
                 if (mat.map) mat.map.dispose();
-                mat.map = texture;
-                
-                // Aplicar a textura UV de sobreposição (Nome/Número/Escudo)
-                if (uvTexture) {
-                  console.log("Aplicando uvTexture ao material:", mat.name);
-                  mat.emissiveMap = uvTexture;
-                  mat.emissive = new THREE.Color(0xffffff);
-                  mat.emissiveIntensity = 1.5;
-                  mat.needsUpdate = true;
-                } else {
-                  mat.emissiveMap = null;
-                  mat.emissive = new THREE.Color(0x000000);
-                  mat.emissiveIntensity = 0;
-                }
-                
-                mat.transparent = true;
-                mat.alphaTest = 0.5;
-                mat.roughness = 0.5;
-                mat.metalness = 0;
+                mat.map = tex;
                 mat.needsUpdate = true;
               }
             });
           }
         });
-      }, undefined, (err) => {
-        console.error("Erro ao carregar textura:", err);
       });
     };
 
-    if (textureUrl) {
-      if (textureUrl.endsWith('.svg') || textureUrl.includes('svg')) {
-        fetch(textureUrl).then(r => r.blob()).then(blob => applyTexture(URL.createObjectURL(blob)));
-      } else {
-        applyTexture(textureUrl);
-      }
+    if (textureUrl.includes('svg')) {
+      fetch(textureUrl)
+        .then(r => r.blob())
+        .then(blob => loadAndApply(URL.createObjectURL(blob)))
+        .catch(err => console.error("Erro ao carregar SVG:", err));
+    } else {
+      loadAndApply(textureUrl);
     }
-  }, [clonedScene, textureUrl, uvTexture]);
+  }, [textureUrl, clonedScene]);
 
-
-  return (
-    <group>
-      <primitive object={clonedScene} />
-      
-      {/* Removemos o mapeamento redundante das zonas para evitar duplicação no 3D */}
-
-    </group>
-  );
+  return <primitive object={clonedScene} />;
 }
 
 function FallbackError({ error }: { error: any }) {

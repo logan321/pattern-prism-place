@@ -34,7 +34,7 @@ interface AppContextType {
   setActiveSide: (side: 'front' | 'back') => void;
 }
 
-const AppContext = createContext<AppContextType | undefined>(undefined);
+export const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export function AppContextProvider({ children }: { children: ReactNode }) {
   const [zones, setZones] = useState<Zone3D[]>([]);

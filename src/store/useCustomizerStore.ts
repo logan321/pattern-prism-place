@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { UvLayer, UvZoneRect } from '@/lib/textureGenerator';
 
 interface CustomizerState {
   selectedModel: string | null;
@@ -6,8 +7,8 @@ interface CustomizerState {
   syncShirtShorts: boolean;
   activeTab: string;
   subTab: string;
-  
-  // Customization settings
+
+  // Customização básica (legado)
   name: string;
   number: string;
   formation: string;
@@ -15,14 +16,20 @@ interface CustomizerState {
   numberColor: string;
   nameFont: string;
   shieldUrl: string | null;
-  
+
+  // ─── Sistema UV Zones (novo) ───────────────────────────────────────────
+  uvMapZones: Record<string, UvZoneRect>;   // zonas vindas do banco (pixels absolutos)
+  uvMapDims: { w: number | null; h: number | null }; // dimensões do UV map
+  uvLayers: UvLayer[];                       // layers ativos (texto / imagem)
+  uvTextDrafts: Record<string, string>;      // rascunho live do texto (antes do debounce)
+  uvBaseUrl: string | null;                  // URL da imagem base do UV map
+
   setSelectedModel: (id: string | null) => void;
   setSelectedPattern: (id: string | null) => void;
   setSyncShirtShorts: (sync: boolean) => void;
   setActiveTab: (tab: string) => void;
   setSubTab: (tab: string) => void;
-  
-  // Customization setters
+
   setName: (name: string) => void;
   setNumber: (num: string) => void;
   setFormation: (formation: string) => void;
@@ -30,6 +37,14 @@ interface CustomizerState {
   setNumberColor: (color: string) => void;
   setNameFont: (font: string) => void;
   setShieldUrl: (url: string | null) => void;
+
+  // UV Zones setters
+  setUvMapZones: (zones: Record<string, UvZoneRect>) => void;
+  setUvMapDims: (dims: { w: number | null; h: number | null }) => void;
+  setUvLayers: (layers: UvLayer[] | ((prev: UvLayer[]) => UvLayer[])) => void;
+  setUvTextDrafts: (drafts: Record<string, string> | ((prev: Record<string, string>) => Record<string, string>)) => void;
+  setUvBaseUrl: (url: string | null) => void;
+  clearUvState: () => void;
 }
 
 export const useCustomizerStore = create<CustomizerState>((set) => ({
@@ -38,7 +53,7 @@ export const useCustomizerStore = create<CustomizerState>((set) => ({
   syncShirtShorts: true,
   activeTab: 'Modelo',
   subTab: 'Camisa',
-  
+
   name: 'SEU NOME',
   number: '10',
   formation: 'escudo-esq-nome-dir',
@@ -46,7 +61,14 @@ export const useCustomizerStore = create<CustomizerState>((set) => ({
   numberColor: '#ffffff',
   nameFont: 'Arial',
   shieldUrl: null,
-  
+
+  // UV zones (inicialmente vazio)
+  uvMapZones: {},
+  uvMapDims: { w: null, h: null },
+  uvLayers: [],
+  uvTextDrafts: {},
+  uvBaseUrl: null,
+
   setSelectedModel: (id) => set({ selectedModel: id }),
   setSelectedPattern: (id) => set({ selectedPattern: id }),
   setSyncShirtShorts: (sync) => set({ syncShirtShorts: sync }),
@@ -60,4 +82,21 @@ export const useCustomizerStore = create<CustomizerState>((set) => ({
   setNumberColor: (numberColor) => set({ numberColor }),
   setNameFont: (nameFont) => set({ nameFont }),
   setShieldUrl: (shieldUrl) => set({ shieldUrl }),
+
+  setUvMapZones: (uvMapZones) => set({ uvMapZones }),
+  setUvMapDims: (uvMapDims) => set({ uvMapDims }),
+  setUvLayers: (layers) => set((state) => ({
+    uvLayers: typeof layers === 'function' ? layers(state.uvLayers) : layers
+  })),
+  setUvTextDrafts: (drafts) => set((state) => ({
+    uvTextDrafts: typeof drafts === 'function' ? drafts(state.uvTextDrafts) : drafts
+  })),
+  setUvBaseUrl: (uvBaseUrl) => set({ uvBaseUrl }),
+  clearUvState: () => set({
+    uvMapZones: {},
+    uvMapDims: { w: null, h: null },
+    uvLayers: [],
+    uvTextDrafts: {},
+    uvBaseUrl: null,
+  }),
 }));

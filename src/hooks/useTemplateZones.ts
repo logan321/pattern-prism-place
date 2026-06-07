@@ -1,13 +1,11 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Zone3D } from '@/context/AppContext';
-import { useToast } from '@/components/ui/use-toast';
 
 export const useTemplateZones = () => {
   const [zones, setZones] = useState<Zone3D[]>([]);
   const [templateId, setTemplateId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const { toast } = useToast();
 
   const loadTemplate = useCallback(async (id: string) => {
     setLoading(true);
@@ -36,24 +34,20 @@ export const useTemplateZones = () => {
           rotation3d: z.rotation_3d,
           pathData: z.path_data as { x: number; y: number }[] | undefined,
           shared: z.shared,
+          patchOnly: z.patch_only || false,
         }));
         setZones(mappedZones);
       }
     } catch (error: any) {
-      toast({
-        title: "Erro ao carregar template",
-        description: error.message,
-        variant: "destructive",
-      });
+      console.error("Erro ao carregar template:", error.message);
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, []);
 
   const saveTemplate = useCallback(async (id: string, newZones: Zone3D[]) => {
     setLoading(true);
     try {
-      // First, delete existing zones for this template
       const { error: deleteError } = await supabase
         .from('template_zones')
         .delete()
@@ -61,7 +55,6 @@ export const useTemplateZones = () => {
 
       if (deleteError) throw deleteError;
 
-      // Prepare data for insert
       const insertData = newZones.map(z => ({
         template_id: id,
         name: z.name,
@@ -69,14 +62,15 @@ export const useTemplateZones = () => {
         x_percent: z.xPercent,
         y_percent: z.yPercent,
         width_percent: z.widthPercent,
-        height_percent: z.heightPercent,
+        height_percent: z.height_percent,
         rotation: z.rotation,
         position_3d: z.position3d,
-        normal_3d: z.normal3d,
+        normal_3d: z.normal_3d,
         size_3d: z.size3d,
-        rotation_3d: z.rotation3d,
-        path_data: z.pathData,
+        rotation_3d: z.rotation_3d,
+        path_data: z.path_data,
         shared: z.shared,
+        patch_only: z.patchOnly,
       }));
 
       const { error: insertError } = await supabase
@@ -85,21 +79,13 @@ export const useTemplateZones = () => {
 
       if (insertError) throw insertError;
 
-      toast({
-        title: "Sucesso",
-        description: "Template salvo com sucesso!",
-      });
       setZones(newZones);
     } catch (error: any) {
-      toast({
-        title: "Erro ao salvar template",
-        description: error.message,
-        variant: "destructive",
-      });
+      console.error("Erro ao salvar template:", error.message);
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, []);
 
   const createDefaultZones = useCallback(() => {
     const defaultZones: Zone3D[] = [
@@ -113,6 +99,7 @@ export const useTemplateZones = () => {
         heightPercent: 10,
         rotation: 0,
         shared: false,
+        patchOnly: false,
       },
       {
         id: crypto.randomUUID(),
@@ -124,6 +111,7 @@ export const useTemplateZones = () => {
         heightPercent: 10,
         rotation: 0,
         shared: false,
+        patchOnly: false,
       },
       {
         id: crypto.randomUUID(),
@@ -135,6 +123,7 @@ export const useTemplateZones = () => {
         heightPercent: 20,
         rotation: 0,
         shared: false,
+        patchOnly: false,
       }
     ];
     setZones(defaultZones);

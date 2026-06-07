@@ -51,6 +51,36 @@ function ModelWithUVClick({ url, onPointSelect, zones }: {
     return clone;
   }, [scene]);
 
+  // Limpar materiais para modo neutro no editor para não confundir com a estampa
+  useEffect(() => {
+    if (!clonedScene) return;
+    
+    clonedScene.traverse((obj) => {
+      if ((obj as THREE.Mesh).isMesh) {
+        const mesh = obj as THREE.Mesh;
+        const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+        
+        mats.forEach((mat: any) => {
+          if (mat instanceof THREE.MeshStandardMaterial) {
+            // Remover TODAS as texturas — queremos ver só a geometria limpa
+            mat.map = null;
+            mat.normalMap = null;
+            mat.roughnessMap = null;
+            mat.metalnessMap = null;
+            mat.aoMap = null;
+            mat.emissiveMap = null;
+            mat.emissive = new THREE.Color(0x000000);
+            mat.emissiveIntensity = 0;
+            
+            // Cor neutra para ver bem o modelo
+            mat.color = new THREE.Color(0xcccccc);
+            mat.needsUpdate = true;
+          }
+        });
+      }
+    });
+  }, [clonedScene]);
+
   useEffect(() => {
     const canvas = canvasRef.current;
     canvas.width = 2048; // Alta resolução para precisão UV

@@ -166,7 +166,7 @@ function Model({
         const mesh = child as THREE.Mesh;
         const meshName = mesh.name.toLowerCase();
         
-        // Pular aviamentos (ziper, botões, etc) ao aplicar o emissive (nomes/números)
+        // Pular aviamentos ao aplicar o emissive (nomes/números)
         const isHardware = meshName.includes('zipper') || 
                           meshName.includes('ziper') || 
                           meshName.includes('button') || 
@@ -186,7 +186,7 @@ function Model({
             mat.emissiveMap = uvTexture;
             mat.emissive.set(0xffffff); 
             mat.emissiveIntensity = 1.0;
-            mat.transparent = true;
+            // REMOVIDO mat.transparent = true que podia afetar a renderização do tecido
             mat.needsUpdate = true;
           }
         });

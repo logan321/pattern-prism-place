@@ -258,9 +258,9 @@ export default function ZoneEditor({ referenceUrl, onClose }: any) {
           
           {/* Zoom Controls Overlay */}
           <div className="absolute bottom-8 right-8 flex flex-col gap-2">
-             <button onClick={() => setZoom(prev => Math.min(prev + 0.1, 2))} className="p-3 bg-[#111] text-white rounded-xl hover:bg-[#222] border border-[#333] shadow-xl"><Maximize className="w-5 h-5"/></button>
-             <button onClick={() => setZoom(prev => Math.max(prev - 0.1, 0.1))} className="p-3 bg-[#111] text-white rounded-xl hover:bg-[#222] border border-[#333] shadow-xl"><RotateCcw className="w-5 h-5"/></button>
-             <div className="bg-[#111] px-4 py-2 rounded-xl border border-[#333] text-white text-[10px] font-bold text-center">
+             <button onClick={() => setZoom(prev => Math.min(prev + 0.1, 2))} className="p-3 bg-[#161616] text-white rounded-xl hover:bg-[#222] border border-[#333] shadow-xl"><Maximize className="w-5 h-5"/></button>
+             <button onClick={() => setZoom(prev => Math.max(prev - 0.1, 0.1))} className="p-3 bg-[#161616] text-white rounded-xl hover:bg-[#222] border border-[#333] shadow-xl"><RotateCcw className="w-5 h-5"/></button>
+             <div className="bg-[#161616] px-4 py-2 rounded-xl border border-[#333] text-white text-[10px] font-bold text-center">
                 {Math.round(zoom * 100)}%
              </div>
           </div>
@@ -372,7 +372,7 @@ export default function ZoneEditor({ referenceUrl, onClose }: any) {
       {/* Preview Modal */}
       {showPreview && previewUrl && (
         <div className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center p-10 backdrop-blur-md animate-in zoom-in-95 duration-200">
-           <div className="bg-[#111] rounded-3xl overflow-hidden max-w-5xl w-full flex flex-col max-h-full border border-white/5 shadow-[0_0_100px_rgba(0,0,0,0.8)]">
+           <div className="bg-[#161616] rounded-3xl overflow-hidden max-w-5xl w-full flex flex-col max-h-full border border-white/5 shadow-[0_0_100px_rgba(0,0,0,0.8)]">
               <div className="p-6 border-b border-white/5 flex justify-between items-center bg-[#161616]">
                  <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-orange-600/10 rounded-xl flex items-center justify-center">

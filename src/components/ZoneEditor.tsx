@@ -1,16 +1,6 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Trash2, Plus, Save, X, Move, Maximize, RotateCcw } from 'lucide-react';
-
-interface UVZone {
-  id: string;
-  name: string;
-  type: 'text' | 'logo' | 'sponsor' | 'number';
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  rotation: number;
-}
+import React, { useState, useRef } from 'react';
+import { Trash2, Plus, Save, X, Move, Maximize, RotateCcw, Eye, Layers } from 'lucide-react';
+import { generateFinalTexture, UVZone } from '../lib/textureGenerator';
 
 const TIPOS_ZONA = [
   { id: 'logo', label: 'Logo / Escudo' },
@@ -23,7 +13,10 @@ export default function ZoneEditor({ referenceUrl, initialZones = [], onSave, on
   const [zonas, setZonas] = useState<UVZone[]>(initialZones);
   const [idSelecionado, setIdSelecionado] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [zoom, setZoom] = useState(0.3); // Zoom ajustado para visualização inicial
+  const [zoom, setZoom] = useState(0.3);
+  const [showPreview, setShowPreview] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
   
   const canvasSize = 2048;
   const zonaSelecionada = zonas.find(z => z.id === idSelecionado);
@@ -33,7 +26,7 @@ export default function ZoneEditor({ referenceUrl, initialZones = [], onSave, on
   };
 
   const handleCanvasClick = (e: React.MouseEvent) => {
-    if (idSelecionado) return; // Don't create if one is selected, we might be dragging
+    if (idSelecionado) return;
     
     const rect = e.currentTarget.getBoundingClientRect();
     const x = (e.clientX - rect.left) / (rect.width / canvasSize);
@@ -54,6 +47,54 @@ export default function ZoneEditor({ referenceUrl, initialZones = [], onSave, on
     setIdSelecionado(novaId);
   };
 
+  const handleGeneratePreview = async () => {
+    setIsGenerating(true);
+    try {
+      const customizations = {
+        name: 'TESTE',
+        number: '10',
+        shieldUrl: 'https://placehold.co/400x400/ea580c/white?text=LOGO',
+        nameColor: '#ffffff',
+        numberColor: '#ffffff',
+        nameFont: 'Arial'
+      };
+
+      const canvas = await generateFinalTexture({
+        baseTextureUrl: referenceUrl,
+        zones: zonas,
+        customizations
+      });
+
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.save();
+        ctx.strokeStyle = '#ff0000';
+        ctx.lineWidth = 10;
+        ctx.strokeRect(50, 50, 200, 200);
+        ctx.fillStyle = '#ff0000';
+        ctx.font = 'bold 60px Arial';
+        ctx.fillText('VALIDAÇÃO UV MATRIX', 270, 110);
+        
+        // Draw some lines to help see corners
+        ctx.beginPath();
+        ctx.moveTo(0,0); ctx.lineTo(100, 100);
+        ctx.moveTo(2048, 0); ctx.lineTo(1948, 100);
+        ctx.moveTo(0, 2048); ctx.lineTo(100, 1948);
+        ctx.moveTo(2048, 2048); ctx.lineTo(1948, 1948);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      setPreviewUrl(canvas.toDataURL());
+      setShowPreview(true);
+    } catch (err) {
+      console.error('Error generating preview:', err);
+      alert('Erro ao gerar preview');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   return (
     <div className="fixed inset-0 bg-[#0a0a0a] z-[60] flex flex-col font-sans">
       <header className="flex justify-between items-center p-4 bg-[#111] border-b border-[#222]">
@@ -62,6 +103,13 @@ export default function ZoneEditor({ referenceUrl, initialZones = [], onSave, on
           <span className="text-gray-500 text-xs">Clique no mapa para posicionar áreas</span>
         </div>
         <div className="flex gap-2">
+          <button 
+            onClick={handleGeneratePreview} 
+            disabled={isGenerating}
+            className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-6 rounded-xl flex items-center gap-2 transition-all disabled:opacity-50"
+          >
+            <Eye className="w-4 h-4" /> {isGenerating ? 'Gerando...' : 'Validar Textura'}
+          </button>
           <button onClick={() => onSave(zonas)} className="bg-orange-600 hover:bg-orange-700 text-white py-2 px-6 rounded-xl flex items-center gap-2 transition-all">
             <Save className="w-4 h-4" /> Salvar Gabarito
           </button>
@@ -115,8 +163,12 @@ export default function ZoneEditor({ referenceUrl, initialZones = [], onSave, on
               <img 
                 src={referenceUrl} 
                 alt="UV Template" 
-                className="absolute inset-0 w-full h-full object-contain pointer-events-none opacity-80"
-                style={{ mixBlendMode: 'screen' }}
+                className="absolute inset-0 w-full h-full object-contain pointer-events-none"
+                style={{ 
+                  filter: 'invert(1) contrast(1.2)', 
+                  opacity: 0.6,
+                  backgroundColor: '#ffffff'
+                }}
               />
             )}
             
@@ -125,6 +177,7 @@ export default function ZoneEditor({ referenceUrl, initialZones = [], onSave, on
               backgroundImage: 'linear-gradient(#444 1px, transparent 1px), linear-gradient(90deg, #444 1px, transparent 1px)',
               backgroundSize: `${(canvasSize * zoom) / 20}px ${(canvasSize * zoom) / 20}px`
             }}></div>
+            
             {zonas.map(z => {
               const isSelected = z.id === idSelecionado;
               return (
@@ -278,6 +331,40 @@ export default function ZoneEditor({ referenceUrl, initialZones = [], onSave, on
           )}
         </div>
       </div>
+
+      {/* Modal de Preview */}
+      {showPreview && previewUrl && (
+        <div className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-10">
+          <div className="bg-[#111] rounded-2xl overflow-hidden max-w-4xl w-full flex flex-col max-h-full border border-white/10 shadow-2xl">
+            <div className="p-4 border-b border-white/5 flex justify-between items-center">
+              <div className="flex items-center gap-2">
+                <Layers className="w-5 h-5 text-orange-500" />
+                <h3 className="text-white font-bold">Preview da Textura Composta (2048x2048)</h3>
+              </div>
+              <button onClick={() => setShowPreview(false)} className="text-gray-400 hover:text-white">
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-auto p-4 bg-[#050505] flex items-center justify-center">
+              <div className="relative">
+                <img src={previewUrl} alt="Preview Final" className="max-w-full h-auto shadow-2xl border border-white/5" />
+                <div className="absolute top-4 left-4 bg-red-600 text-white text-[10px] font-bold px-2 py-1 rounded">
+                  TEXTURA FINAL GERADA
+                </div>
+              </div>
+            </div>
+            <div className="p-6 bg-[#161616] flex justify-between items-center">
+              <p className="text-gray-500 text-xs italic">
+                Esta é a imagem exata que será enviada para o modelo 3D. 
+                Se o texto "TESTE" e o retângulo vermelho estiverem aqui, a composição está funcionando.
+              </p>
+              <button onClick={() => setShowPreview(false)} className="bg-orange-600 text-white px-8 py-2 rounded-xl font-bold">
+                Entendido
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

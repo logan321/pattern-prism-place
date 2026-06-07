@@ -388,42 +388,84 @@ export default function Simulator() {
               <div className="col-span-2 space-y-4">
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold text-gray-500 uppercase">Nome</label>
-                  <input 
-                    type="text" 
-                    value={customName}
-                    onChange={(e) => setName(e.target.value)}
-                    className="w-full border rounded p-2 text-sm"
-                    placeholder="DIGITE O NOME"
-                  />
+                  <div className="flex gap-2">
+                    <input 
+                      type="text" 
+                      value={customName}
+                      onChange={(e) => setName(e.target.value)}
+                      className="flex-1 border rounded p-2 text-sm"
+                      placeholder="DIGITE O NOME"
+                    />
+                    <input 
+                      type="color" 
+                      value={useCustomizerStore.getState().nameColor}
+                      onChange={(e) => useCustomizerStore.getState().setNameColor(e.target.value)}
+                      className="w-10 h-9 p-1 rounded border cursor-pointer"
+                    />
+                  </div>
                 </div>
+
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold text-gray-500 uppercase">Número</label>
-                  <input 
-                    type="text" 
-                    value={customNumber}
-                    onChange={(e) => setNumber(e.target.value)}
-                    className="w-full border rounded p-2 text-sm"
-                    placeholder="00"
-                  />
+                  <div className="flex gap-2">
+                    <input 
+                      type="text" 
+                      value={customNumber}
+                      onChange={(e) => setNumber(e.target.value)}
+                      className="flex-1 border rounded p-2 text-sm"
+                      placeholder="00"
+                    />
+                    <input 
+                      type="color" 
+                      value={useCustomizerStore.getState().numberColor}
+                      onChange={(e) => useCustomizerStore.getState().setNumberColor(e.target.value)}
+                      className="w-10 h-9 p-1 rounded border cursor-pointer"
+                    />
+                  </div>
                 </div>
+
                 <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase">Formação</label>
+                  <label className="text-[10px] font-bold text-gray-500 uppercase">Fonte</label>
+                  <select 
+                    value={useCustomizerStore.getState().nameFont}
+                    onChange={(e) => useCustomizerStore.getState().setNameFont(e.target.value)}
+                    className="w-full border rounded p-2 text-sm"
+                  >
+                    <option value="Arial">Arial</option>
+                    <option value="Verdana">Verdana</option>
+                    <option value="Times New Roman">Times New Roman</option>
+                    <option value="Courier New">Courier New</option>
+                    <option value="Impact">Impact</option>
+                  </select>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-gray-500 uppercase">Alinhamento / Posição</label>
                   <div className="grid grid-cols-1 gap-2">
                     <button 
                       onClick={() => setFormation('left-shield')}
-                      className="text-[10px] border p-2 rounded hover:bg-orange-50"
+                      className={cn(
+                        "text-[10px] border p-2 rounded transition-colors",
+                        useCustomizerStore.getState().namePosition === 'right' ? "bg-orange-50 border-orange-500 text-orange-700" : "hover:bg-gray-50"
+                      )}
                     >
                       NOME DIR / ESCUDO ESQ
                     </button>
                     <button 
                       onClick={() => setFormation('right-shield')}
-                      className="text-[10px] border p-2 rounded hover:bg-orange-50"
+                      className={cn(
+                        "text-[10px] border p-2 rounded transition-colors",
+                        useCustomizerStore.getState().namePosition === 'left' ? "bg-orange-50 border-orange-500 text-orange-700" : "hover:bg-gray-50"
+                      )}
                     >
                       NOME ESQ / ESCUDO DIR
                     </button>
                     <button 
                       onClick={() => setFormation('center-name')}
-                      className="text-[10px] border p-2 rounded hover:bg-orange-50"
+                      className={cn(
+                        "text-[10px] border p-2 rounded transition-colors",
+                        useCustomizerStore.getState().namePosition === 'center' ? "bg-orange-50 border-orange-500 text-orange-700" : "hover:bg-gray-50"
+                      )}
                     >
                       NOME CENTRAL
                     </button>

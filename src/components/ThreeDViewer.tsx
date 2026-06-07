@@ -21,12 +21,7 @@ function Model({ url, textureUrl, zones = [] }: { url: string; textureUrl?: stri
   
   // Efeito para criar a textura de zonas baseada em UV
   useEffect(() => {
-    if (!zones.length) {
-      setUvTexture(null);
-      return;
-    }
-
-    console.log("Criando textura UV para zones:", zones);
+    console.log("Criando textura UV para zones e texto:", { zones, name, number, nameColor, numberColor, nameFont });
     const canvas = document.createElement('canvas');
     canvas.width = 2048;
     canvas.height = 2048;
@@ -35,13 +30,13 @@ function Model({ url, textureUrl, zones = [] }: { url: string; textureUrl?: stri
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
+    // Desenhar Zonas
     zones.forEach((zone) => {
       if (zone.uv) {
         console.log(`Renderizando visualmente a zona na textura UV: ${zone.name}`, zone.uv);
         const x = zone.uv[0] * canvas.width;
         const y = (1 - zone.uv[1]) * canvas.height;
 
-        // Desenhar círculo
         ctx.beginPath();
         ctx.arc(x, y, 15, 0, Math.PI * 2);
         ctx.fillStyle = '#ea580c';
@@ -50,7 +45,6 @@ function Model({ url, textureUrl, zones = [] }: { url: string; textureUrl?: stri
         ctx.lineWidth = 4;
         ctx.stroke();
 
-        // Texto
         ctx.font = 'bold 24px Arial';
         ctx.fillStyle = 'white';
         ctx.textAlign = 'center';
@@ -58,10 +52,29 @@ function Model({ url, textureUrl, zones = [] }: { url: string; textureUrl?: stri
       }
     });
 
+    // Desenhar Nome e Número se houver zonas específicas ou posições padrão
+    // Para teste, vamos desenhar o nome e número em posições fixas que costumam ser as "costas" em muitos modelos UV
+    
+    if (name) {
+      ctx.font = `bold 120px ${nameFont}`;
+      ctx.fillStyle = nameColor;
+      ctx.textAlign = 'center';
+      // Exemplo: Costas (ajustar conforme UV do modelo real)
+      ctx.fillText(name.toUpperCase(), canvas.width * 0.5, canvas.height * 0.2);
+    }
+
+    if (number) {
+      ctx.font = `bold 300px ${nameFont}`;
+      ctx.fillStyle = numberColor;
+      ctx.textAlign = 'center';
+      // Exemplo: Costas (ajustar conforme UV do modelo real)
+      ctx.fillText(number, canvas.width * 0.5, canvas.height * 0.45);
+    }
+
     const texture = new THREE.CanvasTexture(canvas);
     texture.flipY = false;
     setUvTexture(texture);
-  }, [zones]);
+  }, [zones, name, number, nameColor, numberColor, nameFont]);
 
   useEffect(() => {
     const applyTexture = (imageSrc: string) => {

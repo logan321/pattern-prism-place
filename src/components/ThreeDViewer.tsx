@@ -46,10 +46,12 @@ function Model({ url, textureUrl, zones = [] }: { url: string; textureUrl?: stri
       };
 
       // Zonas
-      const nameZoneRight = zones.find(z => z.name.toUpperCase() === 'PEITO DIREITO');
-      const nameZoneLeft = zones.find(z => z.name.toUpperCase() === 'PEITO ESQUERDO');
-      const nameZoneTop = zones.find(z => z.name.toUpperCase() === 'NOME TOPO');
-      const numberZoneCenter = zones.find(z => z.name.toUpperCase().includes('NUMERO CENTRO') || z.name.toUpperCase().includes('NÚMERO CENTRO'));
+      const findZone = (search: string) => zones.find(z => z.name.toUpperCase().includes(search.toUpperCase()));
+      
+      const nameZoneRight = findZone('PEITO DIREITO') || findZone('DIREITO');
+      const nameZoneLeft = findZone('PEITO ESQUERDO') || findZone('ESQUERDO');
+      const nameZoneTop = findZone('NOME TOPO') || findZone('TOPO');
+      const numberZoneCenter = findZone('NUMERO CENTRO') || findZone('NÚMERO CENTRO') || findZone('NUMERO') || findZone('NÚMERO');
 
       // 1. Escudo
       const targetShieldZone = shieldPosition === 'left' ? nameZoneLeft : nameZoneRight;

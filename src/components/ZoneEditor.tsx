@@ -105,8 +105,18 @@ function ModeloComTextura({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Limpa com fundo transparente para não esconder a textura base
+    // Limpa com fundo transparente
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // TESTE UV: Desenha uma borda e uma cruz em todo o espaço UV
+    ctx.strokeStyle = 'rgba(255, 0, 0, 0.5)';
+    ctx.lineWidth = 20;
+    ctx.strokeRect(0, 0, canvas.width, canvas.height);
+    ctx.beginPath();
+    ctx.moveTo(0, 0); ctx.lineTo(canvas.width, canvas.height);
+    ctx.moveTo(canvas.width, 0); ctx.lineTo(0, canvas.height);
+    ctx.stroke();
+    
     console.log('DEBUG: Desenhando zonas no canvas:', zonas.length);
     
     // Desenha cada zona

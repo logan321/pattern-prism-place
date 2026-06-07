@@ -1028,7 +1028,7 @@ export default function Admin() {
                   disabled={isUploading}
                   className="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 rounded-xl transition-all shadow-md disabled:opacity-50"
                 >
-                  {isUploading ? 'Enviando...' : 'Cadastrar Estampa'}
+                  {isUploading ? 'Enviando...' : (editingPattern ? 'Salvar Alterações' : 'Cadastrar Estampa')}
                 </button>
               </div>
             </form>

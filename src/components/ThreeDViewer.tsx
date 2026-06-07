@@ -155,9 +155,9 @@ function Model({ url, textureUrl, zones = [] }: { url: string; textureUrl?: stri
           const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
           materials.forEach((mat) => {
             if (mat instanceof THREE.MeshStandardMaterial || mat instanceof THREE.MeshPhysicalMaterial) {
-              if (mat.emissiveMap) mat.emissiveMap.dispose();
               mat.emissiveMap = uvTexture;
-              mat.emissiveIntensity = 1.5;
+              mat.emissive.set(0xffffff); // Garante que a cor emissiva seja branca para mostrar a textura
+              mat.emissiveIntensity = 1.0;
               mat.needsUpdate = true;
             }
           });

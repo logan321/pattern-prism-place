@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Trash2, Save, X, Move, Maximize, RotateCcw, Eye, Layers, Square, Crosshair } from 'lucide-react';
+import { Trash2, Save, X, Move, Maximize, RotateCcw, Eye, Layers, Square, Crosshair, Target } from 'lucide-react';
 import { UVZone, generateFinalTexture } from '../lib/textureGenerator';
 
 const TIPOS_ZONA = [
@@ -10,6 +10,10 @@ const TIPOS_ZONA = [
 ];
 
 export default function ZoneEditor({ referenceUrl, initialZones = [], onSave, onClose }: any) {
+  useEffect(() => {
+    console.log('ZoneEditor: referenceUrl is', referenceUrl);
+    console.log('ZoneEditor: initialZones count:', initialZones.length);
+  }, [referenceUrl, initialZones]);
   const [zonas, setZonas] = useState<UVZone[]>(initialZones);
   const [idSelecionado, setIdSelecionado] = useState<string | null>(null);
   const [zoom, setZoom] = useState(0.4);
@@ -139,25 +143,38 @@ export default function ZoneEditor({ referenceUrl, initialZones = [], onSave, on
         {/* Center - UV Map Canvas */}
         <div className="flex-1 relative bg-[#050505] overflow-auto flex items-center justify-center p-20 select-none">
           <div 
-            className="relative bg-white shadow-[0_0_100px_rgba(0,0,0,0.5)] transition-transform duration-200"
+            className="relative bg-[#f8f8f8] shadow-[0_0_100px_rgba(0,0,0,0.5)] transition-transform duration-200"
             style={{ 
               width: canvasSize * zoom, 
               height: canvasSize * zoom,
-              backgroundImage: 'radial-gradient(#ddd 1px, transparent 1px)',
-              backgroundSize: `${20 * zoom}px ${20 * zoom}px`
+              backgroundImage: `
+                linear-gradient(45deg, #eee 25%, transparent 25%), 
+                linear-gradient(-45deg, #eee 25%, transparent 25%), 
+                linear-gradient(45deg, transparent 75%, #eee 75%), 
+                linear-gradient(-45deg, transparent 75%, #eee 75%)
+              `,
+              backgroundSize: `${20 * zoom}px ${20 * zoom}px`,
+              backgroundPosition: `0 0, 0 ${10 * zoom}px, ${10 * zoom}px -${10 * zoom}px, -${10 * zoom}px 0px`
             }}
             onClick={handleCanvasClick}
           >
-            {referenceUrl && (
+            {referenceUrl ? (
               <img 
                 src={referenceUrl} 
                 alt="UV Matrix" 
-                className="absolute inset-0 w-full h-full object-contain pointer-events-none opacity-80"
+                className="absolute inset-0 w-full h-full object-fill pointer-events-none opacity-90"
                 onError={(e) => {
                   (e.target as HTMLImageElement).style.display = 'none';
-                  console.error('Failed to load UV reference image');
+                  console.error('Failed to load UV reference image:', referenceUrl);
                 }}
               />
+            ) : (
+              <div className="absolute inset-0 flex items-center justify-center bg-gray-50">
+                <div className="text-center p-8">
+                  <Target className="w-12 h-12 text-gray-200 mx-auto mb-4" />
+                  <p className="text-gray-400 text-xs font-bold uppercase tracking-widest">Aguardando Matriz UV...</p>
+                </div>
+              </div>
             )}
             
             {zonas.map(z => {

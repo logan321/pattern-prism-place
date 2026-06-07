@@ -36,7 +36,23 @@ function UVConfigView({ models, queryClient, modelsLoading, onOpenMatrizModal }:
     queryFn: async () => {
       const { data, error } = await supabase.from('uv_matrices').select('*, modelos(nome, glb_url)');
       if (error) throw error;
-      return data;
+      
+      const matricesWithUrls = await Promise.all(data.map(async (m) => {
+        if (!m.reference_url) return m;
+        try {
+          const marker = '/public/textures/';
+          if (m.reference_url.includes(marker)) {
+            const path = m.reference_url.split(marker)[1].split('?')[0];
+            const { data: signedData } = await supabase.storage.from('textures').createSignedUrl(decodeURIComponent(path), 3600);
+            if (signedData) return { ...m, reference_url: signedData.signedUrl };
+          }
+        } catch (err) {
+          console.error('Erro ao gerar URL assinada para matriz:', m.id, err);
+        }
+        return m;
+      }));
+
+      return matricesWithUrls;
     }
   });
 
@@ -64,8 +80,8 @@ function UVConfigView({ models, queryClient, modelsLoading, onOpenMatrizModal }:
       const { error } = await supabase
         .from('uv_matrices')
         .update({ 
-          zones
-          // modelo_id: null // Removido para não perder o vínculo com o modelo ao salvar as zonas
+          zones,
+          modelo_id: selectedModelId || null
         } as any)
         .eq('id', selectedMatrizId);
       
@@ -241,11 +257,15 @@ function UVMatrizImportModal({ isOpen, onClose, queryClient }: { isOpen: boolean
       let referenceUrl = null;
 
       if (referenceFile) {
-        const fileExt = referenceFile.name.split('.').pop();
+        const fileExt = referenceFile.name.split('.').pop()?.toLowerCase();
         const fileName = `${Date.now()}_ref_${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
+        
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from('textures')
-          .upload(fileName, referenceFile);
+          .upload(fileName, referenceFile, {
+            contentType: fileExt === 'svg' ? 'image/svg+xml' : undefined,
+            cacheControl: '3600'
+          });
 
         if (uploadError) throw uploadError;
         referenceUrl = supabase.storage.from('textures').getPublicUrl(uploadData.path).data.publicUrl;
@@ -428,7 +448,22 @@ export default function Admin() {
     queryFn: async () => {
       const { data, error } = await supabase.from('uv_matrices').select('*');
       if (error) throw error;
-      return data;
+      
+      const matricesWithUrls = await Promise.all(data.map(async (m) => {
+        if (!m.reference_url) return m;
+        try {
+          const marker = '/public/textures/';
+          if (m.reference_url.includes(marker)) {
+            const path = m.reference_url.split(marker)[1].split('?')[0];
+            const { data: signedData } = await supabase.storage.from('textures').createSignedUrl(decodeURIComponent(path), 3600);
+            if (signedData) return { ...m, reference_url: signedData.signedUrl };
+          }
+        } catch (err) {
+          console.error('Erro ao gerar URL assinada:', m.id, err);
+        }
+        return m;
+      }));
+      return matricesWithUrls;
     }
   });
 

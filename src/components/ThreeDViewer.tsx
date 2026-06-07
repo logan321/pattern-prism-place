@@ -82,25 +82,34 @@ function Model({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    console.log('DRAW zones:', zones);
-    console.log('DRAW formation:', formation);
-    console.log('DRAW name:', name);
-    console.log('DRAW number:', number);
-    console.log('DRAW shieldUrl:', shieldUrl);
+    // console.log('DRAW zones:', zones);
+    // console.log('DRAW formation:', formation);
+    // console.log('DRAW name:', name);
+    // console.log('DRAW number:', number);
+    // console.log('DRAW shieldUrl:', shieldUrl);
 
     const regras = FORMACOES[formation || ''] ?? FORMACOES['escudo-esq-nome-dir'];
-    console.log('DRAW regras:', regras);
+    // console.log('DRAW regras:', regras);
 
-    const getZona = (posId: string | null) =>
-      posId ? zones?.find(z => z.id === posId || z.name === posId) : null;
+    const getZona = (posId: string | null) => {
+      if (!posId) return null;
+      // Normalizar IDs e nomes para comparação (remover hifens e converter para minúsculo)
+      const normalize = (s: string) => s.toLowerCase().replace(/-/g, '');
+      const normPosId = normalize(posId);
+      
+      return zones?.find(z => 
+        normalize(z.id) === normPosId || 
+        normalize(z.name) === normPosId
+      );
+    };
 
     const logoZone   = getZona(regras.logo);
     const nameZone   = getZona(regras.nome);
-    const numberZone = getZona(regras.number || regras.numero); // Ensure backward compatibility with 'numero'
+    const numberZone = getZona(regras.numero || regras.number);
 
-    console.log('DRAW logoZone:', logoZone);
-    console.log('DRAW nameZone:', nameZone);
-    console.log('DRAW numberZone:', numberZone);
+    // console.log('DRAW logoZone:', logoZone);
+    // console.log('DRAW nameZone:', nameZone);
+    // console.log('DRAW numberZone:', numberZone);
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     

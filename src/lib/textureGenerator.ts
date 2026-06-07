@@ -46,8 +46,9 @@ export async function generateFinalTexture({
     });
     ctx.drawImage(baseImg, 0, 0, canvas.width, canvas.height);
   } else {
-    // Fallback or transparent
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // Fill with white background if no base texture, to ensure model isn't black
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
   }
 
   // 2. Draw Zones

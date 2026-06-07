@@ -294,7 +294,8 @@ function Model({
     }
   }, [textureUrl, clonedScene]);
 
-  return <primitive object={clonedScene} />;
+  // Adicionar uma key ao primitive para forçar o React Three Fiber a remontar se o modelo mudar drasticamente
+  return <primitive key={url} object={clonedScene} />;
 }
 
 function FallbackError({ error }: { error: any }) {

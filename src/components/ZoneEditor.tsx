@@ -1,4 +1,4 @@
-import React, { useState, useRef, Suspense } from 'react';
+import React, { useState, useRef, Suspense, useEffect } from 'react';
 import { Canvas, useThree } from '@react-three/fiber';
 import { OrbitControls, Stage, useGLTF, Html } from '@react-three/drei';
 import * as THREE from 'three';
@@ -13,24 +13,39 @@ interface Zone {
 
 function ModelWithClick({ url, onPointSelect, zones }: { url: string, onPointSelect: (point: THREE.Vector3) => void, zones: Zone[] }) {
   const { scene } = useGLTF(url);
+  const meshRef = useRef<THREE.Group>(null);
+
+  // Garantir que o modelo esteja pronto e centralizado para as coordenadas baterem
+  useEffect(() => {
+    if (scene) {
+      scene.traverse((child) => {
+        if ((child as THREE.Mesh).isMesh) {
+          child.castShadow = true;
+          child.receiveShadow = true;
+        }
+      });
+    }
+  }, [scene]);
   
   return (
-    <group>
+    <group ref={meshRef}>
       <primitive 
         object={scene} 
         onClick={(e: any) => {
           e.stopPropagation();
+          // Importante: usar e.point que é a coordenada no espaço local/global do objeto clicado
+          // O Three-fiber já trata o raycasting corretamente sobre a geometria do mesh
           onPointSelect(e.point);
         }}
       />
       {zones.map((zone) => (
         <group key={zone.id} position={zone.position}>
           <mesh>
-            <sphereGeometry args={[0.02, 16, 16]} />
-            <meshStandardMaterial color="#ea580c" />
+            <sphereGeometry args={[0.015, 16, 16]} />
+            <meshStandardMaterial color="#ea580c" emissive="#ea580c" emissiveIntensity={2} />
           </mesh>
-          <Html distanceFactor={10} position={[0, 0.05, 0]}>
-            <div className="bg-orange-600 text-white text-[10px] px-2 py-0.5 rounded whitespace-nowrap font-bold shadow-lg">
+          <Html distanceFactor={10} position={[0, 0.03, 0]} center>
+            <div className="bg-orange-600 text-white text-[10px] px-2 py-0.5 rounded whitespace-nowrap font-bold shadow-lg pointer-events-none select-none border border-orange-400/50">
               {zone.name}
             </div>
           </Html>
@@ -150,12 +165,12 @@ export default function ZoneEditor({ modelUrl, initialZones = [], onSave, onClos
 
         {/* 3D Canvas */}
         <div className="flex-1 bg-black relative">
-          <Canvas camera={{ position: [0, 0, 2], fov: 45 }}>
+          <Canvas shadows camera={{ position: [0, 0.5, 2], fov: 40 }} dpr={[1, 2]}>
             <Suspense fallback={null}>
               <Stage intensity={0.5} environment="city" shadows="contact" adjustCamera={false}>
                 <ModelWithClick url={modelUrl} onPointSelect={setSelectedPoint} zones={zones} />
               </Stage>
-              <OrbitControls makeDefault />
+              <OrbitControls makeDefault minDistance={0.5} maxDistance={5} />
             </Suspense>
           </Canvas>
           

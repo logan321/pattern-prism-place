@@ -223,15 +223,14 @@ function UVConfigView({ models, queryClient, modelsLoading }: { models: any[] | 
   );
 }
 
-function UVMatrizImportModal({ isOpen, onClose, queryClient, models }: { isOpen: boolean, onClose: () => void, queryClient: any, models: any[] | undefined }) {
+function UVMatrizImportModal({ isOpen, onClose, queryClient }: { isOpen: boolean, onClose: () => void, queryClient: any }) {
   const [name, setName] = useState('');
-  const [modelId, setModelId] = useState('');
   const [isUploading, setIsUploading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !modelId) {
-      alert('Por favor, preencha todos os campos.');
+    if (!name) {
+      alert('Por favor, preencha o nome da matriz.');
       return;
     }
 
@@ -241,17 +240,15 @@ function UVMatrizImportModal({ isOpen, onClose, queryClient, models }: { isOpen:
         .from('uv_matrices')
         .insert({
           name: name,
-          modelo_id: modelId,
           zones: []
         } as any);
 
       if (dbError) throw dbError;
 
       queryClient.invalidateQueries({ queryKey: ['uv_matrices'] });
-      alert('UV Matriz criada com sucesso! Agora configure as zonas 3D.');
+      alert('UV Matriz criada com sucesso! Agora você pode vinculá-la a um modelo 3D no editor.');
       onClose();
       setName('');
-      setModelId('');
     } catch (err: any) {
       alert('Erro: ' + err.message);
     } finally {
@@ -277,30 +274,19 @@ function UVMatrizImportModal({ isOpen, onClose, queryClient, models }: { isOpen:
               type="text" 
               value={name} 
               onChange={e => setName(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none text-sm"
+              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 outline-none text-sm"
               placeholder="Ex: Gola Padre Masculina"
               required
             />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Vincular ao Modelo 3D</label>
-            <select 
-              value={modelId}
-              onChange={e => setModelId(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none text-sm bg-white"
-              required
-            >
-              <option value="">Selecione um modelo...</option>
-              {models?.map(m => (
-                <option key={m.id} value={m.id}>{m.nome}</option>
-              ))}
-            </select>
+            <p className="mt-2 text-[10px] text-gray-400 italic">
+              Apenas o nome é necessário agora. O vínculo com o modelo 3D e as zonas são feitos no Editor 3D.
+            </p>
           </div>
           
           <button 
             type="submit" 
             disabled={isUploading}
-            className="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 rounded-xl transition-all shadow-md disabled:opacity-50"
+            className="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-4 rounded-xl transition-all shadow-md disabled:opacity-50 mt-4"
           >
             {isUploading ? 'Criando...' : 'Criar Matriz'}
           </button>

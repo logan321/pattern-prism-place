@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Trash2, Save, X, Move, Maximize, RotateCcw, Eye, Layers, Square, Crosshair } from 'lucide-react';
+import { Trash2, Save, X, Move, Maximize, RotateCcw, Eye, Layers, Square, Crosshair, Target } from 'lucide-react';
 import { UVZone, generateFinalTexture } from '../lib/textureGenerator';
 
 const TIPOS_ZONA = [

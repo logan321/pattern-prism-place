@@ -811,6 +811,14 @@ export default function Simulator() {
               ref={viewerRef}
               modelUrl={modelUrl} 
               finalTexture={finalTexture}
+              customization={{
+                name: customName,
+                number: customNumber,
+                nameColor,
+                numberColor,
+                nameFont,
+                shieldUrl
+              }}
             />
 
           </div>

@@ -1,28 +1,158 @@
-import React, { Suspense, useEffect, useRef, useImperativeHandle, forwardRef, useMemo } from 'react';
+import React, { Suspense, useEffect, useRef, useImperativeHandle, forwardRef, useMemo, useState, useContext } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { OrbitControls, useGLTF } from '@react-three/drei';
+import { OrbitControls, useGLTF, Decal } from '@react-three/drei';
 import * as THREE from 'three';
 import { gsap } from 'gsap';
+import { AppContext } from '../context/AppContext';
 
 export interface ThreeDViewerRef {
   setView: (view: 'front' | 'back' | 'left' | 'right') => void;
   zoom: (direction: 'in' | 'out') => void;
 }
 
-function Model({ url, finalTexture }: { url: string; finalTexture?: THREE.Texture }) {
-  const { scene } = useGLTF(url);
+interface CustomizationState {
+  name: string;
+  number: string;
+  nameColor: string;
+  numberColor: string;
+  nameFont: string;
+  shieldUrl?: string | null;
+}
 
-  // Clona a cena apenas quando o modelo GLTF (URL) muda
+function ZoneDecal({ zone, customization }: { zone: any; customization: CustomizationState }) {
+  const canvasRef = useRef<HTMLCanvasElement>(document.createElement('canvas'));
+  const [texture, setTexture] = useState<THREE.Texture | null>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    canvas.width = 512;
+    canvas.height = 512;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    if (zone.pathData && zone.pathData.length > 2) {
+      ctx.beginPath();
+      zone.pathData.forEach((point: { x: number; y: number }, index: number) => {
+        const x = (point.x / 100) * canvas.width;
+        const y = (point.y / 100) * canvas.height;
+        if (index === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+      ctx.closePath();
+      ctx.clip();
+    }
+
+    const name = zone.name.toLowerCase();
+    let content = '';
+    let color = customization.nameColor || '#ffffff';
+    let fontSize = 40;
+    let imageToRender: string | null = null;
+
+    if (name.includes('nome') || name.includes('name')) {
+      content = customization.name || '';
+      color = customization.nameColor;
+      fontSize = 60;
+    } else if (name.includes('número') || name.includes('number')) {
+      content = customization.number || '';
+      color = customization.numberColor;
+      fontSize = 120;
+    } else if ((name.includes('escudo') || name.includes('shield')) && customization.shieldUrl) {
+      imageToRender = customization.shieldUrl;
+    } else {
+      content = zone.name;
+    }
+
+    if (!content && !imageToRender) return;
+
+    if (imageToRender) {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.src = imageToRender;
+      img.onload = () => {
+        // Clear background
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Re-apply pathData mask if present (needed after clear)
+        if (zone.pathData && zone.pathData.length > 2) {
+          ctx.save();
+          ctx.beginPath();
+          zone.pathData.forEach((point: { x: number; y: number }, index: number) => {
+            const x = (point.x / 100) * canvas.width;
+            const y = (point.y / 100) * canvas.height;
+            if (index === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+          });
+          ctx.closePath();
+          ctx.clip();
+        }
+
+        // Draw image centered and scaled to fit
+        const scale = Math.min(canvas.width / img.width, canvas.height / img.height) * 0.9;
+        const w = img.width * scale;
+        const h = img.height * scale;
+        ctx.drawImage(img, (canvas.width - w) / 2, (canvas.height - h) / 2, w, h);
+        
+        if (zone.pathData && zone.pathData.length > 2) {
+          ctx.restore();
+        }
+
+        const newTexture = new THREE.CanvasTexture(canvas);
+        newTexture.needsUpdate = true;
+        setTexture(newTexture);
+      };
+    } else {
+      ctx.fillStyle = color;
+      ctx.font = `bold ${fontSize}px ${customization.nameFont || 'sans-serif'}`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(content, canvas.width / 2, canvas.height / 2);
+
+      const newTexture = new THREE.CanvasTexture(canvas);
+      newTexture.needsUpdate = true;
+      setTexture(newTexture);
+    }
+  }, [zone, customization]);
+
+  if (!texture || !zone.position3d) return null;
+
+  const position = new THREE.Vector3(...zone.position3d);
+  const normal = zone.normal3d ? new THREE.Vector3(...zone.normal3d) : new THREE.Vector3(0, 0, 1);
+  const rotation = new THREE.Euler(0, 0, 0);
+  
+  const quaternion = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), normal);
+  rotation.setFromQuaternion(quaternion);
+
+  if (zone.rotation3d) {
+    rotation.z += zone.rotation3d;
+  }
+
+  const scale = zone.size3d || 0.2;
+
+  return (
+    <Decal
+      position={position}
+      rotation={rotation}
+      scale={[scale, scale, 1]}
+      map={texture}
+    />
+  );
+}
+
+function Model({ url, finalTexture, customization }: { url: string; finalTexture?: THREE.Texture; customization: CustomizationState }) {
+  const { scene } = useGLTF(url);
+  const context = useContext(AppContext);
+  const zones = context?.zones || [];
+
   const clonedScene = useMemo(() => {
     console.log('ThreeDViewer: Clonando cena para o modelo:', url);
     return scene.clone();
   }, [scene, url]);
 
-  // Atualiza as texturas sempre que a finalTexture mudar, sem precisar reclonar a cena toda
   useEffect(() => {
     if (!clonedScene) return;
-    
-    console.log('ThreeDViewer: Verificando textura para aplicação...', { hasTexture: !!finalTexture });
     
     clonedScene.traverse((child) => {
       if ((child as THREE.Mesh).isMesh) {
@@ -32,15 +162,9 @@ function Model({ url, finalTexture }: { url: string; finalTexture?: THREE.Textur
           materials.forEach((mat) => {
             if (mat instanceof THREE.MeshStandardMaterial || mat instanceof THREE.MeshPhysicalMaterial) {
               if (finalTexture) {
-                // Importante: Marcar que a textura mudou
                 finalTexture.needsUpdate = true;
                 mat.map = finalTexture;
                 mat.color.set(0xffffff);
-                mat.emissive.set(0x000000);
-                mat.emissiveIntensity = 0;
-                mat.emissiveMap = null;
-                mat.roughness = 0.5;
-                mat.metalness = 0.0;
                 mat.needsUpdate = true;
               } else {
                 mat.color.set(0xcccccc);
@@ -52,13 +176,30 @@ function Model({ url, finalTexture }: { url: string; finalTexture?: THREE.Textur
     });
   }, [clonedScene, finalTexture]);
 
-  return <primitive object={clonedScene} />;
+  const positionedZones = useMemo(() => 
+    zones.filter(z => z.position3d), 
+    [zones]
+  );
+
+  return (
+    <group>
+      <primitive object={clonedScene} />
+      {positionedZones.map((zone) => (
+        <ZoneDecal 
+          key={zone.id} 
+          zone={zone} 
+          customization={customization} 
+        />
+      ))}
+    </group>
+  );
 }
 
 export const ThreeDViewer = forwardRef<ThreeDViewerRef, { 
   modelUrl?: string; 
   finalTexture?: THREE.Texture;
-}>(({ modelUrl, finalTexture }, ref) => {
+  customization?: CustomizationState;
+}>(({ modelUrl, finalTexture, customization = { name: '', number: '', nameColor: '#ffffff', numberColor: '#ffffff', nameFont: 'Arial' } }, ref) => {
   const orbitRef = useRef<any>(null);
 
   useImperativeHandle(ref, () => ({
@@ -137,7 +278,7 @@ export const ThreeDViewer = forwardRef<ThreeDViewerRef, {
           <directionalLight position={[5, 5, 5]} intensity={1.2} castShadow />
           <directionalLight position={[-5, 5, -5]} intensity={0.8} />
           <pointLight position={[0, -5, 0]} intensity={0.5} />
-          <Model url={modelUrl} finalTexture={finalTexture} />
+          <Model url={modelUrl} finalTexture={finalTexture} customization={customization} />
           <OrbitControls 
             ref={orbitRef}
             enablePan={false}

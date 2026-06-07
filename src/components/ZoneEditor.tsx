@@ -105,12 +105,13 @@ function ModeloComTextura({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Limpa com fundo transparente
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // Fundo sólido escuro para o canvas (AJUDA A VER A MALHA NO TESTE)
+    ctx.fillStyle = '#111111';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
     
     // TESTE UV: Desenha uma borda e uma cruz em todo o espaço UV
-    ctx.strokeStyle = 'rgba(255, 0, 0, 0.5)';
-    ctx.lineWidth = 20;
+    ctx.strokeStyle = '#ff00ff';
+    ctx.lineWidth = 40;
     ctx.strokeRect(0, 0, canvas.width, canvas.height);
     ctx.beginPath();
     ctx.moveTo(0, 0); ctx.lineTo(canvas.width, canvas.height);
@@ -183,16 +184,13 @@ function ModeloComTextura({
           
           if (newMat instanceof THREE.MeshStandardMaterial || newMat instanceof THREE.MeshPhysicalMaterial || newMat instanceof THREE.MeshBasicMaterial) {
             // @ts-ignore
+            newMat.map = tex; // USAR MAP DIRETAMENTE PARA TESTE AGRESSIVO
+            // @ts-ignore
             newMat.emissiveMap = tex;
             // @ts-ignore
-            newMat.emissive = new THREE.Color(0xff00ff); // MAGENTA para depuração
+            newMat.emissive = new THREE.Color(0xffffff);
             // @ts-ignore
-            newMat.emissiveIntensity = 20.0; // Brilho EXTREMO para teste
-            
-            // Para garantir que apareça mesmo se não for StandardMaterial
-            if (newMat instanceof THREE.MeshBasicMaterial) {
-              newMat.map = tex; // BasicMaterial não tem emissiveMap
-            }
+            newMat.emissiveIntensity = 1.0; 
             
             newMat.needsUpdate = true;
             return newMat;

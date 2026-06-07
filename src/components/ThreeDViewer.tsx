@@ -80,12 +80,8 @@ function ZoneDecal({ zone, customization }: { zone: any; customization: Customiz
   const normal = zone.normal3d ? new THREE.Vector3(...zone.normal3d) : new THREE.Vector3(0, 0, 1);
   const rotation = new THREE.Euler(0, 0, 0);
   
-  const lookAtMatrix = new THREE.Matrix4().lookAt(
-    new THREE.Vector3(0, 0, 0),
-    normal,
-    new THREE.Vector3(0, 1, 0)
-  );
-  rotation.setFromRotationMatrix(lookAtMatrix);
+  const quaternion = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), normal);
+  rotation.setFromQuaternion(quaternion);
 
   if (zone.rotation3d) {
     rotation.z += zone.rotation3d;

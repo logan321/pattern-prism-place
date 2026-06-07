@@ -272,10 +272,8 @@ export default function Simulator() {
     // 1. Tentar encontrar a matriz vinculada ao modelo atual (pelo ID)
     let matriz = uvMatrices.find(m => m.modelo_id === selectedModel);
     
-    // 2. Tentar pelo modelo especial 'local-gola-padre' que pode estar salvo como null no modelo_id do banco
-    // mas que queremos que funcione. Se só houver uma matriz e o modelo for local, usamos ela.
+    // 2. Se for o modelo local e não achou por ID, tenta a que não tem modelo_id
     if (!matriz && selectedModel === 'local-gola-padre') {
-      // Se houver uma matriz sem modelo_id, pode ser essa
       matriz = uvMatrices.find(m => !m.modelo_id);
     }
 
@@ -284,12 +282,20 @@ export default function Simulator() {
       matriz = uvMatrices.find(m => m.id === currentPattern.uv_matriz_id);
     }
     
-    // 4. Fallback para a primeira disponível
+    // 4. Fallback: Se não encontrou nada específico para o modelo, 
+    // e existe uma matriz marcada como "mestra" (sem modelo_id), usamos ela.
+    if (!matriz) {
+      matriz = uvMatrices.find(m => !m.modelo_id);
+    }
+
+    // 5. Último recurso: pega a primeira
     if (!matriz && uvMatrices.length > 0) {
       matriz = uvMatrices[0];
     }
     
-    console.log('Simulator: UV Matriz Selecionada:', matriz?.name, 'ID:', matriz?.id);
+    if (matriz) {
+      console.log(`Simulator: UV Matriz Ativa: ${matriz.name} (Zonas: ${matriz.zones ? (matriz.zones as any).length : 0})`);
+    }
     return matriz;
   }, [uvMatrices, selectedModel, currentPattern]);
 
@@ -311,8 +317,13 @@ export default function Simulator() {
   const [finalTexture, setFinalTexture] = useState<THREE.CanvasTexture | undefined>(undefined);
 
   useEffect(() => {
+    let active = true;
     const updateTexture = async () => {
+      if (!active) return;
+      
       try {
+        console.log(`Simulator: Gerando textura final... Zonas: ${activeUVMatriz?.zones ? (activeUVMatriz.zones as any).length : 0}`);
+        
         const canvas = await generateFinalTexture({
           baseTextureUrl: textureUrl,
           zones: (activeUVMatriz?.zones as unknown as UVZone[]) || [],
@@ -326,9 +337,12 @@ export default function Simulator() {
           }
         });
         
+        if (!active) return;
+
         const tex = new THREE.CanvasTexture(canvas);
         tex.flipY = false;
         tex.colorSpace = THREE.SRGBColorSpace;
+        tex.needsUpdate = true;
         setFinalTexture(tex);
       } catch (err) {
         console.error('Error generating final texture:', err);
@@ -336,6 +350,7 @@ export default function Simulator() {
     };
     
     updateTexture();
+    return () => { active = false; };
   }, [textureUrl, activeUVMatriz, customName, customNumber, shieldUrl, nameColor, numberColor, nameFont]);
 
   // Logs removidos para evitar poluição no console e possíveis erros de hook indiretos

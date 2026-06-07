@@ -308,6 +308,12 @@ export default function Simulator() {
 
 
 
+  console.log('patterns:', patterns);
+  console.log('selectedPattern:', selectedPattern);
+  console.log('selectedPattern.uv_matriz_id:', currentPattern?.uv_matriz_id);
+  console.log('uvMatrizAtiva:', activeUVMatriz);
+  console.log('currentZones:', currentZones);
+
   return (
     <>
 

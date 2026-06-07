@@ -65,12 +65,11 @@ function UVConfigView({ models, queryClient, modelsLoading, onOpenMatrizModal }:
 
   const handleSaveZones = async (zones: any[]) => {
     try {
-      const isLocalModel = selectedModelId.startsWith('local-');
       const { error } = await supabase
         .from('uv_matrices')
         .update({ 
           zones,
-          modelo_id: isLocalModel ? null : selectedModelId 
+          modelo_id: null 
         } as any)
         .eq('id', selectedMatrizId);
       

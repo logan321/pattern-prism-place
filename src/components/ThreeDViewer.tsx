@@ -9,7 +9,7 @@ import { useCustomizerStore } from '../store/useCustomizerStore';
 interface Zone {
   id: string;
   name: string;
-  tipo?: 'nome' | 'numero' | 'logo' | 'estampa' | 'outro';
+  tipo?: string;
   position: [number, number, number];
   rotation?: [number, number, number];
   uv?: [number, number];
@@ -65,6 +65,13 @@ function Model({
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
+  const FORMACOES: Record<string, any> = {
+    'escudo-esq-nome-dir': { logo: 'peito-esquerdo', nome: 'peito-direito',  numero: 'costas-centro' },
+    'escudo-dir-nome-esq': { logo: 'peito-direito',  nome: 'peito-esquerdo', numero: 'costas-centro' },
+    'nome-centro':         { logo: null,              nome: 'peito-centro',   numero: 'costas-centro' },
+    'so-numero':           { logo: null,              nome: null,             numero: 'costas-centro' },
+  };
+
   const drawOnCanvas = async () => {
     if (!canvasRef.current) {
       canvasRef.current = document.createElement('canvas');
@@ -78,6 +85,7 @@ function Model({
     if (!ctx) return;
 
     console.log('COMPOSITOR — zones recebidas:', zones);
+    console.log('COMPOSITOR — formação ativa:', formation);
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
@@ -85,10 +93,15 @@ function Model({
       return [uv[0] * canvas.width, (1 - uv[1]) * canvas.height];
     };
 
-    // Buscar por TIPO, não por nome
-    const logoZone   = zones?.find(z => z.tipo === 'logo');
-    const nameZone   = zones?.find(z => z.tipo === 'nome');
-    const numberZone = zones?.find(z => z.tipo === 'numero');
+    const regras = FORMACOES[formation || ''] ?? FORMACOES['escudo-esq-nome-dir'];
+
+    // Buscar zona pelo ID de posição (ID padronizado)
+    const getZona = (posId: string | null) =>
+      posId ? zones?.find(z => z.id === posId || z.name === posId) : null;
+
+    const logoZone   = getZona(regras.logo);
+    const nameZone   = getZona(regras.nome);
+    const numberZone = getZona(regras.numero);
 
     console.log('logoZone:', logoZone);
     console.log('nameZone:', nameZone);
@@ -165,7 +178,7 @@ function Model({
 
   useEffect(() => {
     drawOnCanvas();
-  }, [zones, name, number, nameColor, numberColor, nameFont, shieldUrl, clonedScene]);
+  }, [zones, name, number, nameColor, numberColor, nameFont, shieldUrl, clonedScene, formation]);
 
   // 2. Efeito para carregar a Estampa Principal (textureUrl)
   useEffect(() => {
@@ -345,6 +358,7 @@ export const ThreeDViewer = forwardRef<ThreeDViewerRef, {
               namePosition={namePosition}
               shieldPosition={shieldPosition}
               shieldUrl={shieldUrl}
+              formation={formation}
             />
           </Stage>
           <OrbitControls 

@@ -135,6 +135,7 @@ export default function Simulator() {
   const nameFont = useCustomizerStore(state => state.nameFont);
   const namePosition = useCustomizerStore(state => state.namePosition);
   const shieldPosition = useCustomizerStore(state => state.shieldPosition);
+  const shieldUrl = useCustomizerStore(state => state.shieldUrl);
   
   const setName = useCustomizerStore(state => state.setName);
   const setNumber = useCustomizerStore(state => state.setNumber);
@@ -142,6 +143,7 @@ export default function Simulator() {
   const setNumberColor = useCustomizerStore(state => state.setNumberColor);
   const setNameFont = useCustomizerStore(state => state.setNameFont);
   const setFormation = useCustomizerStore(state => state.setFormation);
+  const setShieldUrl = useCustomizerStore(state => state.setShieldUrl);
 
   const { data: models } = useQuery({
     queryKey: ['models'],
@@ -518,10 +520,37 @@ export default function Simulator() {
                     </button>
                   </div>
                 </div>
-                <div className="p-4 border-2 border-dashed border-gray-200 rounded-lg text-center">
-                  <Upload className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-                  <p className="text-[10px] text-gray-500">Faça upload do seu escudo (PNG/JPG)</p>
-                  <button className="mt-2 bg-orange-600 text-white text-[10px] px-3 py-1 rounded">Selecionar Arquivo</button>
+                <div className="p-4 border-2 border-dashed border-gray-200 rounded-lg text-center relative">
+                  {shieldUrl ? (
+                    <div className="relative group">
+                      <img src={shieldUrl} alt="Escudo" className="w-16 h-16 mx-auto object-contain mb-2" />
+                      <button 
+                        onClick={() => setShieldUrl(null)}
+                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <RotateCcw className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <Upload className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                      <p className="text-[10px] text-gray-500">Faça upload do seu escudo (PNG/JPG)</p>
+                    </>
+                  )}
+                  <input 
+                    type="file" 
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (ev) => setShieldUrl(ev.target?.result as string);
+                        reader.readAsDataURL(file);
+                      }
+                    }}
+                    className="absolute inset-0 opacity-0 cursor-pointer"
+                  />
+                  {!shieldUrl && <button className="mt-2 bg-orange-600 text-white text-[10px] px-3 py-1 rounded">Selecionar Arquivo</button>}
                 </div>
                 <p className="text-[10px] text-gray-400 italic">
                   * Enquanto não houver upload, uma marcação circular aparecerá no modelo.

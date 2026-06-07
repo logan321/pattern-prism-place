@@ -1,6 +1,6 @@
-import React, { Suspense, useEffect, useRef, useImperativeHandle, forwardRef } from 'react';
+import React, { Suspense, useEffect, useRef, useImperativeHandle, forwardRef, useState } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { OrbitControls, Stage, useGLTF, Text } from '@react-three/drei';
+import { OrbitControls, Stage, useGLTF } from '@react-three/drei';
 import * as THREE from 'three';
 import { ErrorBoundary } from 'react-error-boundary';
 import { gsap } from 'gsap';
@@ -15,12 +15,10 @@ interface Zone {
 }
 
 function Model({ url, textureUrl, zones = [] }: { url: string; textureUrl?: string; zones?: Zone[] }) {
-  console.log("Zones recebidas no Model:", zones);
   const { scene } = useGLTF(url);
-  
-  // Clone da cena para garantir que mudanças de material sejam aplicadas corretamente a cada instância
   const clonedScene = React.useMemo(() => scene.clone(), [scene, url]);
-  const [uvTexture, setUvTexture] = React.useState<THREE.CanvasTexture | null>(null);
+  const [uvTexture, setUvTexture] = useState<THREE.CanvasTexture | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(document.createElement('canvas'));
   
   const name = useCustomizerStore(state => state.name);
   const number = useCustomizerStore(state => state.number);
@@ -29,119 +27,103 @@ function Model({ url, textureUrl, zones = [] }: { url: string; textureUrl?: stri
   const nameFont = useCustomizerStore(state => state.nameFont);
   const namePosition = useCustomizerStore(state => state.namePosition);
   const shieldPosition = useCustomizerStore(state => state.shieldPosition);
+  const shieldUrl = useCustomizerStore(state => state.shieldUrl);
 
-  // Efeito para criar a textura de zonas baseada em UV
   useEffect(() => {
-    console.log("Criando textura UV para zones e texto:", { zones, name, number, nameColor, numberColor, nameFont });
-    const canvas = document.createElement('canvas');
-    canvas.width = 2048;
-    canvas.height = 2048;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    const drawOnCanvas = async () => {
+      const canvas = canvasRef.current;
+      canvas.width = 2048;
+      canvas.height = 2048;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
-    // Desenhar Zonas (para debug visual)
-    zones.forEach((zone) => {
-      if (zone.uv) {
-        console.log(`Desenhando zona na textura: ${zone.name}`, zone.uv);
-        const x = zone.uv[0] * canvas.width;
-        const y = (1 - zone.uv[1]) * canvas.height;
-
-        ctx.beginPath();
-        ctx.arc(x, y, 10, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(234, 88, 12, 0.5)'; // Laranja semi-transparente
-        ctx.fill();
-        
-        ctx.font = 'bold 12px Arial';
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-        ctx.textAlign = 'center';
-        ctx.fillText(zone.name, x, y - 15);
-      }
-    });
-
-    // Desenhar Nome e Número
-    // Busca as zonas pelos nomes específicos definidos pelo usuário
-    const nameZoneRight = zones.find(z => z.name.toUpperCase() === 'PEITO DIREITO');
-    const nameZoneLeft = zones.find(z => z.name.toUpperCase() === 'PEITO ESQUERDO');
-    const nameZoneTop = zones.find(z => z.name.toUpperCase() === 'NOME TOPO');
-    const nameZoneBottom = zones.find(z => z.name.toUpperCase() === 'NOME ABAIXO');
-    
-    // Zonas de Número e Escudo (baseado nas marcações do usuário)
-    const numberZoneCenter = zones.find(z => z.name.toUpperCase() === 'NUMERO CENTRO' || z.name.toUpperCase() === 'NÚMERO CENTRO');
-    const shieldZoneRight = zones.find(z => z.name.toUpperCase() === 'PEITO DIREITO');
-    const shieldZoneLeft = zones.find(z => z.name.toUpperCase() === 'PEITO ESQUERDO');
-
-    // 1. Renderizar Escudo (Placeholder ou real)
-    if (shieldPosition) {
-      let targetShieldZone = shieldPosition === 'left' ? shieldZoneLeft : shieldZoneRight;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
       
+      const getCoord = (uv: [number, number]): [number, number] => {
+        // Tratar o UV considerando flipY=false no Three.js
+        // Se flipY=false, UV(0,0) é Top-Left
+        return [uv[0] * canvas.width, uv[1] * canvas.height];
+      };
+
+      // Zonas
+      const nameZoneRight = zones.find(z => z.name.toUpperCase() === 'PEITO DIREITO');
+      const nameZoneLeft = zones.find(z => z.name.toUpperCase() === 'PEITO ESQUERDO');
+      const nameZoneTop = zones.find(z => z.name.toUpperCase() === 'NOME TOPO');
+      const numberZoneCenter = zones.find(z => z.name.toUpperCase().includes('NUMERO CENTRO') || z.name.toUpperCase().includes('NÚMERO CENTRO'));
+
+      // 1. Escudo
+      const targetShieldZone = shieldPosition === 'left' ? nameZoneLeft : nameZoneRight;
       if (targetShieldZone?.uv) {
-        const sx = targetShieldZone.uv[0] * canvas.width;
-        const sy = (1 - targetShieldZone.uv[1]) * canvas.height;
+        const [sx, sy] = getCoord(targetShieldZone.uv);
         
-        // Círculo branco com borda vermelha (conforme solicitado: círculo vermelho ou branco)
-        ctx.beginPath();
-        ctx.arc(sx, sy, 50, 0, Math.PI * 2);
-        ctx.fillStyle = 'white';
-        ctx.fill();
-        ctx.strokeStyle = '#ff0000';
-        ctx.lineWidth = 6;
-        ctx.stroke();
+        if (shieldUrl) {
+          try {
+            const img = new Image();
+            img.crossOrigin = "anonymous";
+            await new Promise((resolve, reject) => {
+              img.onload = resolve;
+              img.onerror = reject;
+              img.src = shieldUrl;
+            });
+            const size = 120;
+            ctx.drawImage(img, sx - size / 2, sy - size / 2, size, size);
+          } catch (e) {
+            console.error("Erro ao carregar escudo:", e);
+          }
+        } else {
+          // Placeholder do Escudo
+          ctx.beginPath();
+          ctx.arc(sx, sy, 50, 0, Math.PI * 2);
+          ctx.fillStyle = 'white';
+          ctx.fill();
+          ctx.strokeStyle = '#ff0000';
+          ctx.lineWidth = 6;
+          ctx.stroke();
+          
+          ctx.font = 'bold 20px Arial';
+          ctx.fillStyle = '#ff0000';
+          ctx.textAlign = 'center';
+          ctx.fillText('ESCUDO', sx, sy + 7);
+        }
+      }
+
+      // 2. Nome
+      if (name) {
+        let targetZone = nameZoneTop;
+        if (namePosition === 'right') targetZone = nameZoneRight;
+        if (namePosition === 'left') targetZone = nameZoneLeft;
         
-        ctx.font = 'bold 18px Arial';
-        ctx.fillStyle = '#ff0000';
-        ctx.textAlign = 'center';
-        ctx.fillText('ESCUDO', sx, sy + 6);
+        if (targetZone?.uv) {
+          const [tx, ty] = getCoord(targetZone.uv);
+          ctx.font = `bold 80px ${nameFont}`;
+          ctx.fillStyle = nameColor;
+          ctx.textAlign = 'center';
+          // Ajuste fino para não sobrepor o escudo se estiver no mesmo peito
+          const offset = (namePosition === 'right' || namePosition === 'left') ? 80 : 0;
+          ctx.fillText(name.toUpperCase(), tx, ty + offset);
+        }
       }
-    }
 
-    // 2. Renderizar Nome
-    if (name) {
-      ctx.font = `bold 80px ${nameFont}`;
-      ctx.fillStyle = nameColor;
-      ctx.textAlign = 'center';
-      
-      let targetZone = nameZoneTop; // Default topo
-      
-      if (namePosition === 'right') targetZone = nameZoneRight;
-      if (namePosition === 'left') targetZone = nameZoneLeft;
-      if (namePosition === 'center') targetZone = nameZoneTop;
-      
-      if (targetZone?.uv) {
-        const tx = targetZone.uv[0] * canvas.width;
-        const ty = (1 - targetZone.uv[1]) * canvas.height;
-        // Se for no peito, subir um pouco o texto para não ficar em cima do marcador
-        const finalTy = (namePosition === 'right' || namePosition === 'left') ? ty - 20 : ty;
-        ctx.fillText(name.toUpperCase(), tx, finalTy);
-      } else {
-        // Fallback se não encontrar a zona
-        ctx.fillText(name.toUpperCase(), canvas.width * 0.5, canvas.height * 0.2);
+      // 3. Número
+      if (number) {
+        if (numberZoneCenter?.uv) {
+          const [nx, ny] = getCoord(numberZoneCenter.uv);
+          ctx.font = `bold 300px ${nameFont}`;
+          ctx.fillStyle = numberColor;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(number, nx, ny);
+        }
       }
-    }
 
-    // 3. Renderizar Número
-    if (number) {
-      ctx.font = `bold 300px ${nameFont}`;
-      ctx.fillStyle = numberColor;
-      ctx.textAlign = 'center';
-      
-      let targetZone = numberZoneCenter;
-      
-      if (targetZone?.uv) {
-        const tx = targetZone.uv[0] * canvas.width;
-        const ty = (1 - targetZone.uv[1]) * canvas.height;
-        ctx.fillText(number, tx, ty);
-      } else {
-        // Fallback para as costas (estimado se não houver zona específica)
-        ctx.fillText(number, canvas.width * 0.5, canvas.height * 0.45);
-      }
-    }
+      const texture = new THREE.CanvasTexture(canvas);
+      texture.flipY = false;
+      texture.needsUpdate = true;
+      setUvTexture(texture);
+    };
 
-    const texture = new THREE.CanvasTexture(canvas);
-    texture.flipY = false;
-    setUvTexture(texture);
-  }, [zones, name, number, nameColor, numberColor, nameFont, namePosition, shieldPosition]);
+    drawOnCanvas();
+  }, [zones, name, number, nameColor, numberColor, nameFont, namePosition, shieldPosition, shieldUrl]);
 
   useEffect(() => {
     const applyTexture = (imageSrc: string) => {
@@ -175,7 +157,8 @@ function Model({ url, textureUrl, zones = [] }: { url: string; textureUrl?: stri
                   console.log("Aplicando uvTexture ao material:", mat.name);
                   mat.emissiveMap = uvTexture;
                   mat.emissive = new THREE.Color(0xffffff);
-                  mat.emissiveIntensity = 2.0;
+                  mat.emissiveIntensity = 1.5;
+                  mat.needsUpdate = true;
                 } else {
                   mat.emissiveMap = null;
                   mat.emissive = new THREE.Color(0x000000);

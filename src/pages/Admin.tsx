@@ -749,7 +749,15 @@ export default function Admin() {
             </div>
             {activeView !== 'config' ? (
               <button 
-                onClick={() => activeView === 'models' ? document.getElementById('file-upload-input')?.click() : setShowPatternModal(true)}
+                onClick={() => {
+                  if (activeView === 'models') {
+                    document.getElementById('file-upload-input')?.click();
+                  } else {
+                    setEditingPattern(null);
+                    setPatternData({ name: '', png: null, svg: null, uvMatrizId: '' });
+                    setShowPatternModal(true);
+                  }
+                }}
                 className={cn(
                   "bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg font-bold flex items-center space-x-2 transition-all shadow-sm cursor-pointer",
                   isUploading && "opacity-50 cursor-not-allowed"

@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useContext } from 'react';
 import { Trash2, Save, X, Move, Maximize, RotateCcw, Eye, Layers, Square, Crosshair, Target, ExternalLink, PenTool, Share2 } from 'lucide-react';
 import { generateFinalTexture } from '../lib/textureGenerator';
 import { AppContext, Zone3D } from '../context/AppContext';
+import PolygonDrawer from './PolygonDrawer';
 
 const TIPOS_ZONA = [
   { id: 'logo', label: 'Logo / Escudo' },
@@ -20,6 +21,7 @@ export default function ZoneEditor({ referenceUrl, onClose }: any) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [showPreview, setShowPreview] = useState(false);
   const [isDrawingPath, setIsDrawingPath] = useState(false);
+  const [showPolygonDrawer, setShowPolygonDrawer] = useState(false);
 
   const canvasSize = 2048;
   const zonaSelecionada = zones.find((z: Zone3D) => z.id === selectedZoneId);
@@ -299,11 +301,11 @@ export default function ZoneEditor({ referenceUrl, onClose }: any) {
                         <span className="text-[10px] font-bold uppercase">Compartilhada</span>
                     </button>
                     <button 
-                        onClick={() => setIsDrawingPath(!isDrawingPath)}
-                        className={`flex-1 p-3 rounded-xl border flex items-center justify-center gap-2 transition-all ${isDrawingPath ? 'bg-orange-600 border-orange-600 text-white' : 'bg-[#1a1a1a] border-[#333] text-gray-500'}`}
+                        onClick={() => setShowPolygonDrawer(true)}
+                        className={`flex-1 p-3 rounded-xl border flex items-center justify-center gap-2 transition-all ${zonaSelecionada.pathData?.length ? 'bg-orange-600 border-orange-600 text-white' : 'bg-[#1a1a1a] border-[#333] text-gray-500'}`}
                     >
                         <PenTool className="w-4 h-4" />
-                        <span className="text-[10px] font-bold uppercase">{isDrawingPath ? 'Finalizar' : 'Contorno'}</span>
+                        <span className="text-[10px] font-bold uppercase">{zonaSelecionada.pathData?.length ? 'Editar Contorno' : 'Definir Contorno'}</span>
                     </button>
                 </div>
 
@@ -390,6 +392,17 @@ export default function ZoneEditor({ referenceUrl, onClose }: any) {
               </div>
            </div>
         </div>
+      )}
+      {showPolygonDrawer && zonaSelecionada && (
+        <PolygonDrawer
+          imageUrl={referenceUrl}
+          initialPoints={zonaSelecionada.pathData || []}
+          onSave={(points) => {
+            updateZone(zonaSelecionada.id, { pathData: points });
+            setShowPolygonDrawer(false);
+          }}
+          onCancel={() => setShowPolygonDrawer(false)}
+        />
       )}
     </div>
   );

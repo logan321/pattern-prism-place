@@ -164,9 +164,25 @@ function Model({
     clonedScene.traverse((child) => {
       if ((child as THREE.Mesh).isMesh) {
         const mesh = child as THREE.Mesh;
+        const meshName = mesh.name.toLowerCase();
+        
+        // Pular aviamentos (ziper, botões, etc) ao aplicar o emissive (nomes/números)
+        const isHardware = meshName.includes('zipper') || 
+                          meshName.includes('ziper') || 
+                          meshName.includes('button') || 
+                          meshName.includes('botao') ||
+                          meshName.includes('puller') ||
+                          meshName.includes('slider') ||
+                          meshName.includes('trim');
+        
+        if (isHardware) return;
+
         const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
         materials.forEach((mat) => {
           if (mat instanceof THREE.MeshStandardMaterial || mat instanceof THREE.MeshPhysicalMaterial) {
+            const matName = mat.name.toLowerCase();
+            if (matName.includes('zipper') || matName.includes('ziper') || matName.includes('button') || matName.includes('trim')) return;
+
             mat.emissiveMap = uvTexture;
             mat.emissive.set(0xffffff); 
             mat.emissiveIntensity = 1.0;
@@ -194,9 +210,27 @@ function Model({
         clonedScene.traverse((child) => {
           if ((child as THREE.Mesh).isMesh) {
             const mesh = child as THREE.Mesh;
+            const meshName = mesh.name.toLowerCase();
+            
+            // NÃO aplicar a estampa em zíperes, botões e outros aviamentos
+            // Isso preserva as texturas originais do GLB para estas partes
+            const isHardware = meshName.includes('zipper') || 
+                              meshName.includes('ziper') || 
+                              meshName.includes('button') || 
+                              meshName.includes('botao') ||
+                              meshName.includes('puller') ||
+                              meshName.includes('slider') ||
+                              meshName.includes('trim');
+
+            if (isHardware) return;
+
             const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
             materials.forEach((mat) => {
               if (mat instanceof THREE.MeshStandardMaterial || mat instanceof THREE.MeshPhysicalMaterial) {
+                const matName = mat.name.toLowerCase();
+                // Também checar o nome do material
+                if (matName.includes('zipper') || matName.includes('ziper') || matName.includes('button') || matName.includes('trim')) return;
+
                 if (mat.map) mat.map.dispose();
                 mat.map = tex;
                 mat.needsUpdate = true;

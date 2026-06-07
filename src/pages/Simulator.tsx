@@ -144,16 +144,17 @@ export default function Simulator() {
     setNameFont,
     setFormation,
     setShieldUrl,
-    // Add missing actions
-    setUvLayerText,
-    setUvLayerImage,
-    removeUvLayer
-  } = useCustomizerStore();
-
-  const {
-    uvMapZones, uvMapDims, uvLayers, uvTextDrafts, uvBaseUrl,
-    setUvMapZones, setUvMapDims, setUvLayers, setUvTextDrafts,
-    setUvBaseUrl, clearUvState,
+    uvMapZones, 
+    uvMapDims, 
+    uvLayers, 
+    uvTextDrafts, 
+    uvBaseUrl,
+    setUvMapZones, 
+    setUvMapDims, 
+    setUvLayers, 
+    setUvTextDrafts,
+    setUvBaseUrl, 
+    clearUvState,
   } = useCustomizerStore();
 
   const { data: models } = useQuery({

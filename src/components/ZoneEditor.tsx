@@ -1,10 +1,9 @@
 import React, { useState, useRef, Suspense, useMemo, useEffect } from 'react';
-import { Canvas, useThree } from '@react-three/fiber';
-import { OrbitControls, useGLTF, Html, TransformControls } from '@react-three/drei';
-import { Trash2 } from 'lucide-react';
+import { Canvas } from '@react-three/fiber';
+import { OrbitControls, useGLTF } from '@react-three/drei';
+import { Trash2, Plus, Save, X } from 'lucide-react';
 import * as THREE from 'three';
 
-// ---- TIPOS ----
 interface ZonaMarcada {
   id: string;
   name: string;
@@ -13,12 +12,8 @@ interface ZonaMarcada {
   width: number;
   height: number;
   rotation: number;
-  // Campos auxiliares para renderização 3D no editor
-  point: [number, number, number];
-  normal: [number, number, number];
 }
 
-// ---- POSIÇÕES PADRÃO ----
 const TIPOS_ZONA = [
   { id: 'logo', label: 'Logo / Escudo' },
   { id: 'text', label: 'Texto / Nome' },
@@ -26,50 +21,6 @@ const TIPOS_ZONA = [
   { id: 'sponsor', label: 'Patrocinador' },
 ];
 
-// ---- ÁREA EDITÁVEL NA TEXTURA UV ----
-// Não usamos componentes 3D independentes (meshes/planos)
-// A visualização é feita via CSS Overlay transparente sobre o Canvas
-function AreaEditavelOverlay({ 
-  zona, 
-  onUpdate, 
-  isSelected, 
-  onSelect,
-  canvasBounds 
-}: { 
-  zona: ZonaMarcada; 
-  onUpdate: (updates: Partial<ZonaMarcada>) => void;
-  isSelected: boolean;
-  onSelect: () => void;
-  canvasBounds: DOMRect | null;
-}) {
-  if (!canvasBounds) return null;
-
-  // Converte coordenadas UV (0-1) para pixels na tela (baseado no canvasBounds)
-  // Nota: Y é invertido no UV (0 embaixo, 1 cima)
-  const left = canvasBounds.left + (zona.uvCenter[0] * canvasBounds.width) - ((zona.width * canvasBounds.width) / 2);
-  const top = canvasBounds.top + ((1 - zona.uvCenter[1]) * canvasBounds.height) - ((zona.height * canvasBounds.height) / 2);
-
-  return (
-    <div
-      onClick={(e) => { e.stopPropagation(); onSelect(); }}
-      className={`absolute border-2 cursor-move ${isSelected ? 'border-orange-500 bg-orange-500/20' : 'border-blue-500 bg-blue-500/10'}`}
-      style={{
-        left: `${left}px`,
-        top: `${top}px`,
-        width: `${zona.width * canvasBounds.width}px`,
-        height: `${zona.height * canvasBounds.height}px`,
-        transform: `rotate(${zona.rotation}deg)`,
-        pointerEvents: 'auto'
-      }}
-    >
-      <div className="text-[10px] text-white p-1 font-bold pointer-events-none truncate">
-        {zona.name}
-      </div>
-    </div>
-  );
-}
-
-// ---- MODELO INTERATIVO ----
 function ModeloComTextura({
   url,
   zonas,
@@ -80,49 +31,25 @@ function ModeloComTextura({
 }: {
   url: string;
   zonas: ZonaMarcada[];
-  onClicar: (point: THREE.Vector3, normal: THREE.Vector3, uv: THREE.Vector2) => void;
-  onDrag: (point: THREE.Vector3, normal: THREE.Vector3, uv: THREE.Vector2) => void;
+  onClicar: (uv: THREE.Vector2) => void;
+  onDrag: (uv: THREE.Vector2) => void;
   isDragging: boolean;
   idSelecionado: string | null;
 }) {
   const { scene } = useGLTF(url);
-  const canvasRef = useRef<HTMLCanvasElement>(null!);
+  const canvasRef = useRef<HTMLCanvasElement>(document.createElement('canvas'));
   const textureRef = useRef<THREE.CanvasTexture | null>(null);
 
-  // Inicializa o canvas uma única vez com o tamanho correto
-  if (!canvasRef.current) {
-    const c = document.createElement('canvas');
-    c.width = 2048;
-    c.height = 2048;
-    // @ts-ignore - We know we're setting it
-    canvasRef.current = c;
-  }
-
-  // Efeito para desenhar o overlay UV no canvas
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
+    canvas.width = 2048;
+    canvas.height = 2048;
+    const ctx = canvas.getContext('2d', { alpha: true });
     if (!ctx) return;
 
-    // Fundo sólido escuro para o canvas (AJUDA A VER A MALHA NO TESTE)
-    ctx.fillStyle = '#111111';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
     
-    // TESTE UV: Desenha uma borda e uma cruz em todo o espaço UV
-    ctx.strokeStyle = '#ff00ff';
-    ctx.lineWidth = 40;
-    ctx.strokeRect(0, 0, canvas.width, canvas.height);
-    ctx.beginPath();
-    ctx.moveTo(0, 0); ctx.lineTo(canvas.width, canvas.height);
-    ctx.moveTo(canvas.width, 0); ctx.lineTo(0, canvas.height);
-    ctx.stroke();
-    
-    console.log('DEBUG: Desenhando zonas no canvas:', zonas.length);
-    
-    // Desenha cada zona
     zonas.forEach(z => {
-      console.log('DEBUG: Desenhando zona:', z.name, z.uvCenter);
       const isSelected = z.id === idSelecionado;
       const x = z.uvCenter[0] * canvas.width;
       const y = (1 - z.uvCenter[1]) * canvas.height;
@@ -133,34 +60,31 @@ function ModeloComTextura({
       ctx.translate(x, y);
       ctx.rotate((z.rotation * Math.PI) / 180);
       
-      // Retângulo da área - Bordas mais visíveis
-      ctx.strokeStyle = isSelected ? '#ea580c' : '#3b82f6';
-      ctx.lineWidth = 20; // Muito mais grosso
-      ctx.strokeRect(-w / 2, -h / 2, w, h);
-      
-      // Preenchimento Totalmente Opaco para Teste
-      ctx.fillStyle = isSelected ? '#ea580c' : '#3b82f6';
+      // Estilo Gabarito Profissional
+      ctx.fillStyle = isSelected ? 'rgba(234, 88, 12, 0.4)' : 'rgba(59, 130, 246, 0.2)';
       ctx.fillRect(-w / 2, -h / 2, w, h);
+      
+      ctx.strokeStyle = isSelected ? '#ea580c' : '#3b82f6';
+      ctx.lineWidth = 10;
+      ctx.strokeRect(-w / 2, -h / 2, w, h);
 
-      // Texto
+      // Label
       ctx.fillStyle = 'white';
-      ctx.font = 'bold 120px Arial'; // Maior
+      ctx.font = 'bold 60px Arial';
       ctx.textAlign = 'center';
-      ctx.fillText(z.name.toUpperCase(), 0, 40);
+      ctx.fillText(z.name.toUpperCase(), 0, 20);
       
       ctx.restore();
     });
 
     if (textureRef.current) {
-      console.log('DEBUG: Atualizando textura');
       textureRef.current.needsUpdate = true;
     }
   }, [zonas, idSelecionado]);
 
   const clonedScene = useMemo(() => {
-    console.log('DEBUG: Clonando cena e criando textura UV');
     const clone = scene.clone(true);
-    const tex = new THREE.CanvasTexture(canvasRef.current as HTMLCanvasElement);
+    const tex = new THREE.CanvasTexture(canvasRef.current);
     tex.flipY = false;
     tex.colorSpace = THREE.SRGBColorSpace;
     textureRef.current = tex;
@@ -168,116 +92,56 @@ function ModeloComTextura({
     clone.traverse((obj) => {
       if ((obj as THREE.Mesh).isMesh) {
         const mesh = obj as THREE.Mesh;
-        
-        // Verifica UVs
-        if (!mesh.geometry.attributes.uv) {
-          console.warn(`DEBUG: Malha ${mesh.name} não possui coordenadas UV!`);
-        }
-
         const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
-        console.log(`DEBUG: Malha ${mesh.name} tem ${materials.length} materiais. Tipos:`, materials.map(m => m.type));
         
         const newMaterials = materials.map(m => {
-          // Tentando ser mais abrangente nos materiais
           const newMat = m.clone();
-          console.log(`DEBUG: Clonando material ${m.name} do tipo ${m.type}`);
-          
-          if (newMat instanceof THREE.MeshStandardMaterial || newMat instanceof THREE.MeshPhysicalMaterial || newMat instanceof THREE.MeshBasicMaterial) {
-            // @ts-ignore
-            newMat.map = tex; // USAR MAP DIRETAMENTE PARA TESTE AGRESSIVO
-            // @ts-ignore
+          if (newMat instanceof THREE.MeshStandardMaterial || newMat instanceof THREE.MeshPhysicalMaterial) {
+            newMat.transparent = true;
             newMat.emissiveMap = tex;
-            // @ts-ignore
             newMat.emissive = new THREE.Color(0xffffff);
-            // @ts-ignore
-            newMat.emissiveIntensity = 1.0; 
-            
+            newMat.emissiveIntensity = 0.8;
             newMat.needsUpdate = true;
-            return newMat;
           }
           return newMat;
         });
 
         mesh.material = Array.isArray(mesh.material) ? newMaterials : newMaterials[0];
-        console.log(`DEBUG: Material configurado para malha: ${mesh.name}`);
       }
     });
     return clone;
   }, [scene]);
 
-  const mouseDownTime = useRef(0);
-
   return (
-    <group>
-      <primitive
-        object={clonedScene}
-        onPointerDown={(e: any) => {
-          mouseDownTime.current = Date.now();
-        }}
-        onPointerUp={(e: any) => {
-          const duration = Date.now() - mouseDownTime.current;
-          console.log('DEBUG: onPointerUp', { duration, hasUv: !!e.uv, uv: e.uv });
-          if (duration < 200 && e.uv) {
-            e.stopPropagation();
-            onClicar(e.point, e.face.normal, e.uv);
-          }
-        }}
-        onPointerMove={(e: any) => {
-          if (isDragging && e.uv) {
-            onDrag(e.point, e.face.normal, e.uv);
-          }
-        }}
-      />
-      {/* CUBO DE TESTE PARA VALIDAR A TEXTURA */}
-      <mesh position={[0.8, 0, 0]}>
-        <boxGeometry args={[0.2, 0.2, 0.2]} />
-        <meshBasicMaterial map={textureRef.current!} />
-      </mesh>
-    </group>
+    <primitive
+      object={clonedScene}
+      onPointerUp={(e: any) => {
+        if (e.uv) {
+          e.stopPropagation();
+          onClicar(e.uv);
+        }
+      }}
+      onPointerMove={(e: any) => {
+        if (isDragging && e.uv) {
+          onDrag(e.uv);
+        }
+      }}
+    />
   );
 }
 
-// ---- COMPONENTE PRINCIPAL ----
 export default function ZoneEditor({ modelUrl, initialZones = [], onSave, onClose }: any) {
-  console.log('DEBUG: ZoneEditor render', { modelUrl, numInitialZones: initialZones?.length });
-  const [zonas, setZonas] = useState<ZonaMarcada[]>(() => {
-    const base = initialZones.map((z: any) => ({
-      id: z.id || crypto.randomUUID(),
-      name: z.name || 'Nova Zona',
-      type: z.type || 'text',
-      uvCenter: z.uvCenter || z.uv || [0.5, 0.5],
-      width: z.width || 0.1,
-      height: z.height || 0.1,
-      rotation: z.rotation || 0,
-      point: z.point || [0, 0, 0],
-      normal: z.normal || [0, 1, 0],
-    }));
-
-    // Se não houver zonas, adiciona uma de teste central para validar visualização
-    if (base.length === 0) {
-      base.push({
-        id: 'debug-center',
-        name: 'DEBUG CENTER',
-        type: 'text',
-        uvCenter: [0.5, 0.5],
-        width: 0.2,
-        height: 0.2,
-        rotation: 0,
-        point: [0, 0, 0],
-        normal: [0, 1, 0],
-      });
-    }
-    return base;
-  });
-
+  const [zonas, setZonas] = useState<ZonaMarcada[]>(initialZones);
   const [idSelecionado, setIdSelecionado] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
 
   const zonaSelecionada = zonas.find(z => z.id === idSelecionado);
 
-  const handleClicarNoModelo = (point: THREE.Vector3, normal: THREE.Vector3, uv: THREE.Vector2) => {
-    console.log('DEBUG: handleClicarNoModelo', { uv });
-    // Se não houver nada selecionado, cria uma nova zona
+  const updateZona = (id: string, updates: Partial<ZonaMarcada>) => {
+    setZonas(prev => prev.map(z => z.id === id ? { ...z, ...updates } : z));
+  };
+
+  const handleClicarNoModelo = (uv: THREE.Vector2) => {
     if (!idSelecionado) {
       const novaId = crypto.randomUUID();
       const nova: ZonaMarcada = {
@@ -286,171 +150,118 @@ export default function ZoneEditor({ modelUrl, initialZones = [], onSave, onClos
         type: 'text',
         uvCenter: [uv.x, uv.y],
         width: 0.15,
-        height: 0.05,
+        height: 0.10,
         rotation: 0,
-        point: point.toArray() as [number, number, number],
-        normal: normal.toArray() as [number, number, number],
       };
       setZonas(prev => [...prev, nova]);
       setIdSelecionado(novaId);
     } else {
-      // Se houver selecionado, move para o ponto clicado
-      updateZona(idSelecionado, {
-        uvCenter: [uv.x, uv.y],
-        point: point.toArray() as [number, number, number],
-        normal: normal.toArray() as [number, number, number],
-      });
+      updateZona(idSelecionado, { uvCenter: [uv.x, uv.y] });
     }
-  };
-
-  const handleDragNoModelo = (point: THREE.Vector3, normal: THREE.Vector3, uv: THREE.Vector2) => {
-    if (idSelecionado && isDragging) {
-      updateZona(idSelecionado, {
-        uvCenter: [uv.x, uv.y],
-        point: point.toArray() as [number, number, number],
-        normal: normal.toArray() as [number, number, number],
-      });
-    }
-  };
-
-  const updateZona = (id: string, updates: Partial<ZonaMarcada>) => {
-    setZonas(prev => prev.map(z => z.id === id ? { ...z, ...updates } : z));
-  };
-
-  const handleSalvar = () => {
-    onSave(zonas);
   };
 
   return (
     <div className="fixed inset-0 bg-[#0a0a0a] z-[60] flex flex-col font-sans">
-      {/* Header */}
-      <div className="flex justify-between items-center p-4 bg-[#111] border-b border-[#222]">
-        <div className="flex items-center gap-3">
-          <h1 className="text-white font-bold text-lg">Editor de Áreas Editáveis</h1>
-          <span className="text-gray-500 text-sm">| Clique no modelo para criar ou mover</span>
+      <header className="flex justify-between items-center p-4 bg-[#111] border-b border-[#222]">
+        <div className="flex items-center gap-4">
+          <h1 className="text-white font-bold text-lg">Editor de Gabaritos</h1>
+          <span className="text-gray-500 text-xs">Clique na malha para posicionar</span>
         </div>
         <div className="flex gap-2">
-          <button 
-            onClick={handleSalvar}
-            className="bg-orange-600 hover:bg-orange-700 text-white font-bold py-2 px-6 rounded-lg transition-colors"
-          >
-            Salvar Áreas
+          <button onClick={() => onSave(zonas)} className="bg-orange-600 hover:bg-orange-700 text-white py-2 px-6 rounded-xl flex items-center gap-2 transition-all">
+            <Save className="w-4 h-4" /> Salvar Alterações
           </button>
-          <button 
-            onClick={onClose}
-            className="bg-[#333] hover:bg-[#444] text-white py-2 px-6 rounded-lg transition-colors"
-          >
-            Sair
+          <button onClick={onClose} className="bg-[#222] hover:bg-[#333] text-white py-2 px-6 rounded-xl flex items-center gap-2 transition-all">
+            <X className="w-4 h-4" /> Sair
           </button>
         </div>
-      </div>
+      </header>
 
       <div className="flex flex-1 overflow-hidden">
-        {/* Painel Esquerdo: Lista de Zonas */}
+        {/* Painel Esquerdo */}
         <div className="w-72 bg-[#111] border-r border-[#222] p-4 flex flex-col gap-4 overflow-y-auto">
-          <div className="flex gap-2">
-            <button
-              onClick={() => setIdSelecionado(null)}
-              className={`flex-1 py-2 px-4 rounded-lg border-2 transition-all ${!idSelecionado ? 'border-orange-600 bg-orange-600/10 text-orange-600' : 'border-[#333] text-gray-400'}`}
-            >
-              + Nova Área
-            </button>
-            <button
-              onClick={() => { if(window.confirm('Excluir todas as zonas?')) setZonas([]); }}
-              className="px-3 py-2 rounded-lg border-2 border-red-900/30 text-red-500 hover:bg-red-500/10 transition-all"
-              title="Limpar Tudo"
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
-          </div>
+          <button 
+            onClick={() => setIdSelecionado(null)}
+            className="w-full py-3 bg-[#1a1a1a] border border-dashed border-gray-700 text-gray-400 rounded-xl flex items-center justify-center gap-2 hover:border-orange-600 hover:text-orange-600 transition-all"
+          >
+            <Plus className="w-4 h-4" /> Nova Área
+          </button>
 
-          <div className="space-y-2">
-            <h2 className="text-gray-500 text-xs font-bold uppercase tracking-wider">Zonas Ativas ({zonas.length})</h2>
+          <div className="space-y-2 mt-4">
+            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-2">Zonas ({zonas.length})</p>
             {zonas.map(z => (
               <div 
                 key={z.id}
                 onClick={() => setIdSelecionado(z.id)}
-                className={`p-3 rounded-lg cursor-pointer transition-all border ${idSelecionado === z.id ? 'border-orange-600 bg-orange-600/10' : 'border-[#222] bg-[#1a1a1a] hover:border-[#444]'}`}
+                className={`p-4 rounded-xl cursor-pointer border transition-all ${idSelecionado === z.id ? 'border-orange-600 bg-orange-600/10' : 'border-[#222] bg-[#161616] hover:bg-[#1a1a1a]'}`}
               >
                 <div className="flex justify-between items-center">
-                  <span className={`text-sm font-medium ${idSelecionado === z.id ? 'text-white' : 'text-gray-300'}`}>{z.name}</span>
-                  <button 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setZonas(prev => prev.filter(item => item.id !== z.id));
-                      if (idSelecionado === z.id) setIdSelecionado(null);
-                    }}
-                    className="text-gray-600 hover:text-red-500 transition-colors"
-                  >
-                    ×
-                  </button>
+                  <p className={`font-bold text-sm ${idSelecionado === z.id ? 'text-white' : 'text-gray-400'}`}>{z.name}</p>
+                  <span className="text-[9px] bg-black/40 px-1.5 py-0.5 rounded text-gray-500">{z.type}</span>
                 </div>
-                <div className="text-[10px] text-gray-500 mt-1 uppercase">{z.type}</div>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Centro: Canvas 3D */}
-        <div className="flex-1 relative">
+        {/* Viewport 3D */}
+        <div className="flex-1 relative bg-gradient-to-b from-[#0f0f0f] to-[#050505]">
           <Canvas camera={{ position: [0, 0.5, 2.5], fov: 35 }}>
             <Suspense fallback={null}>
-              <ambientLight intensity={0.7} />
-              <directionalLight position={[5, 5, 5]} intensity={1} />
+              <ambientLight intensity={0.5} />
+              <pointLight position={[10, 10, 10]} intensity={1} />
               <ModeloComTextura 
                 url={modelUrl} 
                 zonas={zonas}
                 onClicar={handleClicarNoModelo}
-                onDrag={handleDragNoModelo}
+                onDrag={(uv) => idSelecionado && updateZona(idSelecionado, { uvCenter: [uv.x, uv.y] })}
                 isDragging={isDragging}
                 idSelecionado={idSelecionado}
               />
-              <OrbitControls enabled={!isDragging} enablePan={false} />
+              <OrbitControls enablePan={false} makeDefault />
             </Suspense>
           </Canvas>
-          {/* O overlay 2D sobre o Canvas foi removido para manter tudo no 3D UV */}
 
           {idSelecionado && (
-            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-black/80 backdrop-blur-md border border-orange-600/30 p-2 rounded-full flex items-center gap-4 px-6 text-white text-sm shadow-2xl">
-               <div className="flex items-center gap-2">
-                 <input 
+            <div className="absolute bottom-8 left-1/2 -translate-x-1/2 bg-black/80 backdrop-blur-xl border border-white/10 p-3 rounded-2xl flex items-center gap-6 px-8 shadow-2xl">
+              <label className="flex items-center gap-3 cursor-pointer group">
+                <input 
                   type="checkbox" 
                   checked={isDragging} 
-                  onChange={e => setIsDragging(e.target.checked)}
-                  id="drag-mode"
-                  className="w-4 h-4 accent-orange-600"
-                 />
-                 <label htmlFor="drag-mode" className="cursor-pointer select-none">Modo Arrastar</label>
-               </div>
-               <div className="w-px h-4 bg-gray-700"></div>
-               <span className="text-gray-400">Clique e arraste no modelo para posicionar</span>
+                  onChange={e => setIsDragging(e.target.checked)} 
+                  className="w-5 h-5 rounded border-gray-700 bg-gray-800 text-orange-600 focus:ring-orange-600"
+                />
+                <span className="text-sm font-medium text-white group-hover:text-orange-500 transition-colors">Modo Arrastar (Real-time)</span>
+              </label>
+              <div className="w-px h-6 bg-white/10"></div>
+              <p className="text-gray-400 text-xs">Ajuste fino clicando na malha</p>
             </div>
           )}
         </div>
 
-        {/* Painel Direito: Propriedades da Zona Selecionada */}
+        {/* Painel Direito */}
         <div className="w-80 bg-[#111] border-l border-[#222] p-6 flex flex-col gap-6 overflow-y-auto">
           {zonaSelecionada ? (
-            <>
-              <h2 className="text-white font-bold text-lg border-b border-[#222] pb-3">Propriedades</h2>
+            <div className="space-y-6">
+              <h2 className="text-white font-bold text-lg border-b border-white/5 pb-4">Ajustes da Área</h2>
               
               <div className="space-y-4">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-gray-400 text-xs font-bold uppercase">Nome da Zona</label>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-gray-500 uppercase">Identificador</label>
                   <input 
                     type="text"
                     value={zonaSelecionada.name}
                     onChange={e => updateZona(zonaSelecionada.id, { name: e.target.value })}
-                    className="bg-[#1a1a1a] border border-[#333] text-white p-2 rounded focus:border-orange-600 outline-none transition-colors"
+                    className="w-full bg-[#1a1a1a] border border-[#333] text-white p-3 rounded-xl outline-none focus:border-orange-600 transition-all text-sm"
                   />
                 </div>
 
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-gray-400 text-xs font-bold uppercase">Tipo de Conteúdo</label>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-gray-500 uppercase">Tipo de Dado</label>
                   <select 
                     value={zonaSelecionada.type}
                     onChange={e => updateZona(zonaSelecionada.id, { type: e.target.value as any })}
-                    className="bg-[#1a1a1a] border border-[#333] text-white p-2 rounded focus:border-orange-600 outline-none"
+                    className="w-full bg-[#1a1a1a] border border-[#333] text-white p-3 rounded-xl outline-none focus:border-orange-600 transition-all text-sm"
                   >
                     {TIPOS_ZONA.map(t => (
                       <option key={t.id} value={t.id}>{t.label}</option>
@@ -458,61 +269,67 @@ export default function ZoneEditor({ modelUrl, initialZones = [], onSave, onClos
                   </select>
                 </div>
 
-                <div className="pt-4 border-t border-[#222] space-y-4">
-                  <div className="flex flex-col gap-1.5">
+                <div className="space-y-4 pt-4">
+                  <div className="space-y-2">
                     <div className="flex justify-between">
-                      <label className="text-gray-400 text-xs font-bold uppercase">Largura</label>
-                      <span className="text-orange-600 text-xs font-mono">{zonaSelecionada.width.toFixed(2)}</span>
+                      <label className="text-[10px] font-bold text-gray-500 uppercase">Largura</label>
+                      <span className="text-orange-600 font-mono text-xs">{zonaSelecionada.width.toFixed(2)}</span>
                     </div>
                     <input 
                       type="range" min="0.01" max="0.5" step="0.01"
                       value={zonaSelecionada.width}
                       onChange={e => updateZona(zonaSelecionada.id, { width: parseFloat(e.target.value) })}
-                      className="accent-orange-600 h-1.5 bg-[#333] rounded-lg appearance-none cursor-pointer"
+                      className="w-full accent-orange-600"
                     />
                   </div>
 
-                  <div className="flex flex-col gap-1.5">
+                  <div className="space-y-2">
                     <div className="flex justify-between">
-                      <label className="text-gray-400 text-xs font-bold uppercase">Altura</label>
-                      <span className="text-orange-600 text-xs font-mono">{zonaSelecionada.height.toFixed(2)}</span>
+                      <label className="text-[10px] font-bold text-gray-500 uppercase">Altura</label>
+                      <span className="text-orange-600 font-mono text-xs">{zonaSelecionada.height.toFixed(2)}</span>
                     </div>
                     <input 
                       type="range" min="0.01" max="0.5" step="0.01"
                       value={zonaSelecionada.height}
                       onChange={e => updateZona(zonaSelecionada.id, { height: parseFloat(e.target.value) })}
-                      className="accent-orange-600 h-1.5 bg-[#333] rounded-lg appearance-none cursor-pointer"
+                      className="w-full accent-orange-600"
                     />
                   </div>
 
-                  <div className="flex flex-col gap-1.5">
+                  <div className="space-y-2">
                     <div className="flex justify-between">
-                      <label className="text-gray-400 text-xs font-bold uppercase">Rotação</label>
-                      <span className="text-orange-600 text-xs font-mono">{zonaSelecionada.rotation}°</span>
+                      <label className="text-[10px] font-bold text-gray-500 uppercase">Rotação</label>
+                      <span className="text-orange-600 font-mono text-xs">{zonaSelecionada.rotation}°</span>
                     </div>
                     <input 
                       type="range" min="-180" max="180" step="1"
                       value={zonaSelecionada.rotation}
                       onChange={e => updateZona(zonaSelecionada.id, { rotation: parseInt(e.target.value) })}
-                      className="accent-orange-600 h-1.5 bg-[#333] rounded-lg appearance-none cursor-pointer"
+                      className="w-full accent-orange-600"
                     />
                   </div>
                 </div>
 
-                <div className="pt-4 border-t border-[#222]">
-                  <div className="flex justify-between text-[10px] text-gray-500 font-mono">
-                    <span>UV X: {zonaSelecionada.uvCenter[0].toFixed(4)}</span>
-                    <span>UV Y: {zonaSelecionada.uvCenter[1].toFixed(4)}</span>
-                  </div>
-                </div>
+                <button 
+                  onClick={() => {
+                    if(window.confirm('Excluir esta área?')) {
+                      setZonas(prev => prev.filter(z => z.id !== idSelecionado));
+                      setIdSelecionado(null);
+                    }
+                  }}
+                  className="w-full py-4 flex items-center justify-center gap-2 border border-red-900/30 text-red-500 rounded-xl hover:bg-red-500/10 transition-all mt-8 text-sm font-bold"
+                >
+                  <Trash2 className="w-4 h-4" /> Excluir Área
+                </button>
               </div>
-            </>
+            </div>
           ) : (
-            <div className="h-full flex flex-col items-center justify-center text-center text-gray-500 gap-4">
-              <div className="w-12 h-12 rounded-full border border-gray-800 flex items-center justify-center">
-                <span className="text-2xl">?</span>
+            <div className="h-full flex flex-col items-center justify-center text-center px-4">
+              <div className="w-16 h-16 bg-[#1a1a1a] rounded-full flex items-center justify-center mb-4">
+                <Edit3 className="w-6 h-6 text-gray-700" />
               </div>
-              <p className="text-sm px-4">Selecione uma zona no modelo ou na lista para editar suas propriedades.</p>
+              <p className="text-gray-400 text-sm font-medium">Nenhuma área selecionada</p>
+              <p className="text-gray-600 text-[10px] mt-2">Clique em um ponto do modelo 3D para começar a marcar.</p>
             </div>
           )}
         </div>
@@ -520,3 +337,5 @@ export default function ZoneEditor({ modelUrl, initialZones = [], onSave, onClos
     </div>
   );
 }
+
+import { Edit3 } from 'lucide-react';

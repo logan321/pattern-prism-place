@@ -167,18 +167,8 @@ function Model({
             console.warn("ThreeDViewer: Logo não carregou:", e);
           }
         } else {
-          ctx.beginPath();
-          ctx.rect(-w / 2, -h / 2, w, h);
-          ctx.strokeStyle = '#ffffff';
-          ctx.lineWidth = 4;
-          ctx.setLineDash([10, 5]);
-          ctx.stroke();
-          ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
-          ctx.fill();
-          ctx.font = `bold ${Math.floor(h * 0.2)}px Arial`;
-          ctx.fillStyle = 'white';
-          ctx.textAlign = 'center';
-          ctx.fillText('ESCUDO', 0, 0);
+          // No simulador final, áreas vazias não aparecem
+          console.log('LogoZone sem shieldUrl, nada desenhado');
         }
       });
     }

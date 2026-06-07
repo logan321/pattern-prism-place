@@ -143,12 +143,18 @@ export default function ZoneEditor({ referenceUrl, initialZones = [], onSave, on
         {/* Center - UV Map Canvas */}
         <div className="flex-1 relative bg-[#050505] overflow-auto flex items-center justify-center p-20 select-none">
           <div 
-            className="relative bg-white shadow-[0_0_100px_rgba(0,0,0,0.5)] transition-transform duration-200"
+            className="relative bg-[#f8f8f8] shadow-[0_0_100px_rgba(0,0,0,0.5)] transition-transform duration-200"
             style={{ 
               width: canvasSize * zoom, 
               height: canvasSize * zoom,
-              backgroundImage: 'radial-gradient(#ddd 1px, transparent 1px)',
-              backgroundSize: `${20 * zoom}px ${20 * zoom}px`
+              backgroundImage: `
+                linear-gradient(45deg, #eee 25%, transparent 25%), 
+                linear-gradient(-45deg, #eee 25%, transparent 25%), 
+                linear-gradient(45deg, transparent 75%, #eee 75%), 
+                linear-gradient(-45deg, transparent 75%, #eee 75%)
+              `,
+              backgroundSize: `${20 * zoom}px ${20 * zoom}px`,
+              backgroundPosition: `0 0, 0 ${10 * zoom}px, ${10 * zoom}px -${10 * zoom}px, -${10 * zoom}px 0px`
             }}
             onClick={handleCanvasClick}
           >
@@ -156,7 +162,7 @@ export default function ZoneEditor({ referenceUrl, initialZones = [], onSave, on
               <img 
                 src={referenceUrl} 
                 alt="UV Matrix" 
-                className="absolute inset-0 w-full h-full object-fill pointer-events-none opacity-100 mix-blend-multiply"
+                className="absolute inset-0 w-full h-full object-fill pointer-events-none opacity-90"
                 onError={(e) => {
                   (e.target as HTMLImageElement).style.display = 'none';
                   console.error('Failed to load UV reference image:', referenceUrl);

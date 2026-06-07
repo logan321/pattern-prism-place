@@ -149,7 +149,7 @@ function ModeloComTextura({
   const clonedScene = useMemo(() => {
     console.log('DEBUG: Clonando cena e criando textura UV');
     const clone = scene.clone(true);
-    const tex = new THREE.CanvasTexture(canvasRef.current);
+    const tex = new THREE.CanvasTexture(canvasRef.current as HTMLCanvasElement);
     tex.flipY = false;
     tex.colorSpace = THREE.SRGBColorSpace;
     textureRef.current = tex;

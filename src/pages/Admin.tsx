@@ -885,7 +885,23 @@ export default function Admin() {
                         {pattern.image_url && (
                           <img src={pattern.image_url} alt={pattern.name} className="w-full h-full object-cover" />
                         )}
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center space-x-2">
+                          <button 
+                            onClick={() => {
+                              setEditingPattern(pattern);
+                              setPatternData({
+                                name: pattern.name,
+                                png: null,
+                                svg: null,
+                                uvMatrizId: pattern.uv_matriz_id || ''
+                              });
+                              setShowPatternModal(true);
+                            }}
+                            className="bg-white p-2 rounded-lg text-orange-600 hover:bg-gray-100"
+                            title="Editar Estampa"
+                          >
+                            <Edit3 className="w-4 h-4" />
+                          </button>
                           <button 
                             onClick={() => handleDelete(pattern.id, 'textures', pattern.image_url)}
                             className="bg-red-500 p-2 rounded-lg text-white hover:bg-red-600"

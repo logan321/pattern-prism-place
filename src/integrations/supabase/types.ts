@@ -458,6 +458,7 @@ export type Database = {
           id: string
           name: string
           normal_3d: Json | null
+          patch_only: boolean | null
           path_data: Json | null
           position_3d: Json | null
           rotation: number
@@ -476,6 +477,7 @@ export type Database = {
           id?: string
           name: string
           normal_3d?: Json | null
+          patch_only?: boolean | null
           path_data?: Json | null
           position_3d?: Json | null
           rotation?: number
@@ -494,6 +496,7 @@ export type Database = {
           id?: string
           name?: string
           normal_3d?: Json | null
+          patch_only?: boolean | null
           path_data?: Json | null
           position_3d?: Json | null
           rotation?: number

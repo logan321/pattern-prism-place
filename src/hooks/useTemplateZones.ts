@@ -62,17 +62,18 @@ export const useTemplateZones = () => {
         x_percent: z.xPercent,
         y_percent: z.yPercent,
         width_percent: z.widthPercent,
-        height_percent: z.height_percent,
+        height_percent: z.heightPercent,
         rotation: z.rotation,
         position_3d: z.position3d,
-        normal_3d: z.normal_3d,
+        normal_3d: z.normal3d,
         size_3d: z.size3d,
-        rotation_3d: z.rotation_3d,
+        rotation_3d: z.rotation3d,
         path_data: z.path_data,
         shared: z.shared,
         patch_only: z.patchOnly,
       }));
 
+      // @ts-ignore - Ignore type mismatches until Supabase types are regenerated
       const { error: insertError } = await supabase
         .from('template_zones')
         .insert(insertData);

@@ -40,13 +40,19 @@ function Model({ url, textureUrl, zones = [] }: { url: string; textureUrl?: stri
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       
       const getCoord = (uv: [number, number]): [number, number] => {
-        // Tratar o UV considerando flipY=false no Three.js
-        // Se flipY=false, UV(0,0) é Top-Left
         return [uv[0] * canvas.width, uv[1] * canvas.height];
       };
 
+      // Fallback zones if empty
+      const effectiveZones = zones.length > 0 ? zones : [
+        { name: 'PEITO DIREITO', uv: [0.35, 0.35] },
+        { name: 'PEITO ESQUERDO', uv: [0.65, 0.35] },
+        { name: 'NOME TOPO', uv: [0.5, 0.15] },
+        { name: 'NUMERO CENTRO', uv: [0.5, 0.5] }
+      ];
+
       // Zonas
-      const findZone = (search: string) => zones.find(z => z.name.toUpperCase().includes(search.toUpperCase()));
+      const findZone = (search: string) => (effectiveZones as any[]).find(z => z.name.toUpperCase().includes(search.toUpperCase()));
       
       const nameZoneRight = findZone('PEITO DIREITO') || findZone('DIREITO');
       const nameZoneLeft = findZone('PEITO ESQUERDO') || findZone('ESQUERDO');

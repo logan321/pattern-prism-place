@@ -317,8 +317,13 @@ export default function Simulator() {
   const [finalTexture, setFinalTexture] = useState<THREE.CanvasTexture | undefined>(undefined);
 
   useEffect(() => {
+    let active = true;
     const updateTexture = async () => {
+      if (!active) return;
+      
       try {
+        console.log(`Simulator: Gerando textura final... Zonas: ${activeUVMatriz?.zones ? (activeUVMatriz.zones as any).length : 0}`);
+        
         const canvas = await generateFinalTexture({
           baseTextureUrl: textureUrl,
           zones: (activeUVMatriz?.zones as unknown as UVZone[]) || [],
@@ -332,9 +337,12 @@ export default function Simulator() {
           }
         });
         
+        if (!active) return;
+
         const tex = new THREE.CanvasTexture(canvas);
         tex.flipY = false;
         tex.colorSpace = THREE.SRGBColorSpace;
+        tex.needsUpdate = true;
         setFinalTexture(tex);
       } catch (err) {
         console.error('Error generating final texture:', err);
@@ -342,6 +350,7 @@ export default function Simulator() {
     };
     
     updateTexture();
+    return () => { active = false; };
   }, [textureUrl, activeUVMatriz, customName, customNumber, shieldUrl, nameColor, numberColor, nameFont]);
 
   // Logs removidos para evitar poluição no console e possíveis erros de hook indiretos

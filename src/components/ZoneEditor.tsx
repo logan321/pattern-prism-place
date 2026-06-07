@@ -10,6 +10,10 @@ const TIPOS_ZONA = [
 ];
 
 export default function ZoneEditor({ referenceUrl, initialZones = [], onSave, onClose }: any) {
+  useEffect(() => {
+    console.log('ZoneEditor: referenceUrl is', referenceUrl);
+    console.log('ZoneEditor: initialZones count:', initialZones.length);
+  }, [referenceUrl, initialZones]);
   const [zonas, setZonas] = useState<UVZone[]>(initialZones);
   const [idSelecionado, setIdSelecionado] = useState<string | null>(null);
   const [zoom, setZoom] = useState(0.4);

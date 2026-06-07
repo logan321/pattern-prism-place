@@ -19,6 +19,12 @@ function Model({ url, textureUrl, zones = [] }: { url: string; textureUrl?: stri
   const { scene } = useGLTF(url);
   const [uvTexture, setUvTexture] = React.useState<THREE.CanvasTexture | null>(null);
   
+  const name = useCustomizerStore(state => state.name);
+  const number = useCustomizerStore(state => state.number);
+  const nameColor = useCustomizerStore(state => state.nameColor);
+  const numberColor = useCustomizerStore(state => state.numberColor);
+  const nameFont = useCustomizerStore(state => state.nameFont);
+
   // Efeito para criar a textura de zonas baseada em UV
   useEffect(() => {
     console.log("Criando textura UV para zones e texto:", { zones, name, number, nameColor, numberColor, nameFont });
@@ -52,14 +58,12 @@ function Model({ url, textureUrl, zones = [] }: { url: string; textureUrl?: stri
       }
     });
 
-    // Desenhar Nome e Número se houver zonas específicas ou posições padrão
-    // Para teste, vamos desenhar o nome e número em posições fixas que costumam ser as "costas" em muitos modelos UV
-    
+    // Desenhar Nome e Número
     if (name) {
       ctx.font = `bold 120px ${nameFont}`;
       ctx.fillStyle = nameColor;
       ctx.textAlign = 'center';
-      // Exemplo: Costas (ajustar conforme UV do modelo real)
+      // Posicionamento estimado para as costas na UV
       ctx.fillText(name.toUpperCase(), canvas.width * 0.5, canvas.height * 0.2);
     }
 
@@ -67,7 +71,7 @@ function Model({ url, textureUrl, zones = [] }: { url: string; textureUrl?: stri
       ctx.font = `bold 300px ${nameFont}`;
       ctx.fillStyle = numberColor;
       ctx.textAlign = 'center';
-      // Exemplo: Costas (ajustar conforme UV do modelo real)
+      // Posicionamento estimado para as costas na UV
       ctx.fillText(number, canvas.width * 0.5, canvas.height * 0.45);
     }
 

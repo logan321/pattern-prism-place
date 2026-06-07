@@ -62,12 +62,7 @@ function Model({
     return clone;
   }, [scene]);
 
-  const canvasRef = useRef<HTMLCanvasElement>(() => {
-    const c = document.createElement('canvas');
-    c.width = 2048;
-    c.height = 2048;
-    return c;
-  });
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   const drawOnCanvas = React.useCallback(async () => {
     console.log('=== COMPOSITOR INICIADO ===');
@@ -76,7 +71,12 @@ function Model({
     console.log('number:', number);
     console.log('shieldUrl:', shieldUrl);
 
-    const canvas = typeof canvasRef.current === 'function' ? (canvasRef.current as any)() : canvasRef.current;
+    if (!canvasRef.current) {
+      canvasRef.current = document.createElement('canvas');
+      canvasRef.current.width = 2048;
+      canvasRef.current.height = 2048;
+    }
+    const canvas = canvasRef.current;
     if (!canvas) return;
     
     const ctx = canvas.getContext('2d');

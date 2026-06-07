@@ -557,7 +557,8 @@ export default function Admin() {
             name: patternData.name,
             image_url: pngUrl,
             svg_url: svgUrl,
-            uv_matriz_id: patternData.uvMatrizId || null
+            uv_matriz_id: patternData.uvMatrizId || null,
+            updated_at: new Date().toISOString()
           } as any)
           .eq('id', editingPattern.id);
         if (dbError) throw dbError;
@@ -569,7 +570,8 @@ export default function Admin() {
             name: patternData.name,
             image_url: pngUrl,
             svg_url: svgUrl,
-            uv_matriz_id: patternData.uvMatrizId || null
+            uv_matriz_id: patternData.uvMatrizId || null,
+            created_at: new Date().toISOString()
           } as any);
         if (dbError) throw dbError;
         alert('Estampa cadastrada com sucesso!');

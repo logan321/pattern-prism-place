@@ -50,7 +50,7 @@ function Model({
           const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
           materials.forEach((mat) => {
             if (mat instanceof THREE.MeshStandardMaterial || mat instanceof THREE.MeshPhysicalMaterial) {
-              mat.emissive = new THREE.Color(0xffffff);
+              mat.emissive = new THREE.Color(0x000000);
               mat.emissiveIntensity = 0;
               mat.needsUpdate = true;
             }

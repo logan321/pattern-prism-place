@@ -18,7 +18,6 @@ function Model({ url, textureUrl, zones = [] }: { url: string; textureUrl?: stri
   const { scene } = useGLTF(url);
   const clonedScene = React.useMemo(() => {
     const clone = scene.clone();
-    // Preparar materiais para aceitar emissive (overlay)
     clone.traverse((child) => {
       if ((child as THREE.Mesh).isMesh) {
         const mesh = child as THREE.Mesh;
@@ -27,7 +26,9 @@ function Model({ url, textureUrl, zones = [] }: { url: string; textureUrl?: stri
           materials.forEach((mat) => {
             if (mat instanceof THREE.MeshStandardMaterial || mat instanceof THREE.MeshPhysicalMaterial) {
               mat.emissive = new THREE.Color(0xffffff);
-              mat.emissiveIntensity = 0; // Começa desligado
+              mat.emissiveIntensity = 0;
+              // Garantir que o mapa base não interfira com a emissão se estiver vazio
+              mat.needsUpdate = true;
             }
           });
         }
@@ -66,9 +67,9 @@ function Model({ url, textureUrl, zones = [] }: { url: string; textureUrl?: stri
       };
 
       const effectiveZones = zones && zones.length > 0 ? zones : [
-        { name: 'PEITO DIREITO', uv: [0.35, 0.65] },
-        { name: 'PEITO ESQUERDO', uv: [0.65, 0.65] },
-        { name: 'NOME TOPO', uv: [0.5, 0.85] },
+        { name: 'PEITO DIREITO', uv: [0.35, 0.72] },
+        { name: 'PEITO ESQUERDO', uv: [0.65, 0.72] },
+        { name: 'NOME TOPO', uv: [0.5, 0.82] },
         { name: 'NUMERO CENTRO', uv: [0.5, 0.5] }
       ];
 
@@ -155,9 +156,16 @@ function Model({ url, textureUrl, zones = [] }: { url: string; textureUrl?: stri
           const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
           materials.forEach((mat) => {
             if (mat instanceof THREE.MeshStandardMaterial || mat instanceof THREE.MeshPhysicalMaterial) {
+              // Limpar mapas antigos antes de atribuir o novo para evitar vazamento de memória e conflitos
+              if (mat.emissiveMap && mat.emissiveMap !== uvTexture) {
+                mat.emissiveMap.dispose();
+              }
+              
               mat.emissiveMap = uvTexture;
-              mat.emissive.set(0xffffff); // Garante que a cor emissiva seja branca para mostrar a textura
+              mat.emissiveMap.colorSpace = THREE.SRGBColorSpace;
+              mat.emissive.set(0xffffff); 
               mat.emissiveIntensity = 1.0;
+              mat.transparent = true; // Importante para o overlay
               mat.needsUpdate = true;
             }
           });
@@ -165,12 +173,12 @@ function Model({ url, textureUrl, zones = [] }: { url: string; textureUrl?: stri
       });
     };
 
-    const timeoutId = setTimeout(drawOnCanvas, 100);
+    const timeoutId = setTimeout(drawOnCanvas, 200);
     return () => { 
       isMounted = false;
       clearTimeout(timeoutId);
     };
-  }, [zones, name, number, nameColor, numberColor, nameFont, namePosition, shieldPosition, shieldUrl, clonedScene]);
+  }, [zones, name, number, nameColor, numberColor, nameFont, namePosition, shieldPosition, shieldUrl, clonedScene, textureUrl]);
 
   // 2. Efeito para carregar a Estampa Principal (textureUrl)
   useEffect(() => {

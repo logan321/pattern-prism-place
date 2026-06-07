@@ -279,6 +279,18 @@ export default function Simulator() {
   console.log('=== ACTIVE UV MATRIZ ===', activeUVMatriz);
   console.log('=== ZONES ===', currentZones);
 
+  // Efeito para trocar a vista automaticamente ao mudar de aba
+  useEffect(() => {
+    if (activeTab === 'Nome/Número') {
+      viewerRef.current?.setView('back');
+    } else if (activeTab === 'Escudo') {
+      viewerRef.current?.setView('front');
+    } else if (activeTab === 'Modelo' || activeTab === 'Cores') {
+      viewerRef.current?.setView('front');
+    }
+  }, [activeTab]);
+
+
 
   return (
     <>

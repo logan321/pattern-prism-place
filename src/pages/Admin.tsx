@@ -511,50 +511,77 @@ export default function Admin() {
 
   const handlePatternSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!patternData.name || !patternData.png || !patternData.svg) {
-      alert('Por favor, preencha o nome e selecione ambos os arquivos (PNG e SVG).');
+    if (!patternData.name) {
+      alert('Por favor, preencha o nome da estampa.');
+      return;
+    }
+
+    if (!editingPattern && (!patternData.png || !patternData.svg)) {
+      alert('Para novas estampas, selecione ambos os arquivos (PNG e SVG).');
       return;
     }
 
     setIsUploading(true);
     try {
-      // 1. Upload PNG
-      const pngName = `thumb_${Date.now()}_${patternData.png.name}`;
-      const { data: pngUpload, error: pngError } = await supabase.storage
-        .from('textures')
-        .upload(pngName, patternData.png);
-      if (pngError) throw pngError;
-      const pngUrl = supabase.storage.from('textures').getPublicUrl(pngUpload.path).data.publicUrl;
+      let pngUrl = editingPattern?.image_url;
+      let svgUrl = editingPattern?.svg_url;
 
-      // 2. Upload SVG
-      const svgName = `uv_${Date.now()}_${patternData.svg.name}`;
-      const { data: svgUpload, error: svgError } = await supabase.storage
-        .from('textures')
-        .upload(svgName, patternData.svg, { 
-          contentType: 'image/svg+xml',
-          cacheControl: '3600',
-          upsert: false 
-        });
-      if (svgError) throw svgError;
-      const svgUrl = supabase.storage.from('textures').getPublicUrl(svgUpload.path).data.publicUrl;
+      // 1. Upload PNG if provided
+      if (patternData.png) {
+        const pngName = `thumb_${Date.now()}_${patternData.png.name}`;
+        const { data: pngUpload, error: pngError } = await supabase.storage
+          .from('textures')
+          .upload(pngName, patternData.png);
+        if (pngError) throw pngError;
+        pngUrl = supabase.storage.from('textures').getPublicUrl(pngUpload.path).data.publicUrl;
+      }
+
+      // 2. Upload SVG if provided
+      if (patternData.svg) {
+        const svgName = `uv_${Date.now()}_${patternData.svg.name}`;
+        const { data: svgUpload, error: svgError } = await supabase.storage
+          .from('textures')
+          .upload(svgName, patternData.svg, { 
+            contentType: 'image/svg+xml',
+            cacheControl: '3600',
+            upsert: false 
+          });
+        if (svgError) throw svgError;
+        svgUrl = supabase.storage.from('textures').getPublicUrl(svgUpload.path).data.publicUrl;
+      }
 
       // 3. Save to DB
-      const { error: dbError } = await supabase
-        .from('patterns')
-        .insert({
-          name: patternData.name,
-          image_url: pngUrl,
-          svg_url: svgUrl,
-          uv_matriz_id: patternData.uvMatrizId || null
-        } as any);
-      if (dbError) throw dbError;
+      if (editingPattern) {
+        const { error: dbError } = await supabase
+          .from('patterns')
+          .update({
+            name: patternData.name,
+            image_url: pngUrl,
+            svg_url: svgUrl,
+            uv_matriz_id: patternData.uvMatrizId || null
+          } as any)
+          .eq('id', editingPattern.id);
+        if (dbError) throw dbError;
+        alert('Estampa atualizada com sucesso!');
+      } else {
+        const { error: dbError } = await supabase
+          .from('patterns')
+          .insert({
+            name: patternData.name,
+            image_url: pngUrl,
+            svg_url: svgUrl,
+            uv_matriz_id: patternData.uvMatrizId || null
+          } as any);
+        if (dbError) throw dbError;
+        alert('Estampa cadastrada com sucesso!');
+      }
 
       queryClient.invalidateQueries({ queryKey: ['patterns'] });
-      alert('Estampa cadastrada com sucesso!');
       setShowPatternModal(false);
+      setEditingPattern(null);
       setPatternData({ name: '', png: null, svg: null, uvMatrizId: '' });
     } catch (error: any) {
-      alert('Erro no upload: ' + error.message);
+      alert('Erro no processamento: ' + error.message);
     } finally {
       setIsUploading(false);
     }

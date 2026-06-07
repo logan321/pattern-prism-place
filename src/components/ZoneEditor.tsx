@@ -106,9 +106,9 @@ export default function ZoneEditor({ referenceUrl, onClose }: any) {
         </div>
       </header>
 
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden p-4 gap-4 bg-[#0a0a0a]">
         {/* Left Panel - Layer List */}
-        <div className="w-72 bg-[#111] border-r border-[#222] p-4 flex flex-col gap-4">
+        <div className="w-72 bg-[#161616] rounded-xl border border-[#222] p-4 flex flex-col gap-4 shadow-xl">
            <div className="flex items-center justify-between px-2">
               <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Camadas / Zonas</span>
               <span className="text-[10px] bg-orange-600/20 text-orange-600 px-2 py-0.5 rounded-full font-bold">{zones.length}</span>
@@ -155,7 +155,7 @@ export default function ZoneEditor({ referenceUrl, onClose }: any) {
         </div>
 
         {/* Center - UV Map Canvas */}
-        <div className="flex-1 relative bg-[#050505] overflow-auto flex items-center justify-center p-20 select-none">
+        <div className="flex-1 relative bg-[#050505] rounded-xl border border-[#222] overflow-auto flex items-center justify-center p-20 select-none shadow-xl">
           <div 
             className="relative bg-[#f8f8f8] shadow-[0_0_100px_rgba(0,0,0,0.5)] transition-transform duration-200"
             style={{ 
@@ -267,7 +267,7 @@ export default function ZoneEditor({ referenceUrl, onClose }: any) {
         </div>
 
         {/* Right Panel - Adjustments */}
-        <div className="w-80 bg-[#111] border-l border-[#222] p-6 flex flex-col gap-6 overflow-y-auto">
+        <div className="w-80 bg-[#161616] rounded-xl border border-[#222] p-6 flex flex-col gap-6 overflow-y-auto shadow-xl">
           {zonaSelecionada ? (
             <div className="space-y-6 animate-in slide-in-from-right duration-300">
               <div className="flex items-center justify-between border-b border-[#222] pb-4">

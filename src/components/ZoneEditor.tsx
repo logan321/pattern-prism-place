@@ -113,8 +113,22 @@ function ModelWithClick({ url, onPointSelect, zones, updateMarkerPos }: {
     <group>
       <primitive 
         object={scene} 
-        onClick={(e: any) => {
+        onPointerDown={(e: any) => {
           e.stopPropagation();
+          // Armazenamos a posição inicial do ponteiro
+          (e.target as any)._pointerDownPos = { x: e.clientX, y: e.clientY };
+        }}
+        onPointerUp={(e: any) => {
+          e.stopPropagation();
+          const startPos = (e.target as any)._pointerDownPos;
+          if (!startPos) return;
+
+          const dx = Math.abs(e.clientX - startPos.x);
+          const dy = Math.abs(e.clientY - startPos.y);
+          
+          // Se moveu mais de 5px, ignoramos (é um drag/orbit)
+          if (dx > 5 || dy > 5) return;
+
           const meshAlvo: THREE.Mesh[] = [];
           scene.traverse((obj) => {
             if (obj instanceof THREE.Mesh && obj.name === 'Cloth') {
@@ -129,7 +143,16 @@ function ModelWithClick({ url, onPointSelect, zones, updateMarkerPos }: {
             const hit = intersects[0];
             if (hit.uv && hit.faceIndex !== undefined) {
               console.log('Hit Cloth Mesh:', hit.object.name, 'UUID:', hit.object.uuid);
-              onPointSelect(hit);
+              
+              // Capturamos a posição da tela relativa ao container para o popover
+              const canvas = e.nativeEvent.target as HTMLCanvasElement;
+              const rect = canvas.getBoundingClientRect();
+              const screenPos = {
+                x: e.nativeEvent.clientX - rect.left,
+                y: e.nativeEvent.clientY - rect.top
+              };
+              
+              onPointSelect(hit, screenPos);
             }
           }
         }}
@@ -198,27 +221,6 @@ export default function ZoneEditor({ modelUrl, initialZones = [], onSave, onClos
     setZones(zones.filter(z => z.id !== id));
   };
 
-  const handleMouseDown = (e: React.MouseEvent) => {
-    mouseStartPos.current = { x: e.clientX, y: e.clientY };
-  };
-
-  const handleMouseUp = (e: React.MouseEvent) => {
-    const dx = Math.abs(e.clientX - mouseStartPos.current.x);
-    const dy = Math.abs(e.clientY - mouseStartPos.current.y);
-    
-    // Se moveu mais de 5px, é um drag/orbit, não um clique de marcação
-    if (dx > 5 || dy > 5) return;
-
-    // O clique real de marcação é tratado pelo ModelWithClick via R3F events
-    // Mas precisamos capturar a posição da tela aqui para o popover
-    if (containerRef.current) {
-      const rect = containerRef.current.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      // Guardamos para uso no callback do hit
-      (window as any)._lastClickPos = { x, y };
-    }
-  };
 
   return (
     <div className="fixed inset-0 bg-black/90 z-[60] flex flex-col">
@@ -276,15 +278,13 @@ export default function ZoneEditor({ modelUrl, initialZones = [], onSave, onClos
         <div 
           ref={containerRef}
           className="flex-1 bg-black relative"
-          onMouseDown={handleMouseDown}
-          onMouseUp={handleMouseUp}
         >
           <Canvas camera={{ position: [0, 0, 2], fov: 45 }}>
             <Suspense fallback={null}>
               <Stage intensity={0.5} environment="city" shadows="contact" adjustCamera={false}>
                 <ModelWithClick 
                   url={modelUrl} 
-                  onPointSelect={(hit) => handlePointSelect(hit, (window as any)._lastClickPos || { x: 0, y: 0 })} 
+                  onPointSelect={handlePointSelect} 
                   zones={zones} 
                   updateMarkerPos={updateMarkerPos}
                 />

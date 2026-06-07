@@ -37,7 +37,7 @@ const LOCAL_MODELS = [
     nome: 'Gola Padre (Local)',
     glb_url: golaPadreAsset.url,
     thumbnail_url: null,
-    pecas: ['Camisa', 'Calção', 'Meião'],
+    pecas: ['Camisa'],
     categoria_id: null,
     created_at: '',
   },

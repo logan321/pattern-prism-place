@@ -94,7 +94,7 @@ function UVConfigView({ models, queryClient, modelsLoading, onOpenMatrizModal }:
           <p className="text-gray-500 text-xs">Crie novas matrizes apenas informando o nome.</p>
         </div>
         <button 
-          onClick={() => (window as any).setShowUVMatrizModal(true)}
+          onClick={onOpenMatrizModal}
           className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded-xl font-bold flex items-center space-x-2 transition-all shadow-md"
         >
           <Plus className="w-4 h-4" />

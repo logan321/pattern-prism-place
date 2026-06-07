@@ -8,9 +8,12 @@ import { gsap } from 'gsap';
 interface Zone {
   id: string;
   name: string;
-  tipo?: string;
-  position: [number, number, number];
-  rotation?: [number, number, number];
+  type?: string;
+  uvCenter?: [number, number];
+  width?: number;
+  height?: number;
+  rotation?: number;
+  // Fallbacks for older data if any still exist
   uv?: [number, number];
 }
 
@@ -106,68 +109,82 @@ function Model({
       return [uv[0] * canvas.width, (1 - uv[1]) * canvas.height];
     };
 
-    // 1. Desenhar Logo ou Placeholder
-    if (logoZone?.uv) {
-      const [sx, sy] = getCoord(logoZone.uv as [number, number]);
-      const size = 200;
-      
-      if (shieldUrl) {
-        try {
-          const img = new Image();
-          img.crossOrigin = "anonymous";
-          await new Promise((resolve, reject) => {
-            img.onload = resolve;
-            img.onerror = reject;
-            img.src = shieldUrl;
-          });
-          ctx.drawImage(img, sx - size / 2, sy - size / 2, size, size);
-        } catch (e) {
-          console.warn("ThreeDViewer: Logo não carregou:", e);
+    // Helper para desenhar conteúdo rotacionado em uma zona
+    const drawZoneContent = (zone: Zone, drawFn: (w: number, h: number) => void) => {
+      const uv = zone.uvCenter || zone.uv;
+      if (!uv) return;
+
+      const [cx, cy] = getCoord(uv as [number, number]);
+      const w = (zone.width || 0.1) * canvas.width;
+      const h = (zone.height || 0.1) * canvas.height;
+      const rotation = (zone.rotation || 0) * (Math.PI / 180);
+
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(rotation);
+      drawFn(w, h);
+      ctx.restore();
+    };
+
+    // 1. Desenhar Logo
+    if (logoZone) {
+      drawZoneContent(logoZone, async (w, h) => {
+        if (shieldUrl) {
+          try {
+            const img = new Image();
+            img.crossOrigin = "anonymous";
+            await new Promise((resolve, reject) => {
+              img.onload = resolve;
+              img.onerror = reject;
+              img.src = shieldUrl;
+            });
+            ctx.drawImage(img, -w / 2, -h / 2, w, h);
+          } catch (e) {
+            console.warn("ThreeDViewer: Logo não carregou:", e);
+          }
+        } else {
+          ctx.beginPath();
+          ctx.rect(-w / 2, -h / 2, w, h);
+          ctx.strokeStyle = '#ffffff';
+          ctx.lineWidth = 4;
+          ctx.setLineDash([10, 5]);
+          ctx.stroke();
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+          ctx.fill();
+          ctx.font = `bold ${Math.floor(h * 0.2)}px Arial`;
+          ctx.fillStyle = 'white';
+          ctx.textAlign = 'center';
+          ctx.fillText('ESCUDO', 0, 0);
         }
-      } else {
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(sx, sy, size / 2.5, 0, Math.PI * 2);
-        ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 6;
-        ctx.setLineDash([15, 10]);
-        ctx.stroke();
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
-        ctx.fill();
-        ctx.font = 'bold 32px Arial';
-        ctx.fillStyle = 'white';
-        ctx.textAlign = 'center';
-        ctx.fillText('ESCUDO', sx, sy + 10);
-        ctx.restore();
-      }
+      });
     }
 
     // 2. Desenhar Nome
-    if (name && nameZone?.uv) {
-      const [tx, ty] = getCoord(nameZone.uv as [number, number]);
-      ctx.save();
-      ctx.font = `bold 100px ${nameFont || 'Arial'}`;
-      ctx.fillStyle = nameColor || '#ffffff';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.shadowColor = 'rgba(0,0,0,0.5)';
-      ctx.shadowBlur = 10;
-      ctx.fillText(name.toUpperCase(), tx, ty, 450);
-      ctx.restore();
+    if (name && nameZone) {
+      drawZoneContent(nameZone, (w, h) => {
+        ctx.font = `bold ${Math.floor(h)}px ${nameFont || 'Arial'}`;
+        ctx.fillStyle = nameColor || '#ffffff';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        // Ajuste automático de escala para caber na largura
+        const metrics = ctx.measureText(name.toUpperCase());
+        const scale = Math.min(1, w / metrics.width);
+        if (scale < 1) {
+          ctx.scale(scale, 1);
+        }
+        ctx.fillText(name.toUpperCase(), 0, 0);
+      });
     }
 
     // 3. Desenhar Número
-    if (number && numberZone?.uv) {
-      const [nx, ny] = getCoord(numberZone.uv as [number, number]);
-      ctx.save();
-      ctx.font = `bold 400px ${nameFont || 'Arial'}`;
-      ctx.fillStyle = numberColor || '#ffffff';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.shadowColor = 'rgba(0,0,0,0.5)';
-      ctx.shadowBlur = 15;
-      ctx.fillText(number, nx, ny);
-      ctx.restore();
+    if (number && numberZone) {
+      drawZoneContent(numberZone, (w, h) => {
+        ctx.font = `bold ${Math.floor(h)}px ${nameFont || 'Arial'}`;
+        ctx.fillStyle = numberColor || '#ffffff';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(number, 0, 0);
+      });
     }
 
     if (!textureRef.current) {

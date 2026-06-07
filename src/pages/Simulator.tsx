@@ -133,8 +133,7 @@ export default function Simulator() {
   const nameColor = useCustomizerStore(state => state.nameColor);
   const numberColor = useCustomizerStore(state => state.numberColor);
   const nameFont = useCustomizerStore(state => state.nameFont);
-  const namePosition = useCustomizerStore(state => state.namePosition);
-  const shieldPosition = useCustomizerStore(state => state.shieldPosition);
+  const formation = useCustomizerStore(state => state.formation);
   const shieldUrl = useCustomizerStore(state => state.shieldUrl);
   
   const setName = useCustomizerStore(state => state.setName);
@@ -399,7 +398,6 @@ export default function Simulator() {
               </button>
             ))}
           </div>
-
           <div className="grid grid-cols-2 gap-3">
             {activeTab === 'Modelo' ? (
               allModels.map(model => (
@@ -423,6 +421,48 @@ export default function Simulator() {
               ))
             ) : activeTab === 'Nome/Número' ? (
               <div className="col-span-2 space-y-4">
+                <div className="space-y-3">
+                  <label className="text-[10px] font-bold text-gray-500 uppercase">Formação de Escudo e Nome</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button 
+                      onClick={() => setFormation('escudo-esq-nome-dir')}
+                      className={cn(
+                        "text-[10px] py-2 px-1 border rounded-lg transition-all font-medium",
+                        formation === 'escudo-esq-nome-dir' ? "bg-orange-600 text-white border-orange-600 shadow-md" : "bg-white text-gray-600 border-gray-200 hover:border-orange-300"
+                      )}
+                    >
+                      🛡️ Esq | Nome Dir
+                    </button>
+                    <button 
+                      onClick={() => setFormation('escudo-dir-nome-esq')}
+                      className={cn(
+                        "text-[10px] py-2 px-1 border rounded-lg transition-all font-medium",
+                        formation === 'escudo-dir-nome-esq' ? "bg-orange-600 text-white border-orange-600 shadow-md" : "bg-white text-gray-600 border-gray-200 hover:border-orange-300"
+                      )}
+                    >
+                      Nome Esq | 🛡️ Dir
+                    </button>
+                    <button 
+                      onClick={() => setFormation('nome-centro')}
+                      className={cn(
+                        "text-[10px] py-2 px-1 border rounded-lg transition-all font-medium",
+                        formation === 'nome-centro' ? "bg-orange-600 text-white border-orange-600 shadow-md" : "bg-white text-gray-600 border-gray-200 hover:border-orange-300"
+                      )}
+                    >
+                      Nome Centro
+                    </button>
+                    <button 
+                      onClick={() => setFormation('so-numero')}
+                      className={cn(
+                        "text-[10px] py-2 px-1 border rounded-lg transition-all font-medium",
+                        formation === 'so-numero' ? "bg-orange-600 text-white border-orange-600 shadow-md" : "bg-white text-gray-600 border-gray-200 hover:border-orange-300"
+                      )}
+                    >
+                      Só Número
+                    </button>
+                  </div>
+                </div>
+
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold text-gray-500 uppercase">Nome</label>
                   <div className="flex gap-2">
@@ -475,62 +515,38 @@ export default function Simulator() {
                     <option value="Impact">Impact</option>
                   </select>
                 </div>
-
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase">Alinhamento / Posição</label>
-                  <div className="grid grid-cols-1 gap-2">
-                    <button 
-                      onClick={() => setFormation('left-shield')}
-                      className={cn(
-                        "text-[10px] border p-2 rounded transition-colors",
-                        namePosition === 'right' ? "bg-orange-50 border-orange-500 text-orange-700" : "hover:bg-gray-50"
-                      )}
-                    >
-                      NOME DIR / ESCUDO ESQ
-                    </button>
-                    <button 
-                      onClick={() => setFormation('right-shield')}
-                      className={cn(
-                        "text-[10px] border p-2 rounded transition-colors",
-                        namePosition === 'left' ? "bg-orange-50 border-orange-500 text-orange-700" : "hover:bg-gray-50"
-                      )}
-                    >
-                      NOME ESQ / ESCUDO DIR
-                    </button>
-                    <button 
-                      onClick={() => setFormation('center-name')}
-                      className={cn(
-                        "text-[10px] border p-2 rounded transition-colors",
-                        namePosition === 'center' ? "bg-orange-50 border-orange-500 text-orange-700" : "hover:bg-gray-50"
-                      )}
-                    >
-                      NOME CENTRAL
-                    </button>
-                  </div>
-                </div>
               </div>
             ) : activeTab === 'Escudo' ? (
               <div className="col-span-2 space-y-4">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase">Posição do Escudo</label>
-                  <div className="grid grid-cols-2 gap-2">
+                  <label className="text-[10px] font-bold text-gray-500 uppercase">Posição do Escudo e Nome</label>
+                  <div className="grid grid-cols-1 gap-2">
                     <button 
-                      onClick={() => setFormation('left-shield')}
+                      onClick={() => setFormation('escudo-esq-nome-dir')}
                       className={cn(
                         "text-[10px] border p-2 rounded transition-colors",
-                        shieldPosition === 'left' ? "bg-orange-50 border-orange-500 text-orange-700" : "hover:bg-gray-50"
+                        formation === 'escudo-esq-nome-dir' ? "bg-orange-50 border-orange-500 text-orange-700 font-bold" : "hover:bg-gray-50"
                       )}
                     >
-                      ESQUERDA
+                      🛡️ ESQUERDA / NOME DIREITA
                     </button>
                     <button 
-                      onClick={() => setFormation('right-shield')}
+                      onClick={() => setFormation('escudo-dir-nome-esq')}
                       className={cn(
                         "text-[10px] border p-2 rounded transition-colors",
-                        shieldPosition === 'right' ? "bg-orange-50 border-orange-500 text-orange-700" : "hover:bg-gray-50"
+                        formation === 'escudo-dir-nome-esq' ? "bg-orange-50 border-orange-500 text-orange-700 font-bold" : "hover:bg-gray-50"
                       )}
                     >
-                      DIREITA
+                      🛡️ DIREITA / NOME ESQUERDA
+                    </button>
+                    <button 
+                      onClick={() => setFormation('nome-centro')}
+                      className={cn(
+                        "text-[10px] border p-2 rounded transition-colors",
+                        formation === 'nome-centro' ? "bg-orange-50 border-orange-500 text-orange-700 font-bold" : "hover:bg-gray-50"
+                      )}
+                    >
+                      NOME CENTRO
                     </button>
                   </div>
                 </div>
@@ -591,9 +607,8 @@ export default function Simulator() {
               nameColor={nameColor}
               numberColor={numberColor}
               nameFont={nameFont}
-              namePosition={namePosition}
-              shieldPosition={shieldPosition}
               shieldUrl={shieldUrl}
+              formation={formation}
             />
 
           </div>

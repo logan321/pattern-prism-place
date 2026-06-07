@@ -7,10 +7,20 @@ import { X, Save, Plus, Trash2 } from 'lucide-react';
 interface Zone {
   id: string;
   name: string;
-  tipo: 'nome' | 'numero' | 'logo' | 'estampa' | 'outro';
   position: [number, number, number];
   uv?: [number, number];
 }
+
+const POSICOES_ZONA = [
+  { id: 'peito-esquerdo',  label: 'Peito Esquerdo' },
+  { id: 'peito-direito',   label: 'Peito Direito' },
+  { id: 'peito-centro',    label: 'Peito Centro' },
+  { id: 'costas-topo',     label: 'Costas Topo' },
+  { id: 'costas-centro',   label: 'Costas Centro' },
+  { id: 'costas-base',     label: 'Costas Base' },
+  { id: 'manga-esquerda',  label: 'Manga Esquerda' },
+  { id: 'manga-direita',   label: 'Manga Direita' },
+];
 
 function ModelWithUVClick({ url, onPointSelect, zones }: { 
   url: string, 
@@ -128,27 +138,25 @@ export default function ZoneEditor({ modelUrl, initialZones = [], onSave, onClos
 }) {
   const [zones, setZones] = useState<Zone[]>(initialZones);
   const [selectedData, setSelectedData] = useState<{ pos: THREE.Vector3, uv: THREE.Vector2 } | null>(null);
-  const [newZoneName, setNewZoneName] = useState('');
-  const [newZoneTipo, setNewZoneTipo] = useState<Zone['tipo']>('outro');
+  const [posicaoSelecionada, setPosicaoSelecionada] = useState(POSICOES_ZONA[0].id);
 
   const handlePointSelect = (pos: THREE.Vector3, uv: THREE.Vector2) => {
     setSelectedData({ pos, uv });
   };
 
   const handleAddZone = () => {
-    if (!selectedData || !newZoneName) return;
+    if (!selectedData) return;
     
     const newZone: Zone = {
-      id: Math.random().toString(36).substr(2, 9),
-      name: newZoneName,
-      tipo: newZoneTipo,
+      id: posicaoSelecionada,
+      name: posicaoSelecionada,
       position: [selectedData.pos.x, selectedData.pos.y, selectedData.pos.z],
       uv: [selectedData.uv.x, selectedData.uv.y]
     };
     
-    setZones([...zones, newZone]);
+    // Evitar duplicatas da mesma posição
+    setZones(prev => [...prev.filter(z => z.id !== posicaoSelecionada), newZone]);
     setSelectedData(null);
-    setNewZoneName('');
   };
 
   const removeZone = (id: string) => {
@@ -190,24 +198,14 @@ export default function ZoneEditor({ modelUrl, initialZones = [], onSave, onClos
                     <div>V: {selectedData.uv.y.toFixed(4)}</div>
                   </div>
                 </div>
-                <input 
-                  type="text"
-                  placeholder="Ex: Escudo, Logo Manga, etc."
-                  className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white text-sm outline-none focus:ring-2 focus:ring-orange-500 transition-all"
-                  value={newZoneName}
-                  onChange={e => setNewZoneName(e.target.value)}
-                  autoFocus
-                />
                 <select
-                  value={newZoneTipo}
-                  onChange={(e) => setNewZoneTipo(e.target.value as Zone['tipo'])}
+                  value={posicaoSelecionada}
+                  onChange={(e) => setPosicaoSelecionada(e.target.value)}
                   className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white text-sm outline-none focus:ring-2 focus:ring-orange-500 transition-all appearance-none"
                 >
-                  <option value="nome">Nome do jogador</option>
-                  <option value="numero">Número</option>
-                  <option value="logo">Logo / Escudo</option>
-                  <option value="estampa">Estampa</option>
-                  <option value="outro">Outro</option>
+                  {POSICOES_ZONA.map(p => (
+                    <option key={p.id} value={p.id}>{p.label}</option>
+                  ))}
                 </select>
                 <button 
                   onClick={handleAddZone}

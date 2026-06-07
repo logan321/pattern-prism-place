@@ -10,8 +10,7 @@ interface CustomizerState {
   // Customization settings
   name: string;
   number: string;
-  namePosition: 'left' | 'right' | 'center';
-  shieldPosition: 'left' | 'right';
+  formation: string;
   nameColor: string;
   numberColor: string;
   nameFont: string;
@@ -26,15 +25,11 @@ interface CustomizerState {
   // Customization setters
   setName: (name: string) => void;
   setNumber: (num: string) => void;
-  setNamePosition: (pos: 'left' | 'right' | 'center') => void;
-  setShieldPosition: (pos: 'left' | 'right') => void;
+  setFormation: (formation: string) => void;
   setNameColor: (color: string) => void;
   setNumberColor: (color: string) => void;
   setNameFont: (font: string) => void;
   setShieldUrl: (url: string | null) => void;
-  
-  // High-level formation setter
-  setFormation: (type: 'left-shield' | 'right-shield' | 'center-name') => void;
 }
 
 export const useCustomizerStore = create<CustomizerState>((set) => ({
@@ -46,8 +41,7 @@ export const useCustomizerStore = create<CustomizerState>((set) => ({
   
   name: 'SEU NOME',
   number: '10',
-  namePosition: 'left',
-  shieldPosition: 'right',
+  formation: 'escudo-esq-nome-dir',
   nameColor: '#ffffff',
   numberColor: '#ffffff',
   nameFont: 'Arial',
@@ -61,20 +55,9 @@ export const useCustomizerStore = create<CustomizerState>((set) => ({
 
   setName: (name) => set({ name }),
   setNumber: (number) => set({ number }),
-  setNamePosition: (namePosition) => set({ namePosition }),
-  setShieldPosition: (shieldPosition) => set({ shieldPosition }),
+  setFormation: (formation) => set({ formation }),
   setNameColor: (nameColor) => set({ nameColor }),
   setNumberColor: (numberColor) => set({ numberColor }),
   setNameFont: (nameFont) => set({ nameFont }),
   setShieldUrl: (shieldUrl) => set({ shieldUrl }),
-
-  setFormation: (type) => {
-    if (type === 'left-shield') {
-      set({ namePosition: 'right', shieldPosition: 'left' });
-    } else if (type === 'right-shield') {
-      set({ namePosition: 'left', shieldPosition: 'right' });
-    } else {
-      set({ namePosition: 'center' });
-    }
-  }
 }));

@@ -96,13 +96,9 @@ function ModeloComTextura({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Limpa
+    // Limpa com fundo transparente para não esconder a textura base
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
-    // Fundo semitransparente para ver as áreas no modelo
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
     // Desenha cada zona
     zonas.forEach(z => {
       const isSelected = z.id === idSelecionado;
@@ -115,20 +111,22 @@ function ModeloComTextura({
       ctx.translate(x, y);
       ctx.rotate((z.rotation * Math.PI) / 180);
       
-      // Retângulo da área
+      // Retângulo da área - Bordas mais visíveis
       ctx.strokeStyle = isSelected ? '#ea580c' : '#3b82f6';
-      ctx.lineWidth = isSelected ? 8 : 4;
+      ctx.lineWidth = isSelected ? 12 : 6;
       ctx.strokeRect(-w / 2, -h / 2, w, h);
       
-      // Preenchimento
-      ctx.fillStyle = isSelected ? 'rgba(234, 88, 12, 0.3)' : 'rgba(59, 130, 246, 0.2)';
+      // Preenchimento semitransparente
+      ctx.fillStyle = isSelected ? 'rgba(234, 88, 12, 0.4)' : 'rgba(59, 130, 246, 0.25)';
       ctx.fillRect(-w / 2, -h / 2, w, h);
 
-      // Texto no UV
+      // Texto no UV maior e com sombra para contraste
+      ctx.shadowColor = 'black';
+      ctx.shadowBlur = 10;
       ctx.fillStyle = 'white';
-      ctx.font = 'bold 40px Arial';
+      ctx.font = 'bold 50px Arial';
       ctx.textAlign = 'center';
-      ctx.fillText(z.name.toUpperCase(), 0, 10);
+      ctx.fillText(z.name.toUpperCase(), 0, 15);
       
       ctx.restore();
     });
@@ -148,13 +146,23 @@ function ModeloComTextura({
     clone.traverse((obj) => {
       if ((obj as THREE.Mesh).isMesh) {
         const mesh = obj as THREE.Mesh;
-        const mat = new THREE.MeshStandardMaterial({
-          map: tex,
-          transparent: true,
-          roughness: 0.3,
-          metalness: 0.1
+        const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+        
+        const newMaterials = materials.map(m => {
+          if (m instanceof THREE.MeshStandardMaterial || m instanceof THREE.MeshPhysicalMaterial) {
+            const newMat = m.clone();
+            // Usamos emissiveMap para as zonas, assim a textura original (map) continua visível
+            newMat.emissiveMap = tex;
+            newMat.emissive = new THREE.Color(0xffffff);
+            newMat.emissiveIntensity = 2.0; 
+            newMat.transparent = true;
+            newMat.needsUpdate = true;
+            return newMat;
+          }
+          return m;
         });
-        mesh.material = mat;
+
+        mesh.material = Array.isArray(mesh.material) ? newMaterials : newMaterials[0];
       }
     });
     return clone;

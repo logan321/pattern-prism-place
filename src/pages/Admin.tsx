@@ -663,7 +663,9 @@ export default function Admin() {
             if (url.includes('token=')) return null;
             const marker = `/public/${bucket}/`;
             const parts = url.split(marker);
-            return parts.length > 1 ? parts[1].split('?')[0] : null;
+            if (parts.length <= 1) return null;
+            const path = parts[1].split('?')[0];
+            return decodeURIComponent(path);
           };
 
           const pngPath = getPath(p.image_url, 'textures');

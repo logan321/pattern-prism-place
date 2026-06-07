@@ -83,9 +83,9 @@ function Model({
     if (!ctx) return;
 
     if (zones && zones.length > 0) {
-      console.log('ThreeDViewer: Desenhando zonas no canvas:', zones.map(z => z.id));
+      console.log('ThreeDViewer: Zonas recebidas:', zones.map(z => `${z.id} (${z.uv?.[0].toFixed(2)}, ${z.uv?.[1].toFixed(2)})`));
     } else {
-      console.log('ThreeDViewer: Nenhuma zona para desenhar.');
+      console.log('ThreeDViewer: Nenhuma zona recebida nas props.');
     }
 
     // console.log('DRAW zones:', zones);
@@ -114,9 +114,12 @@ function Model({
     const nameZone   = getZona(regras.nome);
     const numberZone = getZona(regras.numero || regras.number);
 
-    // console.log('DRAW logoZone:', logoZone);
-    // console.log('DRAW nameZone:', nameZone);
-    // console.log('DRAW numberZone:', numberZone);
+    console.log('ThreeDViewer: Mapeamento de zonas:', {
+      logo: logoZone ? 'Encontrado' : 'Não encontrado',
+      name: nameZone ? 'Encontrado' : 'Não encontrado',
+      number: numberZone ? 'Encontrado' : 'Não encontrado',
+      formation: formation || 'padrão'
+    });
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
@@ -224,8 +227,7 @@ function Model({
 
             mat.emissiveMap = uvTexture;
             mat.emissive.set(0xffffff); 
-            mat.emissiveIntensity = 1.0;
-            // REMOVIDO mat.transparent = true que podia afetar a renderização do tecido
+            mat.emissiveIntensity = 2.0; // Aumentado para garantir visibilidade sobre o tecido
             mat.needsUpdate = true;
           }
         });

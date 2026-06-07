@@ -998,7 +998,10 @@ export default function Admin() {
             />
           ) : (
             <div className="bg-black rounded-2xl overflow-hidden border border-gray-100 shadow-lg h-[800px]">
-              <Zone3DEditor />
+              <Zone3DEditor 
+                hideBackButton={true}
+                onZonePositioned={(id, data) => console.log('Zone positioned:', id, data)}
+              />
             </div>
           )}
         </div>

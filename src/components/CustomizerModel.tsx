@@ -1,8 +1,7 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useMemo, useContext } from 'react';
 import * as THREE from 'three';
-import { Text, Float, Decal, useTexture } from '@react-three/drei';
-import { useGLTF } from '@react-three/drei';
-import { useThree } from '@react-three/fiber';
+import { Decal, useTexture, useGLTF } from '@react-three/drei';
+import { AppContext } from '../context/AppContext';
 
 export interface CustomizationState {
   name: string;
@@ -12,6 +11,96 @@ export interface CustomizationState {
   nameColor: string;
   numberColor: string;
   nameFont: string;
+}
+
+function ZoneDecal({ zone, customization }: { zone: any; customization: CustomizationState }) {
+  const canvasRef = useRef<HTMLCanvasElement>(document.createElement('canvas'));
+  const [texture, setTexture] = useState<THREE.Texture | null>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    canvas.width = 512;
+    canvas.height = 512;
+
+    // Clear background
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Apply pathData mask if present
+    if (zone.pathData && zone.pathData.length > 2) {
+      ctx.beginPath();
+      zone.pathData.forEach((point: { x: number; y: number }, index: number) => {
+        const x = (point.x / 100) * canvas.width;
+        const y = (point.y / 100) * canvas.height;
+        if (index === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+      ctx.closePath();
+      ctx.clip();
+    }
+
+    // Determine content based on zone name/type
+    const name = zone.name.toLowerCase();
+    let content = '';
+    let color = '#ffffff';
+    let fontSize = 40;
+
+    if (name.includes('nome') || name.includes('name')) {
+      content = customization.name;
+      color = customization.nameColor;
+      fontSize = 60;
+    } else if (name.includes('número') || name.includes('number')) {
+      content = customization.number;
+      color = customization.numberColor;
+      fontSize = 120;
+    } else {
+      content = zone.name;
+    }
+
+    // Render text
+    ctx.fillStyle = color;
+    ctx.font = `bold ${fontSize}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(content, canvas.width / 2, canvas.height / 2);
+
+    const newTexture = new THREE.CanvasTexture(canvas);
+    newTexture.needsUpdate = true;
+    setTexture(newTexture);
+  }, [zone, customization]);
+
+  if (!texture || !zone.position3d) return null;
+
+  const position = new THREE.Vector3(...zone.position3d);
+  const normal = zone.normal3d ? new THREE.Vector3(...zone.normal3d) : new THREE.Vector3(0, 0, 1);
+  const rotation = new THREE.Euler(0, 0, 0);
+  
+  // Calculate orientation from normal
+  const lookAtMatrix = new THREE.Matrix4().lookAt(
+    new THREE.Vector3(0, 0, 0),
+    normal,
+    new THREE.Vector3(0, 1, 0)
+  );
+  rotation.setFromRotationMatrix(lookAtMatrix);
+
+  // Apply extra rotation3d (around the normal axis)
+  if (zone.rotation3d) {
+    const rad = (zone.rotation3d * Math.PI) / 180;
+    rotation.z += rad;
+  }
+
+  const scale = zone.size3d || 0.2;
+
+  return (
+    <Decal
+      position={position}
+      rotation={rotation}
+      scale={[scale, scale, 1]}
+      map={texture}
+    />
+  );
 }
 
 export function CustomizerModel({ 
@@ -24,6 +113,8 @@ export function CustomizerModel({
   customization: CustomizationState;
 }) {
   const { scene } = useGLTF(url);
+  const context = useContext(AppContext);
+  const zones = context?.zones || [];
   const [mainTexture, setMainTexture] = useState<THREE.Texture | null>(null);
 
   useEffect(() => {
@@ -53,58 +144,22 @@ export function CustomizerModel({
     });
   }, [scene, mainTexture]);
 
-  // Positions (Approximated for a standard t-shirt model)
-  const posMap = {
-    name: {
-      left: [-0.2, 0.45, 0.15],
-      right: [0.2, 0.45, 0.15],
-      center: [0, 0.45, 0.15],
-      back: [0, 0.6, -0.15]
-    },
-    shield: {
-      left: [-0.2, 0.35, 0.15],
-      right: [0.2, 0.35, 0.15]
-    },
-    number: {
-      back: [0, 0.3, -0.15]
-    }
-  };
+  const positionedZones = useMemo(() => 
+    zones.filter(z => z.position3d), 
+    [zones]
+  );
 
   return (
     <group>
       <primitive object={scene} />
       
-      {/* Name on Chest/Back depends on logic */}
-      <Float speed={1.5} rotationIntensity={0.1} floatIntensity={0.1}>
-        <Text
-          position={customization.namePosition === 'center' ? posMap.name.center : (customization.namePosition === 'left' ? posMap.name.left : posMap.name.right) as any}
-          fontSize={0.05}
-          color={customization.nameColor}
-          font={customization.nameFont}
-          anchorX="center"
-          anchorY="middle"
-        >
-          {customization.name}
-        </Text>
-      </Float>
-
-      {/* Number on Back */}
-      <Text
-        position={posMap.number.back as any}
-        rotation={[0, Math.PI, 0]}
-        fontSize={0.2}
-        color={customization.numberColor}
-        anchorX="center"
-        anchorY="middle"
-      >
-        {customization.number}
-      </Text>
-
-      {/* Shield (Placeholder for now, could be a Decal or Sprite) */}
-      <mesh position={customization.shieldPosition === 'left' ? posMap.shield.left : posMap.shield.right as any}>
-        <sphereGeometry args={[0.03, 32, 32]} />
-        <meshStandardMaterial color="gold" />
-      </mesh>
+      {positionedZones.map((zone) => (
+        <ZoneDecal 
+          key={zone.id} 
+          zone={zone} 
+          customization={customization} 
+        />
+      ))}
     </group>
   );
 }

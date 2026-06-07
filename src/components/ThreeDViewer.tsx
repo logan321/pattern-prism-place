@@ -151,30 +151,31 @@ function Model({
       ctx.restore();
     }
 
-    if (textureRef.current) {
-      textureRef.current.needsUpdate = true;
-    } else {
+    if (!textureRef.current) {
       const uvTexture = new THREE.CanvasTexture(canvas);
       uvTexture.flipY = false;
       uvTexture.colorSpace = THREE.SRGBColorSpace;
       textureRef.current = uvTexture;
-
-      clonedScene.traverse((child) => {
-        if ((child as THREE.Mesh).isMesh) {
-          const mesh = child as THREE.Mesh;
-          const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
-          materials.forEach((mat) => {
-            if (mat instanceof THREE.MeshStandardMaterial || mat instanceof THREE.MeshPhysicalMaterial) {
-              mat.emissiveMap = uvTexture;
-              mat.emissive.set(0xffffff); 
-              mat.emissiveIntensity = 1.0;
-              mat.transparent = true;
-              mat.needsUpdate = true;
-            }
-          });
-        }
-      });
+    } else {
+      textureRef.current.needsUpdate = true;
     }
+
+    const uvTexture = textureRef.current;
+    clonedScene.traverse((child) => {
+      if ((child as THREE.Mesh).isMesh) {
+        const mesh = child as THREE.Mesh;
+        const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+        materials.forEach((mat) => {
+          if (mat instanceof THREE.MeshStandardMaterial || mat instanceof THREE.MeshPhysicalMaterial) {
+            mat.emissiveMap = uvTexture;
+            mat.emissive.set(0xffffff); 
+            mat.emissiveIntensity = 1.0;
+            mat.transparent = true;
+            mat.needsUpdate = true;
+          }
+        });
+      }
+    });
   };
 
   useEffect(() => {
@@ -182,7 +183,7 @@ function Model({
   }, [zones, name, number, nameColor, numberColor, nameFont, shieldUrl, clonedScene, formation]);
 
   useEffect(() => {
-    if (!textureUrl) return;
+    if (!textureUrl || typeof textureUrl !== 'string') return;
     const loader = new THREE.TextureLoader();
     loader.crossOrigin = 'anonymous';
     const loadAndApply = (url: string) => {

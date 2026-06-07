@@ -126,23 +126,22 @@ export default function Simulator() {
     selectedModel,
     setSelectedModel,
     selectedPattern,
-    setSelectedPattern
+    setSelectedPattern,
+    name: customName,
+    number: customNumber,
+    nameColor,
+    numberColor,
+    nameFont,
+    formation,
+    shieldUrl,
+    setName,
+    setNumber,
+    setNameColor,
+    setNumberColor,
+    setNameFont,
+    setFormation,
+    setShieldUrl
   } = useCustomizerStore();
-  const customName = useCustomizerStore(state => state.name);
-  const customNumber = useCustomizerStore(state => state.number);
-  const nameColor = useCustomizerStore(state => state.nameColor);
-  const numberColor = useCustomizerStore(state => state.numberColor);
-  const nameFont = useCustomizerStore(state => state.nameFont);
-  const formation = useCustomizerStore(state => state.formation);
-  const shieldUrl = useCustomizerStore(state => state.shieldUrl);
-  
-  const setName = useCustomizerStore(state => state.setName);
-  const setNumber = useCustomizerStore(state => state.setNumber);
-  const setNameColor = useCustomizerStore(state => state.setNameColor);
-  const setNumberColor = useCustomizerStore(state => state.setNumberColor);
-  const setNameFont = useCustomizerStore(state => state.setNameFont);
-  const setFormation = useCustomizerStore(state => state.setFormation);
-  const setShieldUrl = useCustomizerStore(state => state.setShieldUrl);
 
   const { data: models } = useQuery({
     queryKey: ['models'],
@@ -301,18 +300,7 @@ export default function Simulator() {
     }
   }, [activeTab]);
 
-  console.log('DRAW_SIMULATOR patterns:', patterns);
-  console.log('DRAW_SIMULATOR selectedPattern:', selectedPattern);
-  console.log('DRAW_SIMULATOR activeUVMatriz:', activeUVMatriz);
-  console.log('DRAW_SIMULATOR currentZones:', currentZones);
-
-
-
-  console.log('patterns:', patterns);
-  console.log('selectedPattern:', selectedPattern);
-  console.log('selectedPattern.uv_matriz_id:', currentPattern?.uv_matriz_id);
-  console.log('uvMatrizAtiva:', activeUVMatriz);
-  console.log('currentZones:', currentZones);
+  // Logs removidos para evitar poluição no console e possíveis erros de hook indiretos
 
   return (
     <>

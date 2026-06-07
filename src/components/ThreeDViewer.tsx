@@ -14,8 +14,34 @@ interface Zone {
   uv?: [number, number];
 }
 
-function Model({ url, textureUrl, zones = [] }: { url: string; textureUrl?: string; zones?: Zone[] }) {
+function Model({ 
+  url, 
+  textureUrl, 
+  zones = [],
+  name,
+  number,
+  nameColor,
+  numberColor,
+  nameFont,
+  namePosition,
+  shieldPosition,
+  shieldUrl
+}: { 
+  url: string; 
+  textureUrl?: string; 
+  zones?: Zone[];
+  name?: string;
+  number?: string;
+  nameColor?: string;
+  numberColor?: string;
+  nameFont?: string;
+  namePosition?: string;
+  shieldPosition?: string;
+  shieldUrl?: string | null;
+}) {
   const { scene } = useGLTF(url);
+  const textureRef = useRef<THREE.CanvasTexture | null>(null);
+  
   const clonedScene = React.useMemo(() => {
     const clone = scene.clone();
     clone.traverse((child) => {
@@ -27,7 +53,6 @@ function Model({ url, textureUrl, zones = [] }: { url: string; textureUrl?: stri
             if (mat instanceof THREE.MeshStandardMaterial || mat instanceof THREE.MeshPhysicalMaterial) {
               mat.emissive = new THREE.Color(0xffffff);
               mat.emissiveIntensity = 0;
-              // Garantir que o mapa base não interfira com a emissão se estiver vazio
               mat.needsUpdate = true;
             }
           });
@@ -37,118 +62,95 @@ function Model({ url, textureUrl, zones = [] }: { url: string; textureUrl?: stri
     return clone;
   }, [scene]);
 
-  const canvasRef = useRef<HTMLCanvasElement>(document.createElement('canvas'));
-  
-  const name = useCustomizerStore(state => state.name);
-  const number = useCustomizerStore(state => state.number);
-  const nameColor = useCustomizerStore(state => state.nameColor);
-  const numberColor = useCustomizerStore(state => state.numberColor);
-  const nameFont = useCustomizerStore(state => state.nameFont);
-  const namePosition = useCustomizerStore(state => state.namePosition);
-  const shieldPosition = useCustomizerStore(state => state.shieldPosition);
-  const shieldUrl = useCustomizerStore(state => state.shieldUrl);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  // 1. Efeito para desenhar o Overlay (Nome/Número/Escudo) no Canvas
-  useEffect(() => {
-    let isMounted = true;
-    const drawOnCanvas = async () => {
-      const canvas = canvasRef.current;
-      if (canvas.width !== 2048) {
-        canvas.width = 2048;
-        canvas.height = 2048;
+  const drawOnCanvas = React.useCallback(async () => {
+    console.log('=== COMPOSITOR INICIADO ===');
+    console.log('zones:', zones);
+    console.log('name:', name);
+    console.log('number:', number);
+    console.log('shieldUrl:', shieldUrl);
+
+    if (!canvasRef.current) {
+      canvasRef.current = document.createElement('canvas');
+      canvasRef.current.width = 2048;
+      canvasRef.current.height = 2048;
+    }
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    const getCoord = (uv: [number, number]): [number, number] => {
+      return [uv[0] * canvas.width, (1 - uv[1]) * canvas.height];
+    };
+
+    // Identificar zonas pelos nomes flexíveis
+    const shieldZone = zones?.find(z =>
+      ['escudo', 'logo', 'shield', 'emblema', 'peito esquerdo', 'peito direito'].includes(z.name?.toLowerCase())
+    );
+    
+    const nameZone = zones?.find(z =>
+      ['nome', 'name', 'nome topo', 'topo'].includes(z.name?.toLowerCase())
+    );
+
+    const numberZone = zones?.find(z =>
+      ['numero', 'number', 'número', 'numero centro', 'centro'].includes(z.name?.toLowerCase())
+    );
+
+    console.log('targetShieldZone:', shieldZone);
+    console.log('targetNameZone:', nameZone);
+    console.log('targetNumberZone:', numberZone);
+
+    // 1. Desenhar Escudo
+    if (shieldUrl && shieldZone?.uv) {
+      try {
+        const [sx, sy] = getCoord(shieldZone.uv as [number, number]);
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        await new Promise((resolve, reject) => {
+          img.onload = resolve;
+          img.onerror = reject;
+          img.src = shieldUrl;
+        });
+        const size = 180;
+        ctx.drawImage(img, sx - size / 2, sy - size / 2, size, size);
+      } catch (e) {
+        console.error("Erro ao carregar escudo:", e);
       }
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return;
+    }
 
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      
-      const getCoord = (uv: [number, number]): [number, number] => {
-        return [uv[0] * canvas.width, (1 - uv[1]) * canvas.height];
-      };
+    // 2. Desenhar Nome
+    if (name && nameZone?.uv) {
+      const [tx, ty] = getCoord(nameZone.uv as [number, number]);
+      ctx.font = `bold 80px ${nameFont || 'Arial'}`;
+      ctx.fillStyle = nameColor || '#ffffff';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(name.toUpperCase(), tx, ty);
+    }
 
-      const effectiveZones = zones && zones.length > 0 ? zones : [
-        { name: 'PEITO DIREITO', uv: [0.35, 0.72] },
-        { name: 'PEITO ESQUERDO', uv: [0.65, 0.72] },
-        { name: 'NOME TOPO', uv: [0.5, 0.82] },
-        { name: 'NUMERO CENTRO', uv: [0.5, 0.5] }
-      ];
+    // 3. Desenhar Número
+    if (number && numberZone?.uv) {
+      const [nx, ny] = getCoord(numberZone.uv as [number, number]);
+      ctx.font = `bold 350px ${nameFont || 'Arial'}`;
+      ctx.fillStyle = numberColor || '#ffffff';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(number, nx, ny);
+    }
 
-      const findZone = (search: string) => {
-        return (effectiveZones as any[]).find(z => 
-          z.name?.toUpperCase().includes(search.toUpperCase())
-        );
-      };
-      
-      const zonePeitoDireito = findZone('PEITO DIREITO') || findZone('DIREITO');
-      const zonePeitoEsquerdo = findZone('PEITO ESQUERDO') || findZone('ESQUERDO') || findZone('TESTE');
-      const zoneNomeTopo = findZone('NOME TOPO') || findZone('TOPO') || findZone('NOME');
-      const zoneNumeroCentro = findZone('NUMERO CENTRO') || findZone('NÚMERO CENTRO') || findZone('NUMERO') || findZone('NÚMERO') || findZone('COSTAS');
-
-      // Escudo
-      const targetShieldZone = shieldPosition === 'left' ? zonePeitoEsquerdo : zonePeitoDireito;
-      if (targetShieldZone?.uv) {
-        const [sx, sy] = getCoord(targetShieldZone.uv as [number, number]);
-        if (shieldUrl) {
-          try {
-            const img = new Image();
-            img.crossOrigin = "anonymous";
-            await new Promise((resolve, reject) => {
-              img.onload = resolve;
-              img.onerror = reject;
-              img.src = shieldUrl;
-            });
-            if (!isMounted) return;
-            const size = 180;
-            ctx.drawImage(img, sx - size / 2, sy - size / 2, size, size);
-          } catch (e) {
-            console.error("Erro ao carregar escudo:", e);
-          }
-        } else {
-          ctx.beginPath();
-          ctx.arc(sx, sy, 60, 0, Math.PI * 2);
-          ctx.fillStyle = 'white';
-          ctx.fill();
-          ctx.strokeStyle = '#ff0000';
-          ctx.lineWidth = 8;
-          ctx.stroke();
-          ctx.font = 'bold 24px Arial';
-          ctx.fillStyle = '#ff0000';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText('ESCUDO', sx, sy);
-        }
-      }
-
-      // Nome
-      if (name) {
-        let targetZone = zoneNomeTopo;
-        if (namePosition === 'right') targetZone = zonePeitoDireito;
-        if (namePosition === 'left') targetZone = zonePeitoEsquerdo;
-        
-        if (targetZone?.uv) {
-          const [tx, ty] = getCoord(targetZone.uv as [number, number]);
-          ctx.font = `bold 100px ${nameFont}`;
-          ctx.fillStyle = nameColor;
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          const offset = (namePosition === 'right' || namePosition === 'left') ? 100 : 0;
-          ctx.fillText(name.toUpperCase(), tx, ty + offset);
-        }
-      }
-
-      // Número
-      if (number && zoneNumeroCentro?.uv) {
-        const [nx, ny] = getCoord(zoneNumeroCentro.uv as [number, number]);
-        ctx.font = `bold 350px ${nameFont}`;
-        ctx.fillStyle = numberColor;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(number, nx, ny);
-      }
-
+    // Aplicar ou atualizar textura
+    if (textureRef.current) {
+      textureRef.current.needsUpdate = true;
+    } else {
       const uvTexture = new THREE.CanvasTexture(canvas);
       uvTexture.flipY = false;
-      uvTexture.needsUpdate = true;
+      uvTexture.colorSpace = THREE.SRGBColorSpace;
+      textureRef.current = uvTexture;
 
       clonedScene.traverse((child) => {
         if ((child as THREE.Mesh).isMesh) {
@@ -156,29 +158,22 @@ function Model({ url, textureUrl, zones = [] }: { url: string; textureUrl?: stri
           const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
           materials.forEach((mat) => {
             if (mat instanceof THREE.MeshStandardMaterial || mat instanceof THREE.MeshPhysicalMaterial) {
-              // Limpar mapas antigos antes de atribuir o novo para evitar vazamento de memória e conflitos
-              if (mat.emissiveMap && mat.emissiveMap !== uvTexture) {
-                mat.emissiveMap.dispose();
-              }
-              
               mat.emissiveMap = uvTexture;
-              mat.emissiveMap.colorSpace = THREE.SRGBColorSpace;
               mat.emissive.set(0xffffff); 
               mat.emissiveIntensity = 1.0;
-              mat.transparent = true; // Importante para o overlay
+              mat.transparent = true;
               mat.needsUpdate = true;
             }
           });
         }
       });
-    };
+    }
+  }, [zones, name, number, nameColor, numberColor, nameFont, namePosition, shieldPosition, shieldUrl, clonedScene]);
 
-    const timeoutId = setTimeout(drawOnCanvas, 200);
-    return () => { 
-      isMounted = false;
-      clearTimeout(timeoutId);
-    };
-  }, [zones, name, number, nameColor, numberColor, nameFont, namePosition, shieldPosition, shieldUrl, clonedScene, textureUrl]);
+  useEffect(() => {
+    const timer = setTimeout(drawOnCanvas, 100);
+    return () => clearTimeout(timer);
+  }, [drawOnCanvas]);
 
   // 2. Efeito para carregar a Estampa Principal (textureUrl)
   useEffect(() => {
@@ -237,8 +232,32 @@ export interface ThreeDViewerRef {
   zoom: (direction: 'in' | 'out') => void;
 }
 
-export const ThreeDViewer = forwardRef<ThreeDViewerRef, { modelUrl?: string; textureUrl?: string; zones?: Zone[] }>(
-  ({ modelUrl, textureUrl, zones = [] }, ref) => {
+export const ThreeDViewer = forwardRef<ThreeDViewerRef, { 
+  modelUrl?: string; 
+  textureUrl?: string; 
+  zones?: Zone[];
+  name?: string;
+  number?: string;
+  nameColor?: string;
+  numberColor?: string;
+  nameFont?: string;
+  namePosition?: string;
+  shieldPosition?: string;
+  shieldUrl?: string | null;
+}>(
+  ({ 
+    modelUrl, 
+    textureUrl, 
+    zones = [],
+    name,
+    number,
+    nameColor,
+    numberColor,
+    nameFont,
+    namePosition,
+    shieldPosition,
+    shieldUrl
+  }, ref) => {
     const orbitRef = useRef<any>(null);
 
     useImperativeHandle(ref, () => ({
@@ -322,7 +341,19 @@ export const ThreeDViewer = forwardRef<ThreeDViewerRef, { modelUrl?: string; tex
         <Canvas shadows camera={{ position: [0, 0, 2.0], fov: 45 }}>
           <Suspense fallback={null}>
           <Stage intensity={0.5} environment="city" shadows="contact" adjustCamera={false} preset="rembrandt">
-            <Model url={modelUrl} textureUrl={textureUrl} zones={zones} />
+            <Model 
+              url={modelUrl} 
+              textureUrl={textureUrl} 
+              zones={zones} 
+              name={name}
+              number={number}
+              nameColor={nameColor}
+              numberColor={numberColor}
+              nameFont={nameFont}
+              namePosition={namePosition}
+              shieldPosition={shieldPosition}
+              shieldUrl={shieldUrl}
+            />
           </Stage>
           <OrbitControls 
             ref={orbitRef} 

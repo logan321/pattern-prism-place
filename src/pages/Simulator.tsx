@@ -585,6 +585,14 @@ export default function Simulator() {
               modelUrl={modelUrl} 
               textureUrl={textureUrl}
               zones={currentZones as any}
+              name={customName}
+              number={customNumber}
+              nameColor={nameColor}
+              numberColor={numberColor}
+              nameFont={nameFont}
+              namePosition={namePosition}
+              shieldPosition={shieldPosition}
+              shieldUrl={shieldUrl}
             />
 
           </div>

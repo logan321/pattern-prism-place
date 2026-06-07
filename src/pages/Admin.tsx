@@ -807,7 +807,7 @@ export default function Admin() {
                           className="bg-white p-2 rounded-lg text-gray-700 hover:bg-gray-100" 
                           title="Atualizar Thumbnail"
                         >
-                          <Upload className="w-4 h-4" />
+                          <ImageIcon className="w-4 h-4" />
                         </button>
                         <button 
                           onClick={() => {

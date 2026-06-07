@@ -279,6 +279,18 @@ export default function Simulator() {
   console.log('=== ACTIVE UV MATRIZ ===', activeUVMatriz);
   console.log('=== ZONES ===', currentZones);
 
+  // Efeito para trocar a vista automaticamente ao mudar de aba
+  useEffect(() => {
+    if (activeTab === 'Nome/Número') {
+      viewerRef.current?.setView('back');
+    } else if (activeTab === 'Escudo') {
+      viewerRef.current?.setView('front');
+    } else if (activeTab === 'Modelo' || activeTab === 'Cores') {
+      viewerRef.current?.setView('front');
+    }
+  }, [activeTab]);
+
+
 
   return (
     <>
@@ -480,6 +492,40 @@ export default function Simulator() {
                     </button>
                   </div>
                 </div>
+              </div>
+            ) : activeTab === 'Escudo' ? (
+              <div className="col-span-2 space-y-4">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-gray-500 uppercase">Posição do Escudo</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button 
+                      onClick={() => setFormation('left-shield')}
+                      className={cn(
+                        "text-[10px] border p-2 rounded transition-colors",
+                        shieldPosition === 'left' ? "bg-orange-50 border-orange-500 text-orange-700" : "hover:bg-gray-50"
+                      )}
+                    >
+                      ESQUERDA
+                    </button>
+                    <button 
+                      onClick={() => setFormation('right-shield')}
+                      className={cn(
+                        "text-[10px] border p-2 rounded transition-colors",
+                        shieldPosition === 'right' ? "bg-orange-50 border-orange-500 text-orange-700" : "hover:bg-gray-50"
+                      )}
+                    >
+                      DIREITA
+                    </button>
+                  </div>
+                </div>
+                <div className="p-4 border-2 border-dashed border-gray-200 rounded-lg text-center">
+                  <Upload className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                  <p className="text-[10px] text-gray-500">Faça upload do seu escudo (PNG/JPG)</p>
+                  <button className="mt-2 bg-orange-600 text-white text-[10px] px-3 py-1 rounded">Selecionar Arquivo</button>
+                </div>
+                <p className="text-[10px] text-gray-400 italic">
+                  * Enquanto não houver upload, uma marcação circular aparecerá no modelo.
+                </p>
               </div>
             ) : (
               <div className="col-span-2 text-center py-8 text-gray-400 text-xs">

@@ -97,27 +97,45 @@ function ModelWithUVClick({ url, onPointSelect, zones }: {
         const x = zone.uv[0] * canvas.width;
         const y = (1 - zone.uv[1]) * canvas.height; // Inverter Y para coordenadas de canvas
 
-        // Desenhar um círculo vibrante
+        // Desenhar a área de marcação (retângulo para simular o "quadro")
+        ctx.save();
+        ctx.strokeStyle = '#ea580c';
+        ctx.lineWidth = 6;
+        ctx.setLineDash([15, 10]);
+        const boxSize = 160;
+        ctx.strokeRect(x - boxSize / 2, y - boxSize / 2, boxSize, boxSize);
+        
+        // Fundo semitransparente para a área
+        ctx.fillStyle = 'rgba(234, 88, 12, 0.2)';
+        ctx.fillRect(x - boxSize / 2, y - boxSize / 2, boxSize, boxSize);
+
+        // Círculo central
         ctx.beginPath();
-        ctx.arc(x, y, 15, 0, Math.PI * 2);
+        ctx.arc(x, y, 12, 0, Math.PI * 2);
         ctx.fillStyle = '#ea580c';
         ctx.fill();
-        
-        // Borda branca para destaque
         ctx.strokeStyle = 'white';
-        ctx.lineWidth = 4;
+        ctx.lineWidth = 3;
         ctx.stroke();
 
-        // Texto da zona diretamente na textura
-        ctx.font = 'bold 24px Arial';
+        // Texto da zona com fundo para legibilidade
+        const label = zone.name.toUpperCase();
+        ctx.font = 'bold 32px Arial';
+        const textWidth = ctx.measureText(label).width;
+        
+        ctx.fillStyle = 'rgba(0,0,0,0.8)';
+        ctx.fillRect(x - textWidth / 2 - 10, y - boxSize / 2 - 45, textWidth + 20, 40);
+        
         ctx.fillStyle = 'white';
         ctx.textAlign = 'center';
-        ctx.fillText(zone.name, x, y - 25);
+        ctx.fillText(label, x, y - boxSize / 2 - 15);
+        ctx.restore();
       }
     });
 
     const newTexture = new THREE.CanvasTexture(canvas);
     newTexture.flipY = false;
+    newTexture.colorSpace = THREE.SRGBColorSpace;
     setTexture(newTexture);
   }, [zones]);
 

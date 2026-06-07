@@ -109,6 +109,11 @@ function Model({
                normalize(z.name || '') === normPosId;
       });
 
+      if (posId.toUpperCase() === 'PEITO DIREITO' || normPosId === 'peitodireito') {
+        console.log('--- FLOW VALIDATION: PEITO DIREITO ---');
+        console.log('1. JSON da zona carregada:', found);
+      }
+
       if (found) {
         console.log(`Zona encontrada para ${posId}:`, {
           name: found.name,
@@ -116,6 +121,9 @@ function Model({
           width: found.width,
           height: found.height
         });
+        if (posId.toUpperCase() === 'PEITO DIREITO' || normPosId === 'peitodireito') {
+          console.log('2. Resultado de getZona:', found);
+        }
       } else {
         console.log(`Zona NÃO encontrada para ${posId}`);
       }
@@ -133,7 +141,7 @@ function Model({
     };
 
     // Helper para desenhar conteúdo rotacionado em uma zona
-    const drawZoneContent = async (zone: Zone, drawFn: (w: number, h: number) => Promise<void> | void) => {
+    const drawZoneContent = async (zone: Zone, drawFn: (w: number, h: number) => Promise<void> | void, zoneType: string) => {
       const uv = zone.uvCenter || zone.uv;
       if (!uv) return;
 
@@ -141,6 +149,16 @@ function Model({
       const w = (zone.width || 0.1) * canvas.width;
       const h = (zone.height || 0.1) * canvas.height;
       const rotation = (zone.rotation || 0) * (Math.PI / 180);
+
+      const isPeitoDireito = zone.name?.toUpperCase() === 'PEITO DIREITO' || zone.id?.toUpperCase() === 'PEITO DIREITO';
+      if (isPeitoDireito) {
+        console.log(`3. Coordenadas UV calculadas para ${zone.name}:`, {
+          uvOriginal: uv,
+          pixelCenter: [cx, cy],
+          sizeInPixels: [w, h],
+          rotation: zone.rotation
+        });
+      }
 
       ctx.save();
       ctx.translate(cx, cy);
@@ -154,7 +172,13 @@ function Model({
       await drawZoneContent(logoZone, async (w, h) => {
         if (shieldUrl) {
           try {
-            console.log('EXECUTANDO drawImage para logo');
+            const isPeitoDireito = logoZone.name?.toUpperCase() === 'PEITO DIREITO' || logoZone.id?.toUpperCase() === 'PEITO DIREITO';
+            if (isPeitoDireito) {
+              console.log('4. EXECUTANDO drawImage para PEITO DIREITO');
+              console.log('5. Conteúdo (Logo URL):', shieldUrl);
+            } else {
+              console.log('EXECUTANDO drawImage para logo');
+            }
             const img = new Image();
             img.crossOrigin = "anonymous";
             await new Promise((resolve, reject) => {
@@ -167,40 +191,50 @@ function Model({
             console.warn("ThreeDViewer: Logo não carregou:", e);
           }
         } else {
-          // No simulador final, áreas vazias não aparecem
           console.log('LogoZone sem shieldUrl, nada desenhado');
         }
-      });
+      }, 'logo');
     }
 
     // 2. Desenhar Nome
     if (name && nameZone) {
       await drawZoneContent(nameZone, async (w, h) => {
-        console.log('EXECUTANDO drawText para nome:', name);
+        const isPeitoDireito = nameZone.name?.toUpperCase() === 'PEITO DIREITO' || nameZone.id?.toUpperCase() === 'PEITO DIREITO';
+        if (isPeitoDireito) {
+          console.log('4. EXECUTANDO drawText para PEITO DIREITO (Nome)');
+          console.log('5. Conteúdo (Nome):', name);
+        } else {
+          console.log('EXECUTANDO drawText para nome:', name);
+        }
         ctx.font = `bold ${Math.floor(h)}px ${nameFont || 'Arial'}`;
         ctx.fillStyle = nameColor || '#ffffff';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        // Ajuste automático de escala para caber na largura
         const metrics = ctx.measureText(name.toUpperCase());
         const scale = Math.min(1, w / metrics.width);
         if (scale < 1) {
           ctx.scale(scale, 1);
         }
         ctx.fillText(name.toUpperCase(), 0, 0);
-      });
+      }, 'nome');
     }
 
     // 3. Desenhar Número
     if (number && numberZone) {
       await drawZoneContent(numberZone, async (w, h) => {
-        console.log('EXECUTANDO drawText para número:', number);
+        const isPeitoDireito = numberZone.name?.toUpperCase() === 'PEITO DIREITO' || numberZone.id?.toUpperCase() === 'PEITO DIREITO';
+        if (isPeitoDireito) {
+          console.log('4. EXECUTANDO drawText para PEITO DIREITO (Número)');
+          console.log('5. Conteúdo (Número):', number);
+        } else {
+          console.log('EXECUTANDO drawText para número:', number);
+        }
         ctx.font = `bold ${Math.floor(h)}px ${nameFont || 'Arial'}`;
         ctx.fillStyle = numberColor || '#ffffff';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(number, 0, 0);
-      });
+      }, 'numero');
     }
 
     if (!textureRef.current) {
@@ -209,7 +243,7 @@ function Model({
       textureRef.current.flipY = false;
       textureRef.current.colorSpace = THREE.SRGBColorSpace;
     } else {
-      console.log('CHAMANDO texture.needsUpdate = true');
+      console.log('6. LOG: CHAMANDO texture.needsUpdate = true');
       textureRef.current.needsUpdate = true;
     }
 
@@ -233,7 +267,7 @@ function Model({
         const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
         materials.forEach((mat) => {
           if (mat instanceof THREE.MeshStandardMaterial || mat instanceof THREE.MeshPhysicalMaterial) {
-            console.log(`[SUCCESS] Aplicando emissiveMap à malha: ${mesh.name}`);
+            console.log(`7. LOG: [SUCCESS] Aplicando emissiveMap (CanvasTexture) à malha: ${mesh.name}`);
             mat.emissiveMap = uvTexture;
             mat.emissive.set(0xffffff); 
             mat.emissiveIntensity = 3.0; // Aumentado para garantir visibilidade

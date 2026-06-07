@@ -29,8 +29,9 @@ import { ThreeDViewer, type ThreeDViewerRef } from '../components/ThreeDViewer';
 import { CustomizerModel } from '../components/CustomizerModel';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../integrations/supabase/client';
-import { generateFinalTexture, UVZone } from '../lib/textureGenerator';
+import { generateFinalTexture, UVZone, UvLayer } from '../lib/textureGenerator';
 import * as THREE from 'three';
+import { useUvCompositor } from '../hooks/useUvCompositor';
 import golaPadreAsset from '../assets/GOLA_PADRE_otimizado.glb.asset.json';
 
 const LOCAL_MODELS = [
@@ -144,6 +145,92 @@ export default function Simulator() {
     setFormation,
     setShieldUrl
   } = useCustomizerStore();
+
+  const {
+    uvMapZones, uvMapDims, uvLayers, uvTextDrafts, uvBaseUrl,
+    setUvMapZones, setUvMapDims, setUvLayers, setUvTextDrafts,
+    setUvBaseUrl, clearUvState,
+  } = useCustomizerStore();
+
+  const uvZonesActive = Object.keys(uvMapZones).length > 0;
+
+  const uvComposite = useUvCompositor({
+    baseUrl: uvZonesActive ? uvBaseUrl : null,
+    zones: uvMapZones,
+    layers: uvLayers,
+    uvWidth: uvMapDims.w,
+    uvHeight: uvMapDims.h,
+  });
+
+  // Quando o padrão (pattern) selecionado mudar, busca o UV map vinculado
+  useEffect(() => {
+    let cancelled = false;
+    if (!currentPattern?.uv_map_id) {
+      clearUvState();
+      return;
+    }
+    (async () => {
+      const { data } = await supabase
+        .from('uv_maps')
+        .select('image_url, uv_zones, uv_width, uv_height')
+        .eq('id', currentPattern.uv_map_id)
+        .maybeSingle();
+      if (cancelled || !data) return;
+      setUvBaseUrl(data.image_url ?? null);
+      setUvMapZones(
+        data.uv_zones && typeof data.uv_zones === 'object'
+          ? (data.uv_zones as Record<string, any>)
+          : {}
+      );
+      setUvMapDims({ w: data.uv_width ?? null, h: data.uv_height ?? null });
+      setUvLayers([]);
+      setUvTextDrafts({});
+    })();
+    return () => { cancelled = true; };
+  }, [currentPattern?.uv_map_id]);
+
+  // Funções para manipular layers de texto
+  const uvTextCommitRef = useRef<number | null>(null);
+
+  const setUvLayerText = (zoneKey: string, content: string) => {
+    setUvTextDrafts(prev => ({ ...prev, [zoneKey]: content }));
+    if (uvTextCommitRef.current != null) window.clearTimeout(uvTextCommitRef.current);
+    uvTextCommitRef.current = window.setTimeout(() => {
+      uvTextCommitRef.current = null;
+      setUvLayers(prev => {
+        const existing = prev.find(l => l.zoneKey === zoneKey && l.type === 'text');
+        if (existing) {
+          if (!content) return prev.filter(l => l !== existing);
+          return prev.map(l => l === existing
+            ? { ...l, content, color: nameColor, fontFamily: nameFont, fontWeight: 900 } as UvLayer
+            : l);
+        }
+        if (!content) return prev;
+        return [...prev, {
+          id: `${zoneKey}_${Date.now()}`, zoneKey, type: 'text',
+          content, color: nameColor, fontFamily: nameFont, fontWeight: 900
+        } as UvLayer];
+      });
+    }, 180);
+  };
+
+  const setUvLayerImage = (zoneKey: string, file: File) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const url = typeof reader.result === 'string' ? reader.result : '';
+      if (!url) return;
+      setUvLayers(prev => [
+        ...prev.filter(l => !(l.zoneKey === zoneKey && l.type === 'image')),
+        { id: `${zoneKey}_image_${Date.now()}`, zoneKey, type: 'image', url, scale: 0.9, opacity: 1 } as UvLayer,
+      ]);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const removeUvLayer = (zoneKey: string) => {
+    setUvLayers(prev => prev.filter(l => l.zoneKey !== zoneKey));
+    setUvTextDrafts(prev => ({ ...prev, [zoneKey]: '' }));
+  };
 
   const { data: models } = useQuery({
     queryKey: ['models'],
@@ -320,25 +407,27 @@ export default function Simulator() {
     let active = true;
     const updateTexture = async () => {
       if (!active) return;
-      
       try {
-        console.log(`Simulator: Gerando textura final... Zonas: ${activeUVMatriz?.zones ? (activeUVMatriz.zones as any).length : 0}`);
-        
-        const canvas = await generateFinalTexture({
-          baseTextureUrl: textureUrl,
-          zones: (activeUVMatriz?.zones as unknown as UVZone[]) || [],
-          customizations: {
-            name: customName,
-            number: customNumber,
-            shieldUrl: shieldUrl,
-            nameColor: nameColor,
-            numberColor: numberColor,
-            nameFont: nameFont
-          }
-        });
-        
+        let canvas: HTMLCanvasElement;
+        if (uvZonesActive && uvComposite.canvas && uvComposite.ready) {
+          // Novo sistema: usa o canvas do compositor UV
+          canvas = uvComposite.canvas;
+        } else {
+          // Sistema legado: textureGenerator
+          canvas = await generateFinalTexture({
+            baseTextureUrl: textureUrl,
+            zones: (activeUVMatriz?.zones as unknown as UVZone[]) || [],
+            customizations: {
+              name: customName,
+              number: customNumber,
+              shieldUrl,
+              nameColor,
+              numberColor,
+              nameFont,
+            },
+          });
+        }
         if (!active) return;
-
         const tex = new THREE.CanvasTexture(canvas);
         tex.flipY = false;
         tex.colorSpace = THREE.SRGBColorSpace;
@@ -348,10 +437,13 @@ export default function Simulator() {
         console.error('Error generating final texture:', err);
       }
     };
-    
     updateTexture();
     return () => { active = false; };
-  }, [textureUrl, activeUVMatriz, customName, customNumber, shieldUrl, nameColor, numberColor, nameFont]);
+  }, [
+    textureUrl, activeUVMatriz, customName, customNumber,
+    shieldUrl, nameColor, numberColor, nameFont,
+    uvZonesActive, uvComposite.canvas, uvComposite.version, uvComposite.ready
+  ]);
 
   // Logs removidos para evitar poluição no console e possíveis erros de hook indiretos
 

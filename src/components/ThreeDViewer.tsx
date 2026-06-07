@@ -69,9 +69,34 @@ function Model({ url, textureUrl, zones = [] }: { url: string; textureUrl?: stri
     
     // Zonas de Número e Escudo (baseado nas marcações do usuário)
     const numberZoneCenter = zones.find(z => z.name.toUpperCase() === 'NUMERO CENTRO' || z.name.toUpperCase() === 'NÚMERO CENTRO');
-    const shieldZoneRight = zones.find(z => z.name.toUpperCase() === 'PEITO DIREITO'); // Geralmente escudo ou nome
+    const shieldZoneRight = zones.find(z => z.name.toUpperCase() === 'PEITO DIREITO');
     const shieldZoneLeft = zones.find(z => z.name.toUpperCase() === 'PEITO ESQUERDO');
 
+    // 1. Renderizar Escudo (Placeholder ou real)
+    if (shieldPosition) {
+      let targetShieldZone = shieldPosition === 'left' ? shieldZoneLeft : shieldZoneRight;
+      
+      if (targetShieldZone?.uv) {
+        const sx = targetShieldZone.uv[0] * canvas.width;
+        const sy = (1 - targetShieldZone.uv[1]) * canvas.height;
+        
+        // Círculo branco com borda vermelha (conforme solicitado: círculo vermelho ou branco)
+        ctx.beginPath();
+        ctx.arc(sx, sy, 50, 0, Math.PI * 2);
+        ctx.fillStyle = 'white';
+        ctx.fill();
+        ctx.strokeStyle = '#ff0000';
+        ctx.lineWidth = 6;
+        ctx.stroke();
+        
+        ctx.font = 'bold 18px Arial';
+        ctx.fillStyle = '#ff0000';
+        ctx.textAlign = 'center';
+        ctx.fillText('ESCUDO', sx, sy + 6);
+      }
+    }
+
+    // 2. Renderizar Nome
     if (name) {
       ctx.font = `bold 80px ${nameFont}`;
       ctx.fillStyle = nameColor;
@@ -86,13 +111,16 @@ function Model({ url, textureUrl, zones = [] }: { url: string; textureUrl?: stri
       if (targetZone?.uv) {
         const tx = targetZone.uv[0] * canvas.width;
         const ty = (1 - targetZone.uv[1]) * canvas.height;
-        ctx.fillText(name.toUpperCase(), tx, ty);
+        // Se for no peito, subir um pouco o texto para não ficar em cima do marcador
+        const finalTy = (namePosition === 'right' || namePosition === 'left') ? ty - 20 : ty;
+        ctx.fillText(name.toUpperCase(), tx, finalTy);
       } else {
         // Fallback se não encontrar a zona
         ctx.fillText(name.toUpperCase(), canvas.width * 0.5, canvas.height * 0.2);
       }
     }
 
+    // 3. Renderizar Número
     if (number) {
       ctx.font = `bold 300px ${nameFont}`;
       ctx.fillStyle = numberColor;
@@ -108,11 +136,6 @@ function Model({ url, textureUrl, zones = [] }: { url: string; textureUrl?: stri
         // Fallback para as costas (estimado se não houver zona específica)
         ctx.fillText(number, canvas.width * 0.5, canvas.height * 0.45);
       }
-    }
-
-    // Opcional: Desenhar Escudo se houver uma zona de escudo ativa e o usuário quiser (poderíamos adicionar lógica de upload aqui)
-    if (shieldPosition) {
-      // Futuramente aqui podemos renderizar o logo do escudo na zona correspondente
     }
 
     const texture = new THREE.CanvasTexture(canvas);

@@ -40,29 +40,33 @@ function Model({ url, textureUrl, zones = [] }: { url: string; textureUrl?: stri
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       
       const getCoord = (uv: [number, number]): [number, number] => {
-        return [uv[0] * canvas.width, uv[1] * canvas.height];
+        // Inverter V (Y) para o padrão de canvas se necessário, ou manter conforme a matriz exportada
+        return [uv[0] * canvas.width, (1 - uv[1]) * canvas.height];
       };
 
-      // Fallback zones if empty
-      const effectiveZones = zones.length > 0 ? zones : [
-        { name: 'PEITO DIREITO', uv: [0.35, 0.35] },
-        { name: 'PEITO ESQUERDO', uv: [0.65, 0.35] },
-        { name: 'NOME TOPO', uv: [0.5, 0.15] },
+      // Zonas prioritárias da UV Matriz
+      const effectiveZones = zones && zones.length > 0 ? zones : [
+        { name: 'PEITO DIREITO', uv: [0.35, 0.65] },
+        { name: 'PEITO ESQUERDO', uv: [0.65, 0.65] },
+        { name: 'NOME TOPO', uv: [0.5, 0.85] },
         { name: 'NUMERO CENTRO', uv: [0.5, 0.5] }
       ];
 
-      // Zonas
-      const findZone = (search: string) => (effectiveZones as any[]).find(z => z.name.toUpperCase().includes(search.toUpperCase()));
+      const findZone = (search: string) => {
+        return (effectiveZones as any[]).find(z => 
+          z.name?.toUpperCase().includes(search.toUpperCase())
+        );
+      };
       
-      const nameZoneRight = findZone('PEITO DIREITO') || findZone('DIREITO');
-      const nameZoneLeft = findZone('PEITO ESQUERDO') || findZone('ESQUERDO');
-      const nameZoneTop = findZone('NOME TOPO') || findZone('TOPO');
-      const numberZoneCenter = findZone('NUMERO CENTRO') || findZone('NÚMERO CENTRO') || findZone('NUMERO') || findZone('NÚMERO');
+      const zonePeitoDireito = findZone('PEITO DIREITO') || findZone('DIREITO');
+      const zonePeitoEsquerdo = findZone('PEITO ESQUERDO') || findZone('ESQUERDO');
+      const zoneNomeTopo = findZone('NOME TOPO') || findZone('TOPO');
+      const zoneNumeroCentro = findZone('NUMERO CENTRO') || findZone('NÚMERO CENTRO') || findZone('NUMERO') || findZone('NÚMERO');
 
       // 1. Escudo
-      const targetShieldZone = shieldPosition === 'left' ? nameZoneLeft : nameZoneRight;
+      const targetShieldZone = shieldPosition === 'left' ? zonePeitoEsquerdo : zonePeitoDireito;
       if (targetShieldZone?.uv) {
-        const [sx, sy] = getCoord(targetShieldZone.uv);
+        const [sx, sy] = getCoord(targetShieldZone.uv as [number, number]);
         
         if (shieldUrl) {
           try {
@@ -73,50 +77,53 @@ function Model({ url, textureUrl, zones = [] }: { url: string; textureUrl?: stri
               img.onerror = reject;
               img.src = shieldUrl;
             });
-            const size = 120;
+            const size = 180; // Aumentado para melhor visibilidade no UV
             ctx.drawImage(img, sx - size / 2, sy - size / 2, size, size);
           } catch (e) {
             console.error("Erro ao carregar escudo:", e);
           }
         } else {
-          // Placeholder do Escudo
+          // Marcador visual do Escudo (Círculo Vermelho/Branco como solicitado)
           ctx.beginPath();
-          ctx.arc(sx, sy, 50, 0, Math.PI * 2);
+          ctx.arc(sx, sy, 60, 0, Math.PI * 2);
           ctx.fillStyle = 'white';
           ctx.fill();
           ctx.strokeStyle = '#ff0000';
-          ctx.lineWidth = 6;
+          ctx.lineWidth = 8;
           ctx.stroke();
           
-          ctx.font = 'bold 20px Arial';
+          ctx.font = 'bold 24px Arial';
           ctx.fillStyle = '#ff0000';
           ctx.textAlign = 'center';
-          ctx.fillText('ESCUDO', sx, sy + 7);
+          ctx.textBaseline = 'middle';
+          ctx.fillText('ESCUDO', sx, sy);
         }
       }
 
       // 2. Nome
       if (name) {
-        let targetZone = nameZoneTop;
-        if (namePosition === 'right') targetZone = nameZoneRight;
-        if (namePosition === 'left') targetZone = nameZoneLeft;
+        let targetZone = zoneNomeTopo;
+        if (namePosition === 'right') targetZone = zonePeitoDireito;
+        if (namePosition === 'left') targetZone = zonePeitoEsquerdo;
         
         if (targetZone?.uv) {
-          const [tx, ty] = getCoord(targetZone.uv);
-          ctx.font = `bold 80px ${nameFont}`;
+          const [tx, ty] = getCoord(targetZone.uv as [number, number]);
+          ctx.font = `bold 100px ${nameFont}`;
           ctx.fillStyle = nameColor;
           ctx.textAlign = 'center';
-          // Ajuste fino para não sobrepor o escudo se estiver no mesmo peito
-          const offset = (namePosition === 'right' || namePosition === 'left') ? 80 : 0;
+          ctx.textBaseline = 'middle';
+          
+          // Ajuste fino: se estiver no peito e tiver escudo, deslocar para baixo/cima
+          const offset = (namePosition === 'right' || namePosition === 'left') ? 100 : 0;
           ctx.fillText(name.toUpperCase(), tx, ty + offset);
         }
       }
 
       // 3. Número
       if (number) {
-        if (numberZoneCenter?.uv) {
-          const [nx, ny] = getCoord(numberZoneCenter.uv);
-          ctx.font = `bold 300px ${nameFont}`;
+        if (zoneNumeroCentro?.uv) {
+          const [nx, ny] = getCoord(zoneNumeroCentro.uv as [number, number]);
+          ctx.font = `bold 350px ${nameFont}`;
           ctx.fillStyle = numberColor;
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';

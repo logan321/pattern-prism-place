@@ -172,7 +172,7 @@ function Model({ url, textureUrl, zones = [] }: { url: string; textureUrl?: stri
       });
     };
 
-    const timeoutId = setTimeout(drawOnCanvas, 100);
+    const timeoutId = setTimeout(drawOnCanvas, 200);
     return () => { 
       isMounted = false;
       clearTimeout(timeoutId);

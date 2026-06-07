@@ -308,6 +308,7 @@ export default function Simulator() {
 
 
   return (
+    <>
 
       <Helmet>
         <title>Simulador de Uniformes 3D Jumptec | Macro Master</title>
@@ -715,5 +716,6 @@ export default function Simulator() {
         </div>
       </footer>
     </div>
+    </>
   );
 }

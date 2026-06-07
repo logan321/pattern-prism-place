@@ -139,6 +139,7 @@ function ModeloComTextura({
   }, [zonas, idSelecionado]);
 
   const clonedScene = useMemo(() => {
+    console.log('DEBUG: Clonando cena e criando textura UV');
     const clone = scene.clone(true);
     const tex = new THREE.CanvasTexture(canvasRef.current);
     tex.flipY = false;
@@ -148,16 +149,22 @@ function ModeloComTextura({
     clone.traverse((obj) => {
       if ((obj as THREE.Mesh).isMesh) {
         const mesh = obj as THREE.Mesh;
+        
+        // Verifica UVs
+        if (!mesh.geometry.attributes.uv) {
+          console.warn(`DEBUG: Malha ${mesh.name} não possui coordenadas UV!`);
+        }
+
         const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
         
         const newMaterials = materials.map(m => {
           if (m instanceof THREE.MeshStandardMaterial || m instanceof THREE.MeshPhysicalMaterial) {
             const newMat = m.clone();
-            // Usamos emissiveMap para as zonas, assim a textura original (map) continua visível
+            // Usamos emissiveMap para sobrepor as zonas à textura original
             newMat.emissiveMap = tex;
             newMat.emissive = new THREE.Color(0xffffff);
-            newMat.emissiveIntensity = 2.0; 
-            newMat.transparent = true;
+            newMat.emissiveIntensity = 5.0; // Aumentado para máximo contraste
+            // Garante que o material não ignore o emissive
             newMat.needsUpdate = true;
             return newMat;
           }
@@ -165,6 +172,7 @@ function ModeloComTextura({
         });
 
         mesh.material = Array.isArray(mesh.material) ? newMaterials : newMaterials[0];
+        console.log(`DEBUG: Material configurado para malha: ${mesh.name}`);
       }
     });
     return clone;

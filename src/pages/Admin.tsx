@@ -36,7 +36,23 @@ function UVConfigView({ models, queryClient, modelsLoading, onOpenMatrizModal }:
     queryFn: async () => {
       const { data, error } = await supabase.from('uv_matrices').select('*, modelos(nome, glb_url)');
       if (error) throw error;
-      return data;
+      
+      const matricesWithUrls = await Promise.all(data.map(async (m) => {
+        if (!m.reference_url) return m;
+        try {
+          const marker = '/public/textures/';
+          if (m.reference_url.includes(marker)) {
+            const path = m.reference_url.split(marker)[1].split('?')[0];
+            const { data: signedData } = await supabase.storage.from('textures').createSignedUrl(decodeURIComponent(path), 3600);
+            if (signedData) return { ...m, reference_url: signedData.signedUrl };
+          }
+        } catch (err) {
+          console.error('Erro ao gerar URL assinada para matriz:', m.id, err);
+        }
+        return m;
+      }));
+
+      return matricesWithUrls;
     }
   });
 
@@ -428,7 +444,22 @@ export default function Admin() {
     queryFn: async () => {
       const { data, error } = await supabase.from('uv_matrices').select('*');
       if (error) throw error;
-      return data;
+      
+      const matricesWithUrls = await Promise.all(data.map(async (m) => {
+        if (!m.reference_url) return m;
+        try {
+          const marker = '/public/textures/';
+          if (m.reference_url.includes(marker)) {
+            const path = m.reference_url.split(marker)[1].split('?')[0];
+            const { data: signedData } = await supabase.storage.from('textures').createSignedUrl(decodeURIComponent(path), 3600);
+            if (signedData) return { ...m, reference_url: signedData.signedUrl };
+          }
+        } catch (err) {
+          console.error('Erro ao gerar URL assinada:', m.id, err);
+        }
+        return m;
+      }));
+      return matricesWithUrls;
     }
   });
 

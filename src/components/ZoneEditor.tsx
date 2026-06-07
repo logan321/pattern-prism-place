@@ -132,7 +132,8 @@ export default function ZoneEditor({ referenceUrl, onClose }: any) {
                     <button 
                       onClick={(e) => {
                         e.stopPropagation();
-                        alert(`Navigando para editor 3D da zona: ${z.name}`);
+                        setSelectedZoneId(z.id);
+                        window.location.href = '/editor-3d';
                       }}
                       className="p-1.5 hover:bg-white/10 rounded-lg text-orange-500"
                       title="Posicionar no 3D"

@@ -31,15 +31,6 @@ function UVConfigView({ models, queryClient, modelsLoading, onOpenMatrizModal }:
   const [selectedModelId, setSelectedModelId] = useState<string>('');
   const [selectedMatrizId, setSelectedMatrizId] = useState<string>('');
 
-  React.useEffect(() => {
-    if (selectedMatrizId && uvMatrices) {
-      const matriz = uvMatrices.find(m => m.id === selectedMatrizId);
-      if (matriz?.modelo_id) {
-        setSelectedModelId(matriz.modelo_id);
-      }
-    }
-  }, [selectedMatrizId, uvMatrices]);
-
   const { data: uvMatrices, isLoading: matricesLoading } = useQuery({
     queryKey: ['uv_matrices'],
     queryFn: async () => {
@@ -64,6 +55,15 @@ function UVConfigView({ models, queryClient, modelsLoading, onOpenMatrizModal }:
       return matricesWithUrls;
     }
   });
+
+  React.useEffect(() => {
+    if (selectedMatrizId && uvMatrices) {
+      const matriz = (uvMatrices as any[]).find(m => m.id === selectedMatrizId);
+      if (matriz?.modelo_id) {
+        setSelectedModelId(matriz.modelo_id);
+      }
+    }
+  }, [selectedMatrizId, uvMatrices]);
 
   const handleDeleteMatriz = async (id: string) => {
     if (!window.confirm('Excluir esta UV Matriz?')) return;

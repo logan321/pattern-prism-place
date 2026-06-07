@@ -437,6 +437,7 @@ export default function Admin() {
 
   const [isUploading, setIsUploading] = useState(false);
   const [showPatternModal, setShowPatternModal] = useState(false);
+  const [showUVMatrizModal, setShowUVMatrizModal] = useState(false);
   const [editingPattern, setEditingPattern] = useState<any | null>(null);
   const [patternData, setPatternData] = useState({ name: '', png: null as File | null, svg: null as File | null, uvMatrizId: '' });
 

@@ -24,6 +24,8 @@ function Model({ url, textureUrl, zones = [] }: { url: string; textureUrl?: stri
   const nameColor = useCustomizerStore(state => state.nameColor);
   const numberColor = useCustomizerStore(state => state.numberColor);
   const nameFont = useCustomizerStore(state => state.nameFont);
+  const namePosition = useCustomizerStore(state => state.namePosition);
+  const shieldPosition = useCustomizerStore(state => state.shieldPosition);
 
   // Efeito para criar a textura de zonas baseada em UV
   useEffect(() => {
@@ -59,24 +61,36 @@ function Model({ url, textureUrl, zones = [] }: { url: string; textureUrl?: stri
     });
 
     // Desenhar Nome e Número
-    // Primeiro tenta encontrar zonas específicas para nome/número
-    const nameZone = zones.find(z => z.name.toUpperCase() === 'NOME');
-    const numberZone = zones.find(z => z.name.toUpperCase() === 'NÚMERO' || z.name.toUpperCase() === 'NUMERO');
+    // Busca as zonas pelos nomes específicos definidos pelo usuário
+    const nameZoneRight = zones.find(z => z.name.toUpperCase() === 'PEITO DIREITO');
+    const nameZoneLeft = zones.find(z => z.name.toUpperCase() === 'PEITO ESQUERDO');
+    const nameZoneTop = zones.find(z => z.name.toUpperCase() === 'NOME TOPO');
+    const nameZoneBottom = zones.find(z => z.name.toUpperCase() === 'NOME ABAIXO');
+    
+    // Zonas de Número e Escudo (baseado nas marcações do usuário)
+    const numberZoneCenter = zones.find(z => z.name.toUpperCase() === 'NUMERO CENTRO' || z.name.toUpperCase() === 'NÚMERO CENTRO');
+    const shieldZoneRight = zones.find(z => z.name.toUpperCase() === 'PEITO DIREITO'); // Geralmente escudo ou nome
+    const shieldZoneLeft = zones.find(z => z.name.toUpperCase() === 'PEITO ESQUERDO');
 
     if (name) {
-      ctx.font = `bold 120px ${nameFont}`;
+      ctx.font = `bold 80px ${nameFont}`;
       ctx.fillStyle = nameColor;
       ctx.textAlign = 'center';
       
-      let x = canvas.width * 0.5;
-      let y = canvas.height * 0.2;
+      let targetZone = nameZoneTop; // Default topo
       
-      if (nameZone?.uv) {
-        x = nameZone.uv[0] * canvas.width;
-        y = (1 - nameZone.uv[1]) * canvas.height;
+      if (namePosition === 'right') targetZone = nameZoneRight;
+      if (namePosition === 'left') targetZone = nameZoneLeft;
+      if (namePosition === 'center') targetZone = nameZoneTop;
+      
+      if (targetZone?.uv) {
+        const tx = targetZone.uv[0] * canvas.width;
+        const ty = (1 - targetZone.uv[1]) * canvas.height;
+        ctx.fillText(name.toUpperCase(), tx, ty);
+      } else {
+        // Fallback se não encontrar a zona
+        ctx.fillText(name.toUpperCase(), canvas.width * 0.5, canvas.height * 0.2);
       }
-      
-      ctx.fillText(name.toUpperCase(), x, y);
     }
 
     if (number) {
@@ -84,21 +98,27 @@ function Model({ url, textureUrl, zones = [] }: { url: string; textureUrl?: stri
       ctx.fillStyle = numberColor;
       ctx.textAlign = 'center';
       
-      let x = canvas.width * 0.5;
-      let y = canvas.height * 0.45;
+      let targetZone = numberZoneCenter;
       
-      if (numberZone?.uv) {
-        x = numberZone.uv[0] * canvas.width;
-        y = (1 - numberZone.uv[1]) * canvas.height;
+      if (targetZone?.uv) {
+        const tx = targetZone.uv[0] * canvas.width;
+        const ty = (1 - targetZone.uv[1]) * canvas.height;
+        ctx.fillText(number, tx, ty);
+      } else {
+        // Fallback para as costas (estimado se não houver zona específica)
+        ctx.fillText(number, canvas.width * 0.5, canvas.height * 0.45);
       }
-      
-      ctx.fillText(number, x, y);
+    }
+
+    // Opcional: Desenhar Escudo se houver uma zona de escudo ativa e o usuário quiser (poderíamos adicionar lógica de upload aqui)
+    if (shieldPosition) {
+      // Futuramente aqui podemos renderizar o logo do escudo na zona correspondente
     }
 
     const texture = new THREE.CanvasTexture(canvas);
     texture.flipY = false;
     setUvTexture(texture);
-  }, [zones, name, number, nameColor, numberColor, nameFont]);
+  }, [zones, name, number, nameColor, numberColor, nameFont, namePosition, shieldPosition]);
 
   useEffect(() => {
     const applyTexture = (imageSrc: string) => {

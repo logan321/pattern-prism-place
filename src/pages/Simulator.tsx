@@ -133,6 +133,8 @@ export default function Simulator() {
   const nameColor = useCustomizerStore(state => state.nameColor);
   const numberColor = useCustomizerStore(state => state.numberColor);
   const nameFont = useCustomizerStore(state => state.nameFont);
+  const namePosition = useCustomizerStore(state => state.namePosition);
+  const shieldPosition = useCustomizerStore(state => state.shieldPosition);
   
   const setName = useCustomizerStore(state => state.setName);
   const setNumber = useCustomizerStore(state => state.setNumber);
@@ -453,7 +455,7 @@ export default function Simulator() {
                       onClick={() => setFormation('left-shield')}
                       className={cn(
                         "text-[10px] border p-2 rounded transition-colors",
-                        useCustomizerStore.getState().namePosition === 'right' ? "bg-orange-50 border-orange-500 text-orange-700" : "hover:bg-gray-50"
+                        namePosition === 'right' ? "bg-orange-50 border-orange-500 text-orange-700" : "hover:bg-gray-50"
                       )}
                     >
                       NOME DIR / ESCUDO ESQ
@@ -462,7 +464,7 @@ export default function Simulator() {
                       onClick={() => setFormation('right-shield')}
                       className={cn(
                         "text-[10px] border p-2 rounded transition-colors",
-                        useCustomizerStore.getState().namePosition === 'left' ? "bg-orange-50 border-orange-500 text-orange-700" : "hover:bg-gray-50"
+                        namePosition === 'left' ? "bg-orange-50 border-orange-500 text-orange-700" : "hover:bg-gray-50"
                       )}
                     >
                       NOME ESQ / ESCUDO DIR
@@ -471,7 +473,7 @@ export default function Simulator() {
                       onClick={() => setFormation('center-name')}
                       className={cn(
                         "text-[10px] border p-2 rounded transition-colors",
-                        useCustomizerStore.getState().namePosition === 'center' ? "bg-orange-50 border-orange-500 text-orange-700" : "hover:bg-gray-50"
+                        namePosition === 'center' ? "bg-orange-50 border-orange-500 text-orange-700" : "hover:bg-gray-50"
                       )}
                     >
                       NOME CENTRAL

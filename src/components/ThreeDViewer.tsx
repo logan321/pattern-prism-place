@@ -229,6 +229,7 @@ function Model({
         const mesh = child as THREE.Mesh;
         const meshName = mesh.name.toLowerCase();
         
+        // Ignora partes metálicas/pequenas que não devem receber estampa
         const isHardware = meshName.includes('zipper') || 
                           meshName.includes('ziper') || 
                           meshName.includes('button') || 
@@ -242,10 +243,10 @@ function Model({
         const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
         materials.forEach((mat) => {
           if (mat instanceof THREE.MeshStandardMaterial || mat instanceof THREE.MeshPhysicalMaterial) {
-            console.log(`Aplicando textura dinâmica ao material de: ${mesh.name}`);
+            console.log(`[SUCCESS] Aplicando emissiveMap à malha: ${mesh.name}`);
             mat.emissiveMap = uvTexture;
             mat.emissive.set(0xffffff); 
-            mat.emissiveIntensity = 2.5; 
+            mat.emissiveIntensity = 3.0; // Aumentado para garantir visibilidade
             mat.needsUpdate = true;
           }
         });

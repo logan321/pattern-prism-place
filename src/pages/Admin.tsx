@@ -946,7 +946,7 @@ export default function Admin() {
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
             <div className="p-6 border-b border-gray-100 flex items-center justify-between">
-              <h3 className="text-xl font-bold text-gray-900">Nova Estampa</h3>
+              <h3 className="text-xl font-bold text-gray-900">{editingPattern ? 'Editar Estampa' : 'Nova Estampa'}</h3>
               <button onClick={() => setShowPatternModal(false)} className="text-gray-400 hover:text-gray-600 transition-colors">
                 <X className="w-5 h-5" />
               </button>

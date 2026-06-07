@@ -186,9 +186,7 @@ export default function ZoneEditor({ modelUrl, initialZones = [], onSave, onClos
   const handleAddZone = () => {
     console.log('GRAVANDO ZONA:', {
       id: posicaoSelecionada,
-      uv: [selectedData?.uv.x, selectedData?.uv.y],
-      canvasWidth: canvasRef.current?.width,
-      canvasHeight: canvasRef.current?.height,
+      uv: [selectedData?.uv.x, selectedData?.uv.y]
     });
     if (!selectedData) return;
     

@@ -517,61 +517,37 @@ export default function Simulator() {
                   </select>
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase">Alinhamento / Posição</label>
-                  <div className="grid grid-cols-1 gap-2">
-                    <button 
-                      onClick={() => setFormation('left-shield')}
-                      className={cn(
-                        "text-[10px] border p-2 rounded transition-colors",
-                        namePosition === 'right' ? "bg-orange-50 border-orange-500 text-orange-700" : "hover:bg-gray-50"
-                      )}
-                    >
-                      NOME DIR / ESCUDO ESQ
-                    </button>
-                    <button 
-                      onClick={() => setFormation('right-shield')}
-                      className={cn(
-                        "text-[10px] border p-2 rounded transition-colors",
-                        namePosition === 'left' ? "bg-orange-50 border-orange-500 text-orange-700" : "hover:bg-gray-50"
-                      )}
-                    >
-                      NOME ESQ / ESCUDO DIR
-                    </button>
-                    <button 
-                      onClick={() => setFormation('center-name')}
-                      className={cn(
-                        "text-[10px] border p-2 rounded transition-colors",
-                        namePosition === 'center' ? "bg-orange-50 border-orange-500 text-orange-700" : "hover:bg-gray-50"
-                      )}
-                    >
-                      NOME CENTRAL
-                    </button>
-                  </div>
-                </div>
-              </div>
             ) : activeTab === 'Escudo' ? (
               <div className="col-span-2 space-y-4">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase">Posição do Escudo</label>
-                  <div className="grid grid-cols-2 gap-2">
+                  <label className="text-[10px] font-bold text-gray-500 uppercase">Posição do Escudo e Nome</label>
+                  <div className="grid grid-cols-1 gap-2">
                     <button 
-                      onClick={() => setFormation('left-shield')}
+                      onClick={() => setFormation('escudo-esq-nome-dir')}
                       className={cn(
                         "text-[10px] border p-2 rounded transition-colors",
-                        shieldPosition === 'left' ? "bg-orange-50 border-orange-500 text-orange-700" : "hover:bg-gray-50"
+                        formation === 'escudo-esq-nome-dir' ? "bg-orange-50 border-orange-500 text-orange-700 font-bold" : "hover:bg-gray-50"
                       )}
                     >
-                      ESQUERDA
+                      🛡️ ESQUERDA / NOME DIREITA
                     </button>
                     <button 
-                      onClick={() => setFormation('right-shield')}
+                      onClick={() => setFormation('escudo-dir-nome-esq')}
                       className={cn(
                         "text-[10px] border p-2 rounded transition-colors",
-                        shieldPosition === 'right' ? "bg-orange-50 border-orange-500 text-orange-700" : "hover:bg-gray-50"
+                        formation === 'escudo-dir-nome-esq' ? "bg-orange-50 border-orange-500 text-orange-700 font-bold" : "hover:bg-gray-50"
                       )}
                     >
-                      DIREITA
+                      🛡️ DIREITA / NOME ESQUERDA
+                    </button>
+                    <button 
+                      onClick={() => setFormation('nome-centro')}
+                      className={cn(
+                        "text-[10px] border p-2 rounded transition-colors",
+                        formation === 'nome-centro' ? "bg-orange-50 border-orange-500 text-orange-700 font-bold" : "hover:bg-gray-50"
+                      )}
+                    >
+                      NOME CENTRO
                     </button>
                   </div>
                 </div>

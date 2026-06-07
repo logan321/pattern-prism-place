@@ -24,9 +24,8 @@ function Model({
   nameColor,
   numberColor,
   nameFont,
-  namePosition,
-  shieldPosition,
-  shieldUrl
+  shieldUrl,
+  formation
 }: { 
   url: string; 
   textureUrl?: string; 
@@ -36,9 +35,8 @@ function Model({
   nameColor?: string;
   numberColor?: string;
   nameFont?: string;
-  namePosition?: string;
-  shieldPosition?: string;
   shieldUrl?: string | null;
+  formation?: string;
 }) {
   const { scene } = useGLTF(url);
   const textureRef = useRef<THREE.CanvasTexture | null>(null);
@@ -95,17 +93,12 @@ function Model({
 
     const regras = FORMACOES[formation || ''] ?? FORMACOES['escudo-esq-nome-dir'];
 
-    // Buscar zona pelo ID de posição (ID padronizado)
     const getZona = (posId: string | null) =>
       posId ? zones?.find(z => z.id === posId || z.name === posId) : null;
 
     const logoZone   = getZona(regras.logo);
     const nameZone   = getZona(regras.nome);
     const numberZone = getZona(regras.numero);
-
-    console.log('logoZone:', logoZone);
-    console.log('nameZone:', nameZone);
-    console.log('numberZone:', numberZone);
 
     // 1. Desenhar Logo
     if (shieldUrl && logoZone?.uv) {
@@ -149,7 +142,6 @@ function Model({
       ctx.restore();
     }
 
-    // Aplicar ou atualizar textura
     if (textureRef.current) {
       textureRef.current.needsUpdate = true;
     } else {
@@ -180,19 +172,15 @@ function Model({
     drawOnCanvas();
   }, [zones, name, number, nameColor, numberColor, nameFont, shieldUrl, clonedScene, formation]);
 
-  // 2. Efeito para carregar a Estampa Principal (textureUrl)
   useEffect(() => {
     if (!textureUrl) return;
-
     const loader = new THREE.TextureLoader();
     loader.crossOrigin = 'anonymous';
-
     const loadAndApply = (url: string) => {
       loader.load(url, (tex) => {
         tex.flipY = false;
         tex.colorSpace = THREE.SRGBColorSpace;
         tex.needsUpdate = true;
-
         clonedScene.traverse((child) => {
           if ((child as THREE.Mesh).isMesh) {
             const mesh = child as THREE.Mesh;
@@ -208,7 +196,6 @@ function Model({
         });
       });
     };
-
     if (textureUrl.includes('svg')) {
       fetch(textureUrl)
         .then(r => r.blob())
@@ -246,9 +233,8 @@ export const ThreeDViewer = forwardRef<ThreeDViewerRef, {
   nameColor?: string;
   numberColor?: string;
   nameFont?: string;
-  namePosition?: string;
-  shieldPosition?: string;
   shieldUrl?: string | null;
+  formation?: string;
 }>(
   ({ 
     modelUrl, 
@@ -259,40 +245,33 @@ export const ThreeDViewer = forwardRef<ThreeDViewerRef, {
     nameColor,
     numberColor,
     nameFont,
-    namePosition,
-    shieldPosition,
-    shieldUrl
+    shieldUrl,
+    formation
   }, ref) => {
     const orbitRef = useRef<any>(null);
 
     useImperativeHandle(ref, () => ({
       setView: (view) => {
         if (!orbitRef.current) return;
-        
         const controls = orbitRef.current;
         const defaultDistance = 2.0;
-        
         let targetTheta = 0;
         let targetPhi = Math.PI / 2;
-        
         switch (view) {
           case 'front': targetTheta = 0; break;
           case 'back': targetTheta = Math.PI; break;
           case 'left': targetTheta = -Math.PI / 2; break;
           case 'right': targetTheta = Math.PI / 2; break;
         }
-
         const proxy = { 
           theta: controls.getAzimuthalAngle(), 
           phi: controls.getPolarAngle(),
           distance: controls.getDistance()
         };
-
         let endTheta = targetTheta;
         const diff = endTheta - proxy.theta;
         if (diff > Math.PI) endTheta -= 2 * Math.PI;
         if (diff < -Math.PI) endTheta += 2 * Math.PI;
-
         gsap.to(proxy, {
           theta: endTheta,
           phi: targetPhi,
@@ -312,11 +291,9 @@ export const ThreeDViewer = forwardRef<ThreeDViewerRef, {
       zoom: (direction) => {
         const controls = orbitRef.current;
         if (!controls) return;
-        
         const currentDistance = controls.getDistance();
         const factor = direction === 'in' ? 0.85 : 1.15;
         const newDistance = Math.min(Math.max(currentDistance * factor, 1.2), 5);
-        
         const proxy = { distance: currentDistance };
         gsap.to(proxy, {
           distance: newDistance,
@@ -355,8 +332,6 @@ export const ThreeDViewer = forwardRef<ThreeDViewerRef, {
               nameColor={nameColor}
               numberColor={numberColor}
               nameFont={nameFont}
-              namePosition={namePosition}
-              shieldPosition={shieldPosition}
               shieldUrl={shieldUrl}
               formation={formation}
             />

@@ -231,51 +231,63 @@ function Model({
   }, [zones, name, number, nameColor, numberColor, nameFont, shieldUrl, clonedScene, formation]);
 
   useEffect(() => {
-    if (!textureUrl || typeof textureUrl !== 'string') return;
     const loader = new THREE.TextureLoader();
     loader.crossOrigin = 'anonymous';
+
+    const applyTexture = (tex: THREE.Texture | null) => {
+      clonedScene.traverse((child) => {
+        if ((child as THREE.Mesh).isMesh) {
+          const mesh = child as THREE.Mesh;
+          const meshName = mesh.name.toLowerCase();
+          
+          const isHardware = meshName.includes('zipper') || 
+                            meshName.includes('ziper') || 
+                            meshName.includes('button') || 
+                            meshName.includes('botao') ||
+                            meshName.includes('puller') ||
+                            meshName.includes('slider') ||
+                            meshName.includes('trim');
+
+          if (isHardware) return;
+
+          const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+          materials.forEach((mat) => {
+            if (mat instanceof THREE.MeshStandardMaterial || mat instanceof THREE.MeshPhysicalMaterial) {
+              const matName = mat.name.toLowerCase();
+              if (matName.includes('zipper') || matName.includes('ziper') || matName.includes('button') || matName.includes('trim')) return;
+
+              mat.map = tex;
+              // Se não tiver textura, definir uma cor base neutra/branca para o tecido
+              if (!tex) mat.color.set(0xffffff);
+              mat.needsUpdate = true;
+            }
+          });
+        }
+      });
+    };
+
+    if (!textureUrl || typeof textureUrl !== 'string') {
+      applyTexture(null);
+      return;
+    }
+
     const loadAndApply = (url: string) => {
       loader.load(url, (tex) => {
         tex.flipY = false;
         tex.colorSpace = THREE.SRGBColorSpace;
         tex.needsUpdate = true;
-        clonedScene.traverse((child) => {
-          if ((child as THREE.Mesh).isMesh) {
-            const mesh = child as THREE.Mesh;
-            const meshName = mesh.name.toLowerCase();
-            
-            // NÃO aplicar a estampa em zíperes, botões e outros aviamentos
-            // Isso preserva as texturas originais do GLB para estas partes
-            const isHardware = meshName.includes('zipper') || 
-                              meshName.includes('ziper') || 
-                              meshName.includes('button') || 
-                              meshName.includes('botao') ||
-                              meshName.includes('puller') ||
-                              meshName.includes('slider') ||
-                              meshName.includes('trim');
-
-            if (isHardware) return;
-
-            const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
-            materials.forEach((mat) => {
-              if (mat instanceof THREE.MeshStandardMaterial || mat instanceof THREE.MeshPhysicalMaterial) {
-                const matName = mat.name.toLowerCase();
-                // Também checar o nome do material
-                if (matName.includes('zipper') || matName.includes('ziper') || matName.includes('button') || matName.includes('trim')) return;
-
-                if (mat.map) mat.map.dispose();
-                mat.map = tex;
-                mat.needsUpdate = true;
-              }
-            });
-          }
-        });
+        applyTexture(tex);
       });
     };
+
     if (textureUrl.includes('svg')) {
       fetch(textureUrl)
         .then(r => r.blob())
-        .then(blob => loadAndApply(URL.createObjectURL(blob)))
+        .then(blob => {
+          const url = URL.createObjectURL(blob);
+          loadAndApply(url);
+          return () => URL.revokeObjectURL(url);
+        })
         .catch(err => console.error("Erro ao carregar SVG:", err));
     } else {
       loadAndApply(textureUrl);

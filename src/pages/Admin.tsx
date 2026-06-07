@@ -818,9 +818,11 @@ export default function Admin() {
                         </button>
                       </div>
                     </div>
-                    <div className="p-4 flex items-center justify-between">
-                      <span className="font-bold text-gray-800">{model.nome}</span>
-                      <ChevronRight className="w-4 h-4 text-gray-400" />
+                    <div className="p-3">
+                      <p className="font-bold text-gray-800 text-[13px] truncate">{model.nome}</p>
+                      <p className="text-[9px] text-gray-400 mt-1 uppercase font-bold tracking-tight">
+                        {model.id.startsWith('local-') ? 'Recurso Local' : 'Cloud Storage'}
+                      </p>
                     </div>
                   </div>
                 ))

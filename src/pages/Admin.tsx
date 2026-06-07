@@ -31,6 +31,15 @@ function UVConfigView({ models, queryClient, modelsLoading, onOpenMatrizModal }:
   const [selectedModelId, setSelectedModelId] = useState<string>('');
   const [selectedMatrizId, setSelectedMatrizId] = useState<string>('');
 
+  React.useEffect(() => {
+    if (selectedMatrizId && uvMatrices) {
+      const matriz = uvMatrices.find(m => m.id === selectedMatrizId);
+      if (matriz?.modelo_id) {
+        setSelectedModelId(matriz.modelo_id);
+      }
+    }
+  }, [selectedMatrizId, uvMatrices]);
+
   const { data: uvMatrices, isLoading: matricesLoading } = useQuery({
     queryKey: ['uv_matrices'],
     queryFn: async () => {

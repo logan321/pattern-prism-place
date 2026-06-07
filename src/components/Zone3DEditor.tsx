@@ -96,21 +96,34 @@ function Scene({ modelUrl, onPointSelected, zones }: {
   );
 }
 
-export function Zone3DEditor() {
+export function Zone3DEditor({ 
+  modelUrl: propModelUrl, 
+  onZonePositioned,
+  hideBackButton = false
+}: { 
+  modelUrl?: string;
+  onZonePositioned?: (zoneId: string, data: Partial<Zone3D>) => void;
+  hideBackButton?: boolean;
+}) {
   const { zones, selectedZoneId, updateZone, setSelectedZoneId } = useAppContext();
-  const [modelUrl] = useState("https://vjhzocuofmbtmgyfxtqy.supabase.co/storage/v1/object/public/models/GOLA_PADRE_otimizado.glb");
+  const [modelUrl] = useState(propModelUrl || "https://vjhzocuofmbtmgyfxtqy.supabase.co/storage/v1/object/public/models/GOLA_PADRE_otimizado.glb");
   
   const selectedZone = zones.find(z => z.id === selectedZoneId);
 
   const handlePointSelected = (point: THREE.Vector3, normal: THREE.Vector3) => {
     if (!selectedZoneId) return;
     
-    updateZone(selectedZoneId, {
-      position3d: [point.x, point.y, point.z],
-      normal3d: [normal.x, normal.y, normal.z],
+    const updateData = {
+      position3d: [point.x, point.y, point.z] as [number, number, number],
+      normal3d: [normal.x, normal.y, normal.z] as [number, number, number],
       size3d: selectedZone?.size3d || 0.3,
       rotation3d: selectedZone?.rotation3d || 0
-    });
+    };
+
+    updateZone(selectedZoneId, updateData);
+    if (onZonePositioned) {
+      onZonePositioned(selectedZoneId, updateData);
+    }
   };
 
   const clearPosition = () => {
@@ -129,9 +142,11 @@ export function Zone3DEditor() {
       <div className="w-80 border-r border-white/10 flex flex-col shrink-0 bg-[#0f0f0f]">
         <div className="p-4 border-b border-white/10 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Link to="/" className="p-2 hover:bg-white/5 rounded-full transition-colors">
-              <ChevronLeft className="w-5 h-5 text-gray-400" />
-            </Link>
+            {!hideBackButton && (
+              <Link to="/" className="p-2 hover:bg-white/5 rounded-full transition-colors">
+                <ChevronLeft className="w-5 h-5 text-gray-400" />
+              </Link>
+            )}
             <h2 className="font-bold text-lg">Zonas 3D</h2>
           </div>
           <Box className="w-5 h-5 text-orange-500" />

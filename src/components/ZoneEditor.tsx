@@ -148,16 +148,23 @@ export default function ZoneEditor({ referenceUrl, initialZones = [], onSave, on
             }}
             onClick={handleCanvasClick}
           >
-            {referenceUrl && (
+            {referenceUrl ? (
               <img 
                 src={referenceUrl} 
                 alt="UV Matrix" 
-                className="absolute inset-0 w-full h-full object-contain pointer-events-none opacity-80"
+                className="absolute inset-0 w-full h-full object-fill pointer-events-none opacity-100 mix-blend-multiply"
                 onError={(e) => {
                   (e.target as HTMLImageElement).style.display = 'none';
-                  console.error('Failed to load UV reference image');
+                  console.error('Failed to load UV reference image:', referenceUrl);
                 }}
               />
+            ) : (
+              <div className="absolute inset-0 flex items-center justify-center bg-gray-50">
+                <div className="text-center p-8">
+                  <Target className="w-12 h-12 text-gray-200 mx-auto mb-4" />
+                  <p className="text-gray-400 text-xs font-bold uppercase tracking-widest">Aguardando Matriz UV...</p>
+                </div>
+              </div>
             )}
             
             {zonas.map(z => {

@@ -79,7 +79,7 @@ export default function ZoneEditor({ referenceUrl, onClose }: any) {
 
   return (
     <div className="fixed inset-0 bg-[#0a0a0a] z-[70] flex flex-col animate-in fade-in duration-300">
-      <header className="flex justify-between items-center p-4 bg-[#111] border-b border-[#222]">
+      <header className="flex justify-between items-center p-4 bg-[#161616] border-b border-[#222]">
         <div className="flex items-center gap-3">
           <div className="bg-orange-600 p-2 rounded-lg">
             <Crosshair className="w-5 h-5 text-white" />
@@ -155,7 +155,7 @@ export default function ZoneEditor({ referenceUrl, onClose }: any) {
         </div>
 
         {/* Center - UV Map Canvas */}
-        <div className="flex-1 relative bg-[#050505] rounded-xl border border-[#222] overflow-auto flex items-center justify-center p-20 select-none shadow-xl">
+        <div className="flex-1 relative bg-[#161616] rounded-xl border border-[#222] overflow-auto flex items-center justify-center p-20 select-none shadow-xl">
           <div 
             className="relative bg-[#f8f8f8] shadow-[0_0_100px_rgba(0,0,0,0.5)] transition-transform duration-200"
             style={{ 

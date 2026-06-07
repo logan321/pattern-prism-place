@@ -259,7 +259,17 @@ export default function Simulator() {
   const modelUrl = currentModel?.glb_url || FALLBACK_MODEL_URL;
 
   // Encontrar as zonas baseadas na UV Matriz vinculada à estampa
-  const activeUVMatriz = React.useMemo(() => uvMatrices?.find(m => m.id === currentPattern?.uv_matriz_id), [uvMatrices, currentPattern]);
+  const activeUVMatriz = React.useMemo(() => {
+    if (!currentPattern) return null;
+    let matriz = uvMatrices?.find(m => m.id === currentPattern?.uv_matriz_id);
+    
+    // Fallback: Se a estampa não tiver matriz vinculada, procura a primeira matriz que tenha zonas definidas
+    if (!matriz && uvMatrices) {
+      matriz = uvMatrices.find(m => Array.isArray(m.zones) && (m.zones as any[]).length > 0);
+    }
+    
+    return matriz;
+  }, [uvMatrices, currentPattern]);
   
   // Converter as zonas para o formato esperado pelo viewer
   const currentZones = React.useMemo(() => {

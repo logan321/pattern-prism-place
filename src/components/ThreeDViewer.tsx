@@ -79,9 +79,9 @@ function Model({ url, textureUrl, zones = [] }: { url: string; textureUrl?: stri
       };
       
       const zonePeitoDireito = findZone('PEITO DIREITO') || findZone('DIREITO');
-      const zonePeitoEsquerdo = findZone('PEITO ESQUERDO') || findZone('ESQUERDO');
-      const zoneNomeTopo = findZone('NOME TOPO') || findZone('TOPO');
-      const zoneNumeroCentro = findZone('NUMERO CENTRO') || findZone('NÚMERO CENTRO') || findZone('NUMERO') || findZone('NÚMERO');
+      const zonePeitoEsquerdo = findZone('PEITO ESQUERDO') || findZone('ESQUERDO') || findZone('TESTE');
+      const zoneNomeTopo = findZone('NOME TOPO') || findZone('TOPO') || findZone('NOME');
+      const zoneNumeroCentro = findZone('NUMERO CENTRO') || findZone('NÚMERO CENTRO') || findZone('NUMERO') || findZone('NÚMERO') || findZone('COSTAS');
 
       // Escudo
       const targetShieldZone = shieldPosition === 'left' ? zonePeitoEsquerdo : zonePeitoDireito;

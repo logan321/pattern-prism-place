@@ -143,7 +143,11 @@ export default function Simulator() {
     setNumberColor,
     setNameFont,
     setFormation,
-    setShieldUrl
+    setShieldUrl,
+    // Add missing actions
+    setUvLayerText,
+    setUvLayerImage,
+    removeUvLayer
   } = useCustomizerStore();
 
   const {

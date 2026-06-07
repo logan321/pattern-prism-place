@@ -99,9 +99,11 @@ function ModeloComTextura({
 
     // Limpa com fundo transparente para não esconder a textura base
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    console.log('DEBUG: Desenhando zonas no canvas:', zonas.length);
     
     // Desenha cada zona
     zonas.forEach(z => {
+      console.log('DEBUG: Desenhando zona:', z.name, z.uvCenter);
       const isSelected = z.id === idSelecionado;
       const x = z.uvCenter[0] * canvas.width;
       const y = (1 - z.uvCenter[1]) * canvas.height;
@@ -114,25 +116,24 @@ function ModeloComTextura({
       
       // Retângulo da área - Bordas mais visíveis
       ctx.strokeStyle = isSelected ? '#ea580c' : '#3b82f6';
-      ctx.lineWidth = isSelected ? 12 : 6;
+      ctx.lineWidth = 15;
       ctx.strokeRect(-w / 2, -h / 2, w, h);
       
-      // Preenchimento semitransparente
-      ctx.fillStyle = isSelected ? 'rgba(234, 88, 12, 0.4)' : 'rgba(59, 130, 246, 0.25)';
+      // Preenchimento semitransparente - mudando para opaco para testar
+      ctx.fillStyle = isSelected ? 'rgba(234, 88, 12, 0.8)' : 'rgba(59, 130, 246, 0.8)';
       ctx.fillRect(-w / 2, -h / 2, w, h);
 
-      // Texto no UV maior e com sombra para contraste
-      ctx.shadowColor = 'black';
-      ctx.shadowBlur = 10;
+      // Texto
       ctx.fillStyle = 'white';
-      ctx.font = 'bold 50px Arial';
+      ctx.font = 'bold 80px Arial';
       ctx.textAlign = 'center';
-      ctx.fillText(z.name.toUpperCase(), 0, 15);
+      ctx.fillText(z.name.toUpperCase(), 0, 30);
       
       ctx.restore();
     });
 
     if (textureRef.current) {
+      console.log('DEBUG: Atualizando textura');
       textureRef.current.needsUpdate = true;
     }
   }, [zonas, idSelecionado]);

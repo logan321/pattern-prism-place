@@ -11,7 +11,8 @@ import {
   X,
   Settings,
   Target,
-  Edit3
+  Edit3,
+  FileText
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
@@ -225,6 +226,7 @@ function UVConfigView({ models, queryClient, modelsLoading, onOpenMatrizModal }:
 
 function UVMatrizImportModal({ isOpen, onClose, queryClient }: { isOpen: boolean, onClose: () => void, queryClient: any }) {
   const [name, setName] = useState('');
+  const [referenceFile, setReferenceFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -236,10 +238,24 @@ function UVMatrizImportModal({ isOpen, onClose, queryClient }: { isOpen: boolean
 
     setIsUploading(true);
     try {
+      let referenceUrl = null;
+
+      if (referenceFile) {
+        const fileExt = referenceFile.name.split('.').pop();
+        const fileName = `${Date.now()}_ref_${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('textures')
+          .upload(fileName, referenceFile);
+
+        if (uploadError) throw uploadError;
+        referenceUrl = supabase.storage.from('textures').getPublicUrl(uploadData.path).data.publicUrl;
+      }
+
       const { error: dbError } = await supabase
         .from('uv_matrices')
         .insert({
           name: name,
+          reference_url: referenceUrl,
           zones: []
         } as any);
 
@@ -249,6 +265,7 @@ function UVMatrizImportModal({ isOpen, onClose, queryClient }: { isOpen: boolean
       alert('UV Matriz criada com sucesso! Agora você pode vinculá-la a um modelo 3D no editor.');
       onClose();
       setName('');
+      setReferenceFile(null);
     } catch (err: any) {
       alert('Erro: ' + err.message);
     } finally {
@@ -278,10 +295,48 @@ function UVMatrizImportModal({ isOpen, onClose, queryClient }: { isOpen: boolean
               placeholder="Ex: Gola Padre Masculina"
               required
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Imagem de Referência (Opcional)</label>
+            <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-xl hover:border-orange-400 transition-colors cursor-pointer relative">
+              <input
+                type="file"
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                accept=".png,.jpg,.jpeg,.svg"
+                onChange={(e) => setReferenceFile(e.target.files?.[0] || null)}
+              />
+              <div className="space-y-1 text-center">
+                {referenceFile ? (
+                  <div className="flex flex-col items-center">
+                    <FileText className="mx-auto h-12 w-12 text-orange-500" />
+                    <p className="text-xs text-gray-600 mt-2 font-medium">{referenceFile.name}</p>
+                    <button 
+                      type="button" 
+                      onClick={(e) => { e.stopPropagation(); setReferenceFile(null); }}
+                      className="text-[10px] text-red-500 hover:underline mt-1"
+                    >
+                      Remover arquivo
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <Upload className="mx-auto h-12 w-12 text-gray-400" />
+                    <div className="flex text-sm text-gray-600">
+                      <span className="relative rounded-md font-medium text-orange-600 hover:text-orange-500">
+                        Clique para enviar
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-500">PNG, JPG ou SVG</p>
+                  </>
+                )}
+              </div>
+            </div>
             <p className="mt-2 text-[10px] text-gray-400 italic">
-              Apenas o nome é necessário agora. O vínculo com o modelo 3D e as zonas são feitos no Editor 3D.
+              A imagem plana do UV map ajuda na organização interna.
             </p>
           </div>
+
           
           <button 
             type="submit" 
@@ -297,6 +352,20 @@ function UVMatrizImportModal({ isOpen, onClose, queryClient }: { isOpen: boolean
 }
 
 
+import golaPadreAsset from '../assets/GOLA_PADRE_otimizado.glb.asset.json';
+
+const LOCAL_MODELS = [
+  {
+    id: 'local-gola-padre',
+    nome: 'Gola Padre (Local)',
+    glb_url: golaPadreAsset.url,
+    thumbnail_url: null,
+    pecas: ['Camisa', 'Calção', 'Meião'],
+    categoria_id: null,
+    created_at: '',
+  },
+];
+
 export default function Admin() {
   const queryClient = useQueryClient();
 
@@ -311,32 +380,45 @@ export default function Admin() {
       }
       
       console.log('Models found:', data?.length);
-      if (!data) return [];
+      const dbModels = data || [];
 
-      const modelsWithSignedUrls = await Promise.all(data.map(async (m) => {
+      const modelsWithSignedUrls = await Promise.all(dbModels.map(async (m) => {
         try {
           const getPath = (url: string | null, bucket: string) => {
             if (!url) return null;
+            if (url.includes('token=')) return null;
             const marker = `/public/${bucket}/`;
             const parts = url.split(marker);
-            return parts.length > 1 ? parts[1] : null;
+            return parts.length > 1 ? parts[1].split('?')[0] : null;
           };
 
+          const glbPath = getPath(m.glb_url, 'models');
           const thumbPath = getPath(m.thumbnail_url, 'textures');
+
+          let signedGlbUrl = m.glb_url;
+          let signedThumbUrl = m.thumbnail_url;
+
+          if (glbPath) {
+            const { data: glbData } = await supabase.storage.from('models').createSignedUrl(glbPath, 3600);
+            if (glbData) signedGlbUrl = glbData.signedUrl;
+          }
+
           if (thumbPath) {
             const { data: thumbData } = await supabase.storage.from('textures').createSignedUrl(thumbPath, 3600);
-            if (thumbData) return { ...m, thumbnail_url: thumbData.signedUrl };
+            if (thumbData) signedThumbUrl = thumbData.signedUrl;
           }
-          return m;
+
+          return { ...m, glb_url: signedGlbUrl, thumbnail_url: signedThumbUrl };
         } catch (err) {
           console.error('Error processing model URL:', m.id, err);
           return m;
         }
       }));
 
-      return modelsWithSignedUrls;
+      return [...LOCAL_MODELS, ...modelsWithSignedUrls];
     }
   });
+
   const [activeView, setActiveView] = useState<'models' | 'patterns' | 'config'>('models');
   
   const { data: uvMatrices } = useQuery({

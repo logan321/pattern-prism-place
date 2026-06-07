@@ -165,8 +165,11 @@ function Model({ url, textureUrl, zones = [] }: { url: string; textureUrl?: stri
       });
     };
 
-    drawOnCanvas();
-    return () => { isMounted = false; };
+    const timeoutId = setTimeout(drawOnCanvas, 100);
+    return () => { 
+      isMounted = false;
+      clearTimeout(timeoutId);
+    };
   }, [zones, name, number, nameColor, numberColor, nameFont, namePosition, shieldPosition, shieldUrl, clonedScene]);
 
   // 2. Efeito para carregar a Estampa Principal (textureUrl)

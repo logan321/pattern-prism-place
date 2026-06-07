@@ -600,7 +600,6 @@ export type Database = {
           id: string
           modelo_id: string | null
           name: string
-          reference_url: string | null
           svg_url: string | null
           zones: Json | null
         }
@@ -609,7 +608,6 @@ export type Database = {
           id?: string
           modelo_id?: string | null
           name: string
-          reference_url?: string | null
           svg_url?: string | null
           zones?: Json | null
         }
@@ -618,7 +616,6 @@ export type Database = {
           id?: string
           modelo_id?: string | null
           name?: string
-          reference_url?: string | null
           svg_url?: string | null
           zones?: Json | null
         }

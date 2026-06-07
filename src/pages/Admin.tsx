@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import golaPadreAsset from '../assets/GOLA_PADRE_otimizado.glb.asset.json';
 import { 
   LayoutDashboard, 
   Box, 
@@ -29,12 +28,11 @@ function cn(...inputs: ClassValue[]) {
 function UVConfigView({ models, queryClient, modelsLoading }: { models: any[] | undefined, queryClient: any, modelsLoading: boolean }) {
   const [selectedMatrizId, setSelectedMatrizId] = useState<string | null>(null);
   const [editingZonesFor, setEditingZonesFor] = useState<any | null>(null);
-  const [selectedModelId, setSelectedModelId] = useState<string>('');
 
   const { data: uvMatrices, isLoading: matricesLoading } = useQuery({
     queryKey: ['uv_matrices'],
     queryFn: async () => {
-      const { data, error } = await supabase.from('uv_matrices').select('*');
+      const { data, error } = await supabase.from('uv_matrices').select('*, modelos(nome, glb_url)');
       if (error) throw error;
       return data;
     }
@@ -47,29 +45,17 @@ function UVConfigView({ models, queryClient, modelsLoading }: { models: any[] | 
     else queryClient.invalidateQueries({ queryKey: ['uv_matrices'] });
   };
 
-  const handleOpenEditor = (matriz: any) => {
-    if (!selectedModelId) {
-      alert('Por favor, selecione um modelo 3D na lista acima primeiro!');
-      return;
-    }
-    const model = models?.find(m => m.id === selectedModelId);
-    setEditingZonesFor({ ...matriz, modelUrl: model?.glb_url });
-  };
-
   const handleSaveZones = async (zones: any[]) => {
     try {
       const { error } = await supabase
         .from('uv_matrices')
-        .update({ 
-          zones,
-          modelo_id: selectedModelId 
-        } as any)
+        .update({ zones } as any)
         .eq('id', editingZonesFor.id);
       
       if (error) throw error;
       
       queryClient.invalidateQueries({ queryKey: ['uv_matrices'] });
-      alert('Zonas salvas e UV Matriz vinculada ao modelo com sucesso!');
+      alert('Zonas salvas com sucesso!');
       setEditingZonesFor(null);
     } catch (err: any) {
       alert('Erro ao salvar: ' + err.message);
@@ -93,16 +79,7 @@ function UVConfigView({ models, queryClient, modelsLoading }: { models: any[] | 
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {models?.map((model: any) => (
-              <button 
-                key={model.id} 
-                onClick={() => setSelectedModelId(model.id)}
-                className={cn(
-                  "p-4 border rounded-xl flex items-center justify-between transition-all text-left",
-                  selectedModelId === model.id 
-                    ? "border-orange-500 bg-orange-50 ring-2 ring-orange-200" 
-                    : "border-gray-100 bg-gray-50 hover:border-gray-300"
-                )}
-              >
+              <div key={model.id} className="p-4 border border-gray-100 rounded-xl bg-gray-50 flex items-center justify-between">
                 <div className="flex items-center space-x-3">
                   <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center border border-gray-200 overflow-hidden shrink-0">
                     {model.thumbnail_url ? (
@@ -116,26 +93,21 @@ function UVConfigView({ models, queryClient, modelsLoading }: { models: any[] | 
                     <p className="text-[10px] text-gray-400">ID: {model.id.substring(0, 8)}...</p>
                   </div>
                 </div>
-                {selectedModelId === model.id && (
-                  <div className="flex items-center space-x-1">
-                    <div className="h-2 w-2 rounded-full bg-orange-500 animate-pulse"></div>
-                    <span className="text-[10px] font-black text-orange-600 uppercase">Selecionado</span>
-                  </div>
-                )}
-              </button>
+                <div className="flex items-center space-x-2">
+                  <span className="flex h-2 w-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]"></span>
+                  <span className="text-[10px] font-bold text-gray-500 uppercase tracking-tight">Ativo</span>
+                </div>
+              </div>
             ))}
           </div>
         )}
       </div>
 
       <div className="bg-white rounded-2xl p-8 border border-gray-100 shadow-sm">
-        <h3 className="text-lg font-bold text-gray-900 mb-2 flex items-center">
+        <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center">
           <Target className="w-5 h-5 mr-2 text-orange-600" />
-          Editor de Zonas 3D
+          UV Matrizes Cadastradas
         </h3>
-        <p className="text-gray-500 text-xs mb-6">
-          Selecione um modelo acima e uma matriz abaixo para configurar as áreas de personalização.
-        </p>
 
         {matricesLoading ? (
           <p className="text-gray-400 text-sm">Carregando matrizes...</p>
@@ -150,14 +122,9 @@ function UVConfigView({ models, queryClient, modelsLoading }: { models: any[] | 
                 <div className="flex justify-between items-start mb-2">
                   <div>
                     <h4 className="font-bold text-gray-800">{m.name}</h4>
-                    <div className="flex items-center space-x-2 mt-1">
-                      <span className={cn(
-                        "text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider",
-                        m.modelo_id ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"
-                      )}>
-                        {m.modelo_id ? "Vinculado" : "Sem Vínculo"}
-                      </span>
-                    </div>
+                    <p className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">
+                      Modelo: {m.modelos?.nome || 'N/A'}
+                    </p>
                   </div>
                   <button 
                     onClick={() => handleDeleteMatriz(m.id)}
@@ -169,16 +136,11 @@ function UVConfigView({ models, queryClient, modelsLoading }: { models: any[] | 
 
                 <div className="flex items-center space-x-3 mt-4">
                   <button 
-                    onClick={() => handleOpenEditor(m)}
-                    className={cn(
-                      "flex-1 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center space-x-2 border",
-                      selectedModelId 
-                        ? "bg-gray-50 hover:bg-orange-600 text-gray-700 hover:text-white border-gray-100 hover:border-orange-600"
-                        : "bg-gray-50 text-gray-300 border-gray-100 cursor-not-allowed"
-                    )}
+                    onClick={() => setEditingZonesFor(m)}
+                    className="flex-1 bg-gray-50 hover:bg-orange-50 text-gray-700 hover:text-orange-700 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center space-x-2 border border-gray-100 hover:border-orange-200"
                   >
                     <Edit3 className="w-3.5 h-3.5" />
-                    <span>{selectedModelId ? 'Abrir Editor de Zonas' : 'Selecione um Modelo 3D'}</span>
+                    <span>Editar Zonas 3D</span>
                   </button>
                 </div>
               </div>
@@ -189,7 +151,7 @@ function UVConfigView({ models, queryClient, modelsLoading }: { models: any[] | 
 
       {editingZonesFor && (
         <ZoneEditor 
-          modelUrl={editingZonesFor.modelUrl}
+          modelUrl={editingZonesFor.modelos?.glb_url}
           initialZones={editingZonesFor.zones || []}
           onSave={handleSaveZones}
           onClose={() => setEditingZonesFor(null)}
@@ -201,42 +163,33 @@ function UVConfigView({ models, queryClient, modelsLoading }: { models: any[] | 
 
 function UVMatrizImportModal({ isOpen, onClose, queryClient, models }: { isOpen: boolean, onClose: () => void, queryClient: any, models: any[] | undefined }) {
   const [name, setName] = useState('');
-  const [file, setFile] = useState<File | null>(null);
+  const [modelId, setModelId] = useState('');
   const [isUploading, setIsUploading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name) {
-      alert('Por favor, preencha o nome.');
+    if (!name || !modelId) {
+      alert('Por favor, preencha todos os campos.');
       return;
     }
 
     setIsUploading(true);
     try {
-      const { data: uploadData, error: uploadError } = file 
-        ? await supabase.storage.from('textures').upload(`uv_ref_${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`, file)
-        : { data: null, error: null };
-      
-      if (uploadError) throw uploadError;
-
-      const refUrl = uploadData 
-        ? supabase.storage.from('textures').getPublicUrl(uploadData.path).data.publicUrl
-        : null;
-
       const { error: dbError } = await supabase
         .from('uv_matrices')
         .insert({
           name: name,
-          reference_url: refUrl,
+          modelo_id: modelId,
           zones: []
         } as any);
 
       if (dbError) throw dbError;
 
       queryClient.invalidateQueries({ queryKey: ['uv_matrices'] });
-      alert('UV Matriz criada com sucesso! Agora você pode vinculá-la a um modelo 3D no editor de zonas.');
+      alert('UV Matriz criada com sucesso! Agora configure as zonas 3D.');
       onClose();
       setName('');
+      setModelId('');
     } catch (err: any) {
       alert('Erro: ' + err.message);
     } finally {
@@ -267,42 +220,20 @@ function UVMatrizImportModal({ isOpen, onClose, queryClient, models }: { isOpen:
               required
             />
           </div>
-
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Imagem de Referência (Opcional)</label>
-            <div className="flex items-center space-x-2">
-              <label className="flex-1 flex flex-col items-center justify-center border-2 border-dashed border-gray-200 rounded-xl py-4 hover:bg-gray-50 cursor-pointer transition-colors group">
-                {file ? (
-                  <span className="text-xs text-green-600 font-bold">{file.name}</span>
-                ) : (
-                  <>
-                    <Upload className="w-5 h-5 text-gray-300 group-hover:text-orange-500 mb-1" />
-                    <span className="text-[10px] text-gray-400">PNG, JPG ou SVG</span>
-                  </>
-                )}
-                <input 
-                  type="file" 
-                  className="hidden" 
-                  accept="image/*,.svg"
-                  onChange={e => setFile(e.target.files?.[0] || null)}
-                />
-              </label>
-              {file && (
-                <button 
-                  type="button"
-                  onClick={() => setFile(null)}
-                  className="p-2 text-gray-400 hover:text-red-500"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              )}
-            </div>
-            <p className="text-[10px] text-gray-400 mt-1 italic">Imagem do UV Map para usar como base no editor.</p>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Vincular ao Modelo 3D</label>
+            <select 
+              value={modelId}
+              onChange={e => setModelId(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none text-sm bg-white"
+              required
+            >
+              <option value="">Selecione um modelo...</option>
+              {models?.map(m => (
+                <option key={m.id} value={m.id}>{m.nome}</option>
+              ))}
+            </select>
           </div>
-
-          <p className="text-xs text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-100">
-            O vínculo com o modelo 3D e a configuração de zonas são feitos no <strong>Editor de Zonas 3D</strong>.
-          </p>
           
           <button 
             type="submit" 
@@ -321,13 +252,17 @@ function UVMatrizImportModal({ isOpen, onClose, queryClient, models }: { isOpen:
 export default function Admin() {
   const queryClient = useQueryClient();
 
-  // Buscar modelos do banco E incluir o modelo local se ele não estiver no banco
-  const { data: dbModels, isLoading: modelsLoading } = useQuery({
+  const { data: models, isLoading: modelsLoading } = useQuery({
     queryKey: ['models'],
     queryFn: async () => {
+      console.log('Fetching models...');
       const { data, error } = await supabase.from('modelos').select('*');
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching models:', error);
+        throw error;
+      }
       
+      console.log('Models found:', data?.length);
       if (!data) return [];
 
       const modelsWithSignedUrls = await Promise.all(data.map(async (m) => {
@@ -346,6 +281,7 @@ export default function Admin() {
           }
           return m;
         } catch (err) {
+          console.error('Error processing model URL:', m.id, err);
           return m;
         }
       }));
@@ -353,21 +289,6 @@ export default function Admin() {
       return modelsWithSignedUrls;
     }
   });
-
-  // Replicar o LOCAL_MODELS do Simulator
-  const LOCAL_MODELS = [
-    {
-      id: 'local-gola-padre',
-      nome: 'Gola Padre (Padrão)',
-      glb_url: golaPadreAsset.url,
-      thumbnail_url: null,
-      pecas: ['Camisa', 'Calção', 'Meião'],
-      categoria_id: null,
-      created_at: '',
-    },
-  ];
-
-  const models = [...LOCAL_MODELS, ...(dbModels || [])];
   const [activeView, setActiveView] = useState<'models' | 'patterns' | 'config'>('models');
   
   const { data: uvMatrices } = useQuery({

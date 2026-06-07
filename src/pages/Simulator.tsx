@@ -398,7 +398,6 @@ export default function Simulator() {
               </button>
             ))}
           </div>
-
           <div className="grid grid-cols-2 gap-3">
             {activeTab === 'Modelo' ? (
               allModels.map(model => (

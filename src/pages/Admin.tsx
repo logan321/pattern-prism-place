@@ -26,8 +26,9 @@ function cn(...inputs: ClassValue[]) {
 }
 
 function UVConfigView({ models, queryClient, modelsLoading }: { models: any[] | undefined, queryClient: any, modelsLoading: boolean }) {
-  const [selectedMatrizId, setSelectedMatrizId] = useState<string | null>(null);
   const [editingZonesFor, setEditingZonesFor] = useState<any | null>(null);
+  const [selectedModelId, setSelectedModelId] = useState<string>('');
+  const [selectedMatrizId, setSelectedMatrizId] = useState<string>('');
 
   const { data: uvMatrices, isLoading: matricesLoading } = useQuery({
     queryKey: ['uv_matrices'],
@@ -45,17 +46,36 @@ function UVConfigView({ models, queryClient, modelsLoading }: { models: any[] | 
     else queryClient.invalidateQueries({ queryKey: ['uv_matrices'] });
   };
 
+  const handleOpenEditor = () => {
+    if (!selectedModelId || !selectedMatrizId) {
+      alert('Selecione um Modelo 3D e uma UV Matriz primeiro.');
+      return;
+    }
+    const matriz = uvMatrices?.find(m => m.id === selectedMatrizId);
+    const model = models?.find(m => m.id === selectedModelId);
+    
+    if (matriz && model) {
+      setEditingZonesFor({
+        ...matriz,
+        modelos: model // Pass the selected model details
+      });
+    }
+  };
+
   const handleSaveZones = async (zones: any[]) => {
     try {
       const { error } = await supabase
         .from('uv_matrices')
-        .update({ zones } as any)
-        .eq('id', editingZonesFor.id);
+        .update({ 
+          zones,
+          modelo_id: selectedModelId 
+        } as any)
+        .eq('id', selectedMatrizId);
       
       if (error) throw error;
       
       queryClient.invalidateQueries({ queryKey: ['uv_matrices'] });
-      alert('Zonas salvas com sucesso!');
+      alert('Vínculo e zonas salvos com sucesso!');
       setEditingZonesFor(null);
     } catch (err: any) {
       alert('Erro ao salvar: ' + err.message);
@@ -64,89 +84,131 @@ function UVConfigView({ models, queryClient, modelsLoading }: { models: any[] | 
 
   return (
     <div className="space-y-6">
-      <div className="bg-white rounded-2xl p-8 border border-gray-100 shadow-sm">
-        <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center">
-          <Box className="w-5 h-5 mr-2 text-orange-600" />
-          Modelos 3D Disponíveis
-        </h3>
-        
-        {modelsLoading ? (
-          <p className="text-gray-400 text-sm">Carregando modelos...</p>
-        ) : models?.length === 0 ? (
-          <div className="text-center py-12 border-2 border-dashed border-gray-100 rounded-xl">
-            <p className="text-gray-400 text-sm">Nenhum modelo 3D cadastrado ainda.</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {models?.map((model: any) => (
-              <div key={model.id} className="p-4 border border-gray-100 rounded-xl bg-gray-50 flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center border border-gray-200 overflow-hidden shrink-0">
-                    {model.thumbnail_url ? (
-                      <img src={model.thumbnail_url} alt={model.nome} className="w-full h-full object-cover" />
-                    ) : (
-                      <Box className="w-5 h-5 text-gray-300" />
-                    )}
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-gray-800 text-sm">{model.nome}</h4>
-                    <p className="text-[10px] text-gray-400">ID: {model.id.substring(0, 8)}...</p>
-                  </div>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <span className="flex h-2 w-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]"></span>
-                  <span className="text-[10px] font-bold text-gray-500 uppercase tracking-tight">Ativo</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+      {/* 1. Criar Nova Matriz (Simplificado) */}
+      <div className="bg-white rounded-2xl p-8 border border-gray-100 shadow-sm flex items-center justify-between">
+        <div>
+          <h3 className="text-lg font-bold text-gray-900 flex items-center">
+            <Target className="w-5 h-5 mr-2 text-orange-600" />
+            Gestão de UV Matrizes
+          </h3>
+          <p className="text-gray-500 text-xs">Crie novas matrizes apenas informando o nome.</p>
+        </div>
+        <button 
+          onClick={() => (window as any).setShowUVMatrizModal(true)}
+          className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded-xl font-bold flex items-center space-x-2 transition-all shadow-md"
+        >
+          <Plus className="w-4 h-4" />
+          <span>Criar Nova UV Matriz</span>
+        </button>
       </div>
 
-      <div className="bg-white rounded-2xl p-8 border border-gray-100 shadow-sm">
-        <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center">
-          <Target className="w-5 h-5 mr-2 text-orange-600" />
-          UV Matrizes Cadastradas
-        </h3>
-
-        {matricesLoading ? (
-          <p className="text-gray-400 text-sm">Carregando matrizes...</p>
-        ) : uvMatrices?.length === 0 ? (
-          <div className="text-center py-12 border-2 border-dashed border-gray-100 rounded-xl">
-            <p className="text-gray-400 text-sm">Nenhuma matriz cadastrada ainda.</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {uvMatrices?.map((m: any) => (
-              <div key={m.id} className="p-4 border border-gray-100 rounded-xl hover:shadow-md transition-all group relative">
-                <div className="flex justify-between items-start mb-2">
-                  <div>
-                    <h4 className="font-bold text-gray-800">{m.name}</h4>
-                    <p className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">
-                      Modelo: {m.modelos?.nome || 'N/A'}
-                    </p>
-                  </div>
-                  <button 
-                    onClick={() => handleDeleteMatriz(m.id)}
-                    className="text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-
-                <div className="flex items-center space-x-3 mt-4">
-                  <button 
-                    onClick={() => setEditingZonesFor(m)}
-                    className="flex-1 bg-gray-50 hover:bg-orange-50 text-gray-700 hover:text-orange-700 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center space-x-2 border border-gray-100 hover:border-orange-200"
-                  >
-                    <Edit3 className="w-3.5 h-3.5" />
-                    <span>Editar Zonas 3D</span>
-                  </button>
-                </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* 2. Editor de Zonas 3D (Novo Fluxo Separado) */}
+        <div className="lg:col-span-1 space-y-6">
+          <div className="bg-white rounded-2xl p-8 border border-gray-100 shadow-sm h-full">
+            <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center">
+              <Edit3 className="w-5 h-5 mr-2 text-orange-600" />
+              Editor de Zonas 3D
+            </h3>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">1. Selecionar Modelo 3D</label>
+                <select 
+                  value={selectedModelId}
+                  onChange={e => setSelectedModelId(e.target.value)}
+                  className="w-full px-3 py-3 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-orange-500 text-sm bg-gray-50 font-medium"
+                >
+                  <option value="">Escolha um modelo...</option>
+                  {models?.map(m => (
+                    <option key={m.id} value={m.id}>{m.nome}</option>
+                  ))}
+                </select>
               </div>
-            ))}
+
+              <div>
+                <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">2. Selecionar UV Matriz</label>
+                <select 
+                  value={selectedMatrizId}
+                  onChange={e => setSelectedMatrizId(e.target.value)}
+                  className="w-full px-3 py-3 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-orange-500 text-sm bg-gray-50 font-medium"
+                >
+                  <option value="">Escolha uma matriz...</option>
+                  {uvMatrices?.map(m => (
+                    <option key={m.id} value={m.id}>{m.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <button 
+                onClick={handleOpenEditor}
+                disabled={!selectedModelId || !selectedMatrizId}
+                className="w-full mt-4 bg-gray-900 hover:bg-black text-white font-bold py-4 rounded-xl transition-all shadow-lg flex items-center justify-center space-x-2 disabled:opacity-30"
+              >
+                <Box className="w-5 h-5" />
+                <span>Abrir Editor de Marcação</span>
+              </button>
+              
+              <p className="text-[10px] text-gray-400 text-center italic">
+                O editor permite marcar pontos diretamente no 3D para posicionar estampas automaticamente.
+              </p>
+            </div>
           </div>
-        )}
+        </div>
+
+        {/* 3. Listagem de Matrizes Existentes */}
+        <div className="lg:col-span-2">
+          <div className="bg-white rounded-2xl p-8 border border-gray-100 shadow-sm min-h-full">
+            <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center">
+              <Target className="w-5 h-5 mr-2 text-orange-600" />
+              Matrizes Cadastradas
+            </h3>
+
+            {matricesLoading ? (
+              <p className="text-gray-400 text-sm">Carregando matrizes...</p>
+            ) : uvMatrices?.length === 0 ? (
+              <div className="text-center py-12 border-2 border-dashed border-gray-100 rounded-xl">
+                <p className="text-gray-400 text-sm">Nenhuma matriz cadastrada ainda.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {uvMatrices?.map((m: any) => (
+                  <div key={m.id} className="p-4 border border-gray-100 rounded-xl hover:shadow-md transition-all group relative bg-gray-50/50">
+                    <div className="flex justify-between items-start">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center border border-gray-200 shrink-0">
+                          <Target className="w-5 h-5 text-gray-300" />
+                        </div>
+                        <div>
+                          <h4 className="font-bold text-gray-800 text-sm">{m.name}</h4>
+                          <div className="flex items-center space-x-2 mt-1">
+                            <span className={cn(
+                              "text-[9px] px-1.5 py-0.5 rounded-full font-bold uppercase tracking-tighter",
+                              m.modelo_id ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-400"
+                            )}>
+                              {m.modelo_id ? "Vinculada" : "Sem Vínculo"}
+                            </span>
+                            {m.modelo_id && (
+                              <p className="text-[10px] text-gray-400 font-medium">
+                                {m.modelos?.nome}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <button 
+                        onClick={() => handleDeleteMatriz(m.id)}
+                        className="text-gray-300 hover:text-red-500 transition-all p-1"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       {editingZonesFor && (

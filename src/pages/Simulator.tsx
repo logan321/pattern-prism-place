@@ -264,13 +264,9 @@ export default function Simulator() {
 
   // Encontrar as zonas baseadas na UV Matriz vinculada à estampa
   const activeUVMatriz = React.useMemo(() => {
-    if (!currentPattern) return null;
-    let matriz = uvMatrices?.find(m => m.id === currentPattern?.uv_matriz_id);
-    
-    // Fallback: Se a estampa não tiver matriz vinculada, procura a primeira matriz que tenha zonas definidas
-    if (!matriz && uvMatrices) {
-      matriz = uvMatrices.find(m => Array.isArray(m.zones) && (m.zones as any[]).length > 0);
-    }
+    // Tentar pela estampa selecionada primeiro, senão pegar a primeira disponível como fallback
+    const matriz = uvMatrices?.find(m => m.id === currentPattern?.uv_matriz_id)
+      ?? uvMatrices?.[0]; // fallback para não ficar vazio
     
     return matriz;
   }, [uvMatrices, currentPattern]);
@@ -278,6 +274,11 @@ export default function Simulator() {
   // Converter as zonas para o formato esperado pelo viewer
   const currentZones = React.useMemo(() => {
     const rawZones = activeUVMatriz?.zones as any[] || [];
+    
+    // Log para confirmar — remover depois:
+    console.log('uvMatrizAtiva:', activeUVMatriz?.name);
+    console.log('currentZones:', rawZones);
+
     return rawZones.map(z => ({
       id: z.id,
       name: z.name,

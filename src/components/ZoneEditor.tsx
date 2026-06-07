@@ -28,16 +28,14 @@ function ModelWithUVClick({ url, onPointSelect, zones }: {
   zones: Zone[] 
 }) {
   const { scene } = useGLTF(url);
-  const [texture, setTexture] = useState<THREE.CanvasTexture | null>(null);
-  const mouseDownPos = useRef({ x: 0, y: 0 });
-  
-  // Criar uma textura de canvas para desenhar as marcações
+  const textureRef = useRef<THREE.CanvasTexture | null>(null);
+  const sceneRef = useRef<THREE.Object3D | null>(null);
   const canvasRef = useRef(document.createElement('canvas'));
+  const mouseDownPos = useRef({ x: 0, y: 0 });
   
   // Clonar a scene para não mutar a cache do useGLTF
   const clonedScene = useMemo(() => {
     const clone = scene.clone(true);
-    // Clonar materiais também para não compartilhar referência
     clone.traverse((obj) => {
       if ((obj as THREE.Mesh).isMesh) {
         const mesh = obj as THREE.Mesh;
@@ -51,99 +49,92 @@ function ModelWithUVClick({ url, onPointSelect, zones }: {
     return clone;
   }, [scene]);
 
-  // Aplicar materiais neutros E a textura de marcação em um único efeito para garantir sincronia
   useEffect(() => {
-    if (!clonedScene) return;
-    
-    clonedScene.traverse((obj) => {
-      if ((obj as THREE.Mesh).isMesh) {
-        const mesh = obj as THREE.Mesh;
-        const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
-        
-        mats.forEach((mat: any) => {
-          if (mat instanceof THREE.MeshStandardMaterial || mat instanceof THREE.MeshPhysicalMaterial) {
-            // Configuração neutra
-            mat.map = null;
-            mat.normalMap = null;
-            mat.roughnessMap = null;
-            mat.metalnessMap = null;
-            mat.aoMap = null;
-            mat.color = new THREE.Color(0xcccccc);
-            
-            // Aplicar marcações UV via emissive
-            if (texture) {
-              mat.emissiveMap = texture;
-              mat.emissive = new THREE.Color(0xffffff);
-              mat.emissiveIntensity = 1.2; // Aumentar intensidade para visibilidade
-            } else {
-              mat.emissive = new THREE.Color(0x000000);
-              mat.emissiveIntensity = 0;
+    if (clonedScene) {
+      sceneRef.current = clonedScene;
+      
+      // Aplicar materiais neutros iniciais
+      clonedScene.traverse((obj) => {
+        if ((obj as THREE.Mesh).isMesh) {
+          const mesh = obj as THREE.Mesh;
+          const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+          mats.forEach((mat: any) => {
+            if (mat instanceof THREE.MeshStandardMaterial || mat instanceof THREE.MeshPhysicalMaterial) {
+              mat.map = null;
+              mat.normalMap = null;
+              mat.roughnessMap = null;
+              mat.metalnessMap = null;
+              mat.aoMap = null;
+              mat.color = new THREE.Color(0xcccccc);
+              mat.needsUpdate = true;
             }
-            
-            mat.needsUpdate = true;
-          }
-        });
-      }
-    });
-  }, [clonedScene, texture]);
+          });
+        }
+      });
+    }
+  }, [clonedScene]);
 
-  useEffect(() => {
+  const redrawTexture = React.useCallback(() => {
     const canvas = canvasRef.current;
-    canvas.width = 2048; // Alta resolução para precisão UV
+    if (!canvas) return;
+    
+    canvas.width = 2048;
     canvas.height = 2048;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Limpar fundo (transparente ou cor base)
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
-    // Desenhar cada zona baseada em suas coordenadas UV
     zones.forEach((zone) => {
-      if (zone.uv) {
-        const x = zone.uv[0] * canvas.width;
-        const y = (1 - zone.uv[1]) * canvas.height; // Inverter Y para coordenadas de canvas
+      if (!zone.uv) return;
+      const x = zone.uv[0] * canvas.width;
+      const y = (1 - zone.uv[1]) * canvas.height;
 
-        // Desenhar a área de marcação (retângulo para simular o "quadro")
-        ctx.save();
-        ctx.strokeStyle = '#ea580c';
-        ctx.lineWidth = 6;
-        ctx.setLineDash([15, 10]);
-        const boxSize = 160;
-        ctx.strokeRect(x - boxSize / 2, y - boxSize / 2, boxSize, boxSize);
-        
-        // Fundo semitransparente para a área
-        ctx.fillStyle = 'rgba(234, 88, 12, 0.2)';
-        ctx.fillRect(x - boxSize / 2, y - boxSize / 2, boxSize, boxSize);
+      // Desenhar círculo laranja
+      ctx.beginPath();
+      ctx.arc(x, y, 20, 0, Math.PI * 2);
+      ctx.fillStyle = '#ea580c';
+      ctx.fill();
+      ctx.strokeStyle = 'white';
+      ctx.lineWidth = 4;
+      ctx.stroke();
 
-        // Círculo central
-        ctx.beginPath();
-        ctx.arc(x, y, 12, 0, Math.PI * 2);
-        ctx.fillStyle = '#ea580c';
-        ctx.fill();
-        ctx.strokeStyle = 'white';
-        ctx.lineWidth = 3;
-        ctx.stroke();
-
-        // Texto da zona com fundo para legibilidade
-        const label = zone.name.toUpperCase();
-        ctx.font = 'bold 32px Arial';
-        const textWidth = ctx.measureText(label).width;
-        
-        ctx.fillStyle = 'rgba(0,0,0,0.8)';
-        ctx.fillRect(x - textWidth / 2 - 10, y - boxSize / 2 - 45, textWidth + 20, 40);
-        
-        ctx.fillStyle = 'white';
-        ctx.textAlign = 'center';
-        ctx.fillText(label, x, y - boxSize / 2 - 15);
-        ctx.restore();
-      }
+      // Label
+      ctx.font = 'bold 28px Arial';
+      ctx.fillStyle = 'white';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(zone.id.toUpperCase(), x, y - 45);
     });
 
-    const newTexture = new THREE.CanvasTexture(canvas);
-    newTexture.flipY = false;
-    newTexture.colorSpace = THREE.SRGBColorSpace;
-    setTexture(newTexture);
+    if (!textureRef.current) {
+      const tex = new THREE.CanvasTexture(canvas);
+      tex.flipY = false;
+      tex.colorSpace = THREE.SRGBColorSpace;
+      textureRef.current = tex;
+
+      sceneRef.current?.traverse((obj) => {
+        const mesh = obj as THREE.Mesh;
+        if (mesh.isMesh) {
+          const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+          mats.forEach((mat: any) => {
+            if (mat instanceof THREE.MeshStandardMaterial || mat instanceof THREE.MeshPhysicalMaterial) {
+              mat.emissiveMap = textureRef.current;
+              mat.emissive = new THREE.Color(0xffffff);
+              mat.emissiveIntensity = 1.2;
+              mat.needsUpdate = true;
+            }
+          });
+        }
+      });
+    } else {
+      textureRef.current.needsUpdate = true;
+    }
   }, [zones]);
+
+  useEffect(() => {
+    redrawTexture();
+  }, [zones, redrawTexture]);
 
   
   return (

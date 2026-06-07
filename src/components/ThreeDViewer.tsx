@@ -38,25 +38,22 @@ function Model({ url, textureUrl, zones = [] }: { url: string; textureUrl?: stri
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
-    // Desenhar Zonas
+    // Desenhar Zonas (para debug visual)
     zones.forEach((zone) => {
       if (zone.uv) {
-        console.log(`Renderizando visualmente a zona na textura UV: ${zone.name}`, zone.uv);
+        console.log(`Desenhando zona na textura: ${zone.name}`, zone.uv);
         const x = zone.uv[0] * canvas.width;
         const y = (1 - zone.uv[1]) * canvas.height;
 
         ctx.beginPath();
-        ctx.arc(x, y, 15, 0, Math.PI * 2);
-        ctx.fillStyle = '#ea580c';
+        ctx.arc(x, y, 10, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(234, 88, 12, 0.5)'; // Laranja semi-transparente
         ctx.fill();
-        ctx.strokeStyle = 'white';
-        ctx.lineWidth = 4;
-        ctx.stroke();
-
-        ctx.font = 'bold 24px Arial';
-        ctx.fillStyle = 'white';
+        
+        ctx.font = 'bold 12px Arial';
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
         ctx.textAlign = 'center';
-        ctx.fillText(zone.name, x, y - 25);
+        ctx.fillText(zone.name, x, y - 15);
       }
     });
 

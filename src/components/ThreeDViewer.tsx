@@ -11,11 +11,110 @@ interface Zone {
   name: string;
   position: [number, number, number];
   rotation?: [number, number, number];
+  uv?: [number, number];
 }
 
 function Model({ url, textureUrl, zones = [] }: { url: string; textureUrl?: string; zones?: Zone[] }) {
   console.log("Zones recebidas no Model:", zones);
   const { scene } = useGLTF(url);
+  const [uvTexture, setUvTexture] = React.useState<THREE.CanvasTexture | null>(null);
+  
+  // Efeito para criar a textura de zonas baseada em UV
+  useEffect(() => {
+    if (!zones.length) {
+      setUvTexture(null);
+      return;
+    }
+
+    console.log("Criando textura UV para zones:", zones);
+    const canvas = document.createElement('canvas');
+    canvas.width = 2048;
+    canvas.height = 2048;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    zones.forEach((zone) => {
+      if (zone.uv) {
+        console.log(`Renderizando visualmente a zona na textura UV: ${zone.name}`, zone.uv);
+        const x = zone.uv[0] * canvas.width;
+        const y = (1 - zone.uv[1]) * canvas.height;
+
+        // Desenhar círculo
+        ctx.beginPath();
+        ctx.arc(x, y, 15, 0, Math.PI * 2);
+        ctx.fillStyle = '#ea580c';
+        ctx.fill();
+        ctx.strokeStyle = 'white';
+        ctx.lineWidth = 4;
+        ctx.stroke();
+
+        // Texto
+        ctx.font = 'bold 24px Arial';
+        ctx.fillStyle = 'white';
+        ctx.textAlign = 'center';
+        ctx.fillText(zone.name, x, y - 25);
+      }
+    });
+
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.flipY = false;
+    setUvTexture(texture);
+  }, [zones]);
+
+  useEffect(() => {
+    const applyTexture = (imageSrc: string) => {
+      const textureLoader = new THREE.TextureLoader();
+      textureLoader.crossOrigin = 'anonymous';
+      
+      textureLoader.load(imageSrc, (texture) => {
+        texture.flipY = false;
+        texture.colorSpace = THREE.SRGBColorSpace;
+        texture.generateMipmaps = true;
+        texture.minFilter = THREE.LinearMipmapLinearFilter;
+        texture.magFilter = THREE.LinearFilter;
+        texture.anisotropy = 16;
+        texture.needsUpdate = true;
+
+        scene.traverse((child) => {
+          const mesh = child as THREE.Mesh;
+          if (mesh.isMesh && mesh.material) {
+            const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+            materials.forEach((mat) => {
+              if (mat instanceof THREE.MeshStandardMaterial) {
+                if (mat.map) mat.map.dispose();
+                mat.map = texture;
+                
+                // Aplicar a textura de UV como emissive se existir
+                if (uvTexture) {
+                  mat.emissiveMap = uvTexture;
+                  mat.emissive = new THREE.Color(0xffffff);
+                  mat.emissiveIntensity = 1;
+                } else {
+                  mat.emissiveMap = null;
+                  mat.emissive = new THREE.Color(0x000000);
+                  mat.emissiveIntensity = 0;
+                }
+                
+                mat.roughness = 1;
+                mat.metalness = 0;
+                mat.needsUpdate = true;
+              }
+            });
+          }
+        });
+      });
+    };
+
+    if (textureUrl) {
+      if (textureUrl.endsWith('.svg') || textureUrl.includes('svg')) {
+        fetch(textureUrl).then(r => r.blob()).then(blob => applyTexture(URL.createObjectURL(blob)));
+      } else {
+        applyTexture(textureUrl);
+      }
+    }
+  }, [scene, textureUrl, uvTexture]);
   const name = useCustomizerStore(state => state.name);
   const number = useCustomizerStore(state => state.number);
   const nameColor = useCustomizerStore(state => state.nameColor);

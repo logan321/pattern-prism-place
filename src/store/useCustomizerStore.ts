@@ -15,6 +15,7 @@ interface CustomizerState {
   nameColor: string;
   numberColor: string;
   nameFont: string;
+  shieldUrl: string | null;
   
   setSelectedModel: (id: string | null) => void;
   setSelectedPattern: (id: string | null) => void;
@@ -30,6 +31,7 @@ interface CustomizerState {
   setNameColor: (color: string) => void;
   setNumberColor: (color: string) => void;
   setNameFont: (font: string) => void;
+  setShieldUrl: (url: string | null) => void;
   
   // High-level formation setter
   setFormation: (type: 'left-shield' | 'right-shield' | 'center-name') => void;
@@ -49,6 +51,7 @@ export const useCustomizerStore = create<CustomizerState>((set) => ({
   nameColor: '#ffffff',
   numberColor: '#ffffff',
   nameFont: 'Arial',
+  shieldUrl: null,
   
   setSelectedModel: (id) => set({ selectedModel: id }),
   setSelectedPattern: (id) => set({ selectedPattern: id }),
@@ -63,6 +66,7 @@ export const useCustomizerStore = create<CustomizerState>((set) => ({
   setNameColor: (nameColor) => set({ nameColor }),
   setNumberColor: (numberColor) => set({ numberColor }),
   setNameFont: (nameFont) => set({ nameFont }),
+  setShieldUrl: (shieldUrl) => set({ shieldUrl }),
 
   setFormation: (type) => {
     if (type === 'left-shield') {

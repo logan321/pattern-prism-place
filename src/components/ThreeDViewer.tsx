@@ -151,7 +151,7 @@ function Model({
 
     // 1. Desenhar Logo
     if (logoZone) {
-      drawZoneContent(logoZone, async (w, h) => {
+      await drawZoneContent(logoZone, async (w, h) => {
         if (shieldUrl) {
           try {
             console.log('EXECUTANDO drawImage para logo');
@@ -185,7 +185,7 @@ function Model({
 
     // 2. Desenhar Nome
     if (name && nameZone) {
-      drawZoneContent(nameZone, (w, h) => {
+      await drawZoneContent(nameZone, async (w, h) => {
         console.log('EXECUTANDO drawText para nome:', name);
         ctx.font = `bold ${Math.floor(h)}px ${nameFont || 'Arial'}`;
         ctx.fillStyle = nameColor || '#ffffff';
@@ -203,7 +203,7 @@ function Model({
 
     // 3. Desenhar Número
     if (number && numberZone) {
-      drawZoneContent(numberZone, (w, h) => {
+      await drawZoneContent(numberZone, async (w, h) => {
         console.log('EXECUTANDO drawText para número:', number);
         ctx.font = `bold ${Math.floor(h)}px ${nameFont || 'Arial'}`;
         ctx.fillStyle = numberColor || '#ffffff';
@@ -251,6 +251,7 @@ function Model({
         });
       }
     });
+  };
   };
 
   useEffect(() => {

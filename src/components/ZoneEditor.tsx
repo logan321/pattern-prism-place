@@ -86,8 +86,16 @@ function ModeloComTextura({
   idSelecionado: string | null;
 }) {
   const { scene } = useGLTF(url);
-  const canvasRef = useRef<HTMLCanvasElement>(document.createElement('canvas'));
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const textureRef = useRef<THREE.CanvasTexture | null>(null);
+
+  // Inicializa o canvas uma única vez com o tamanho correto
+  if (!canvasRef.current) {
+    const c = document.createElement('canvas');
+    c.width = 2048;
+    c.height = 2048;
+    canvasRef.current = c;
+  }
 
   // Efeito para desenhar o overlay UV no canvas
   useEffect(() => {

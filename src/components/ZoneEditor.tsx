@@ -7,8 +7,9 @@ import { X, Save, Plus, Trash2 } from 'lucide-react';
 interface Zone {
   id: string;
   name: string;
+  tipo: 'nome' | 'numero' | 'logo' | 'estampa' | 'outro';
   position: [number, number, number];
-  uv?: [number, number]; // Armazenar coordenadas UV
+  uv?: [number, number];
 }
 
 function ModelWithUVClick({ url, onPointSelect, zones }: { 
@@ -128,6 +129,7 @@ export default function ZoneEditor({ modelUrl, initialZones = [], onSave, onClos
   const [zones, setZones] = useState<Zone[]>(initialZones);
   const [selectedData, setSelectedData] = useState<{ pos: THREE.Vector3, uv: THREE.Vector2 } | null>(null);
   const [newZoneName, setNewZoneName] = useState('');
+  const [newZoneTipo, setNewZoneTipo] = useState<Zone['tipo']>('outro');
 
   const handlePointSelect = (pos: THREE.Vector3, uv: THREE.Vector2) => {
     setSelectedData({ pos, uv });
@@ -139,6 +141,7 @@ export default function ZoneEditor({ modelUrl, initialZones = [], onSave, onClos
     const newZone: Zone = {
       id: Math.random().toString(36).substr(2, 9),
       name: newZoneName,
+      tipo: newZoneTipo,
       position: [selectedData.pos.x, selectedData.pos.y, selectedData.pos.z],
       uv: [selectedData.uv.x, selectedData.uv.y]
     };
@@ -195,6 +198,17 @@ export default function ZoneEditor({ modelUrl, initialZones = [], onSave, onClos
                   onChange={e => setNewZoneName(e.target.value)}
                   autoFocus
                 />
+                <select
+                  value={newZoneTipo}
+                  onChange={(e) => setNewZoneTipo(e.target.value as Zone['tipo'])}
+                  className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white text-sm outline-none focus:ring-2 focus:ring-orange-500 transition-all appearance-none"
+                >
+                  <option value="nome">Nome do jogador</option>
+                  <option value="numero">Número</option>
+                  <option value="logo">Logo / Escudo</option>
+                  <option value="estampa">Estampa</option>
+                  <option value="outro">Outro</option>
+                </select>
                 <button 
                   onClick={handleAddZone}
                   className="w-full bg-white text-black font-bold py-3 rounded-xl text-sm flex items-center justify-center space-x-2 hover:bg-gray-100 transition-all"

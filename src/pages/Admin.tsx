@@ -438,6 +438,7 @@ export default function Admin() {
   const [isUploading, setIsUploading] = useState(false);
   const [showPatternModal, setShowPatternModal] = useState(false);
   const [showUVMatrizModal, setShowUVMatrizModal] = useState(false);
+  const [editingPattern, setEditingPattern] = useState<any | null>(null);
   const [patternData, setPatternData] = useState({ name: '', png: null as File | null, svg: null as File | null, uvMatrizId: '' });
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -510,50 +511,77 @@ export default function Admin() {
 
   const handlePatternSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!patternData.name || !patternData.png || !patternData.svg) {
-      alert('Por favor, preencha o nome e selecione ambos os arquivos (PNG e SVG).');
+    if (!patternData.name) {
+      alert('Por favor, preencha o nome da estampa.');
+      return;
+    }
+
+    if (!editingPattern && (!patternData.png || !patternData.svg)) {
+      alert('Para novas estampas, selecione ambos os arquivos (PNG e SVG).');
       return;
     }
 
     setIsUploading(true);
     try {
-      // 1. Upload PNG
-      const pngName = `thumb_${Date.now()}_${patternData.png.name}`;
-      const { data: pngUpload, error: pngError } = await supabase.storage
-        .from('textures')
-        .upload(pngName, patternData.png);
-      if (pngError) throw pngError;
-      const pngUrl = supabase.storage.from('textures').getPublicUrl(pngUpload.path).data.publicUrl;
+      let pngUrl = editingPattern?.image_url;
+      let svgUrl = editingPattern?.svg_url;
 
-      // 2. Upload SVG
-      const svgName = `uv_${Date.now()}_${patternData.svg.name}`;
-      const { data: svgUpload, error: svgError } = await supabase.storage
-        .from('textures')
-        .upload(svgName, patternData.svg, { 
-          contentType: 'image/svg+xml',
-          cacheControl: '3600',
-          upsert: false 
-        });
-      if (svgError) throw svgError;
-      const svgUrl = supabase.storage.from('textures').getPublicUrl(svgUpload.path).data.publicUrl;
+      // 1. Upload PNG if provided
+      if (patternData.png) {
+        const pngName = `thumb_${Date.now()}_${patternData.png.name}`;
+        const { data: pngUpload, error: pngError } = await supabase.storage
+          .from('textures')
+          .upload(pngName, patternData.png);
+        if (pngError) throw pngError;
+        pngUrl = supabase.storage.from('textures').getPublicUrl(pngUpload.path).data.publicUrl;
+      }
+
+      // 2. Upload SVG if provided
+      if (patternData.svg) {
+        const svgName = `uv_${Date.now()}_${patternData.svg.name}`;
+        const { data: svgUpload, error: svgError } = await supabase.storage
+          .from('textures')
+          .upload(svgName, patternData.svg, { 
+            contentType: 'image/svg+xml',
+            cacheControl: '3600',
+            upsert: false 
+          });
+        if (svgError) throw svgError;
+        svgUrl = supabase.storage.from('textures').getPublicUrl(svgUpload.path).data.publicUrl;
+      }
 
       // 3. Save to DB
-      const { error: dbError } = await supabase
-        .from('patterns')
-        .insert({
-          name: patternData.name,
-          image_url: pngUrl,
-          svg_url: svgUrl,
-          uv_matriz_id: patternData.uvMatrizId || null
-        } as any);
-      if (dbError) throw dbError;
+      if (editingPattern) {
+        const { error: dbError } = await supabase
+          .from('patterns')
+          .update({
+            name: patternData.name,
+            image_url: pngUrl,
+            svg_url: svgUrl,
+            uv_matriz_id: patternData.uvMatrizId || null
+          } as any)
+          .eq('id', editingPattern.id);
+        if (dbError) throw dbError;
+        alert('Estampa atualizada com sucesso!');
+      } else {
+        const { error: dbError } = await supabase
+          .from('patterns')
+          .insert({
+            name: patternData.name,
+            image_url: pngUrl,
+            svg_url: svgUrl,
+            uv_matriz_id: patternData.uvMatrizId || null
+          } as any);
+        if (dbError) throw dbError;
+        alert('Estampa cadastrada com sucesso!');
+      }
 
       queryClient.invalidateQueries({ queryKey: ['patterns'] });
-      alert('Estampa cadastrada com sucesso!');
       setShowPatternModal(false);
+      setEditingPattern(null);
       setPatternData({ name: '', png: null, svg: null, uvMatrizId: '' });
     } catch (error: any) {
-      alert('Erro no upload: ' + error.message);
+      alert('Erro no processamento: ' + error.message);
     } finally {
       setIsUploading(false);
     }
@@ -721,7 +749,15 @@ export default function Admin() {
             </div>
             {activeView !== 'config' ? (
               <button 
-                onClick={() => activeView === 'models' ? document.getElementById('file-upload-input')?.click() : setShowPatternModal(true)}
+                onClick={() => {
+                  if (activeView === 'models') {
+                    document.getElementById('file-upload-input')?.click();
+                  } else {
+                    setEditingPattern(null);
+                    setPatternData({ name: '', png: null, svg: null, uvMatrizId: '' });
+                    setShowPatternModal(true);
+                  }
+                }}
                 className={cn(
                   "bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg font-bold flex items-center space-x-2 transition-all shadow-sm cursor-pointer",
                   isUploading && "opacity-50 cursor-not-allowed"
@@ -857,7 +893,23 @@ export default function Admin() {
                         {pattern.image_url && (
                           <img src={pattern.image_url} alt={pattern.name} className="w-full h-full object-cover" />
                         )}
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center space-x-2">
+                          <button 
+                            onClick={() => {
+                              setEditingPattern(pattern);
+                              setPatternData({
+                                name: pattern.name,
+                                png: null,
+                                svg: null,
+                                uvMatrizId: pattern.uv_matriz_id || ''
+                              });
+                              setShowPatternModal(true);
+                            }}
+                            className="bg-white p-2 rounded-lg text-orange-600 hover:bg-gray-100"
+                            title="Editar Estampa"
+                          >
+                            <Edit3 className="w-4 h-4" />
+                          </button>
                           <button 
                             onClick={() => handleDelete(pattern.id, 'textures', pattern.image_url)}
                             className="bg-red-500 p-2 rounded-lg text-white hover:bg-red-600"
@@ -902,7 +954,7 @@ export default function Admin() {
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
             <div className="p-6 border-b border-gray-100 flex items-center justify-between">
-              <h3 className="text-xl font-bold text-gray-900">Nova Estampa</h3>
+              <h3 className="text-xl font-bold text-gray-900">{editingPattern ? 'Editar Estampa' : 'Nova Estampa'}</h3>
               <button onClick={() => setShowPatternModal(false)} className="text-gray-400 hover:text-gray-600 transition-colors">
                 <X className="w-5 h-5" />
               </button>
@@ -984,7 +1036,7 @@ export default function Admin() {
                   disabled={isUploading}
                   className="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 rounded-xl transition-all shadow-md disabled:opacity-50"
                 >
-                  {isUploading ? 'Enviando...' : 'Cadastrar Estampa'}
+                  {isUploading ? 'Enviando...' : (editingPattern ? 'Salvar Alterações' : 'Cadastrar Estampa')}
                 </button>
               </div>
             </form>

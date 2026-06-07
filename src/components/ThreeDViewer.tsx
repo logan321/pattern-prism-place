@@ -252,7 +252,6 @@ function Model({
       }
     });
   };
-  };
 
   useEffect(() => {
     drawOnCanvas();

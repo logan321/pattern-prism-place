@@ -86,8 +86,6 @@ function Model({ url, textureUrl, zones = [] }: { url: string; textureUrl?: stri
             materials.forEach((mat) => {
               console.log("Processando material:", mat.type);
               if (mat instanceof THREE.MeshStandardMaterial) {
-                // mat.color.set('#ff0000'); // Teste visual
-                
                 if (mat.map) mat.map.dispose();
                 mat.map = texture;
                 
@@ -104,8 +102,6 @@ function Model({ url, textureUrl, zones = [] }: { url: string; textureUrl?: stri
                 mat.roughness = 1;
                 mat.metalness = 0;
                 mat.needsUpdate = true;
-              } else {
-                if ('color' in mat) (mat as any).color.set('#ff0000');
               }
             });
           }
@@ -133,68 +129,7 @@ function Model({ url, textureUrl, zones = [] }: { url: string; textureUrl?: stri
     <group>
       <primitive object={scene} />
       
-      {zones.map((zone) => {
-        console.log(`Renderizando zona: ${zone.name}`, zone);
-        const isName = zone.name.toLowerCase().includes('nome');
-        const isNumber = zone.name.toLowerCase().includes('número') || zone.name.toLowerCase().includes('numero');
-        const isShield = zone.name.toLowerCase().includes('escudo');
-        const isLogo = zone.name.toLowerCase().includes('logo') || zone.name.toLowerCase().includes('patrocínio');
-
-        // Heurística de rotação: se estiver na parte de trás (z < 0), vira 180 graus
-        const defaultRotation: [number, number, number] = zone.position[2] < -0.05 ? [0, Math.PI, 0] : [0, 0, 0];
-        const rotation = zone.rotation || defaultRotation;
-
-        if (isName && name) {
-          return (
-            <Text
-              key={zone.id}
-              position={zone.position}
-              fontSize={0.04}
-              color={nameColor}
-              anchorX="center"
-              anchorY="middle"
-              rotation={rotation}
-            >
-              {name}
-              <meshStandardMaterial attach="material" color={nameColor} polygonOffset polygonOffsetFactor={-1} />
-            </Text>
-          );
-        }
-
-        if (isNumber && number) {
-          return (
-            <Text
-              key={zone.id}
-              position={zone.position}
-              fontSize={0.15}
-              color={numberColor}
-              anchorX="center"
-              anchorY="middle"
-              rotation={rotation}
-            >
-              {number}
-              <meshStandardMaterial attach="material" color={numberColor} polygonOffset polygonOffsetFactor={-1} />
-            </Text>
-          );
-        }
-
-        if (isShield || isLogo) {
-          return (
-            <mesh key={zone.id} position={zone.position} rotation={rotation}>
-              <circleGeometry args={[0.04, 32]} />
-              <meshStandardMaterial 
-                color={isShield ? "#FFD700" : "#ffffff"} 
-                metalness={0.5} 
-                roughness={0.2} 
-                polygonOffset 
-                polygonOffsetFactor={-1} 
-              />
-            </mesh>
-          );
-        }
-
-        return null;
-      })}
+      {/* Removemos o mapeamento redundante das zonas para evitar duplicação no 3D */}
 
     </group>
   );

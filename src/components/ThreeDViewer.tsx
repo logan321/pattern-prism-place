@@ -109,21 +109,42 @@ function Model({
     };
 
 
-    // 1. Desenhar Logo
-    if (shieldUrl && logoZone?.uv) {
-      try {
-        const [sx, sy] = getCoord(logoZone.uv as [number, number]);
-        const img = new Image();
-        img.crossOrigin = "anonymous";
-        await new Promise((resolve, reject) => {
-          img.onload = resolve;
-          img.onerror = reject;
-          img.src = shieldUrl;
-        });
-        const size = 180;
-        ctx.drawImage(img, sx - size / 2, sy - size / 2, size, size);
-      } catch (e) {
-        console.warn("Logo não carregou:", e);
+    // 1. Desenhar Logo ou Placeholder
+    if (logoZone?.uv) {
+      const [sx, sy] = getCoord(logoZone.uv as [number, number]);
+      const size = 180;
+      
+      if (shieldUrl) {
+        try {
+          const img = new Image();
+          img.crossOrigin = "anonymous";
+          await new Promise((resolve, reject) => {
+            img.onload = resolve;
+            img.onerror = reject;
+            img.src = shieldUrl;
+          });
+          ctx.drawImage(img, sx - size / 2, sy - size / 2, size, size);
+        } catch (e) {
+          console.warn("Logo não carregou:", e);
+        }
+      } else {
+        // Placeholder circular para o escudo (conforme pedido pelo cliente)
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(sx, sy, size / 2.5, 0, Math.PI * 2);
+        ctx.strokeStyle = 'white';
+        ctx.lineWidth = 4;
+        ctx.setLineDash([10, 5]); // Pontilhado para parecer marcação
+        ctx.stroke();
+        
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+        ctx.fill();
+        
+        ctx.font = 'bold 20px Arial';
+        ctx.fillStyle = 'white';
+        ctx.textAlign = 'center';
+        ctx.fillText('ESCUDO', sx, sy);
+        ctx.restore();
       }
     }
 
@@ -135,7 +156,9 @@ function Model({
       ctx.fillStyle = nameColor || '#ffffff';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(name.toUpperCase(), tx, ty);
+      // Limitar largura para não extrapolar a zona do peito
+      const maxWidth = 400;
+      ctx.fillText(name.toUpperCase(), tx, ty, maxWidth);
       ctx.restore();
     }
 

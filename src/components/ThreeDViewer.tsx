@@ -82,8 +82,11 @@ function Model({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    console.log('COMPOSITOR — zones recebidas:', zones);
-    console.log('COMPOSITOR — formação ativa:', formation);
+    console.log('DRAW zones:', zones);
+    console.log('DRAW formation:', formation);
+    console.log('DRAW name:', name);
+    console.log('DRAW number:', number);
+    console.log('DRAW shieldUrl:', shieldUrl);
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     

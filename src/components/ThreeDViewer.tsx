@@ -164,12 +164,15 @@ function Model({ url, textureUrl, zones = [] }: { url: string; textureUrl?: stri
             const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
             console.log("Mesh encontrado:", mesh.name, "Materials count:", materials.length);
             materials.forEach((mat) => {
-              console.log("Processando material:", mat.type);
-              if (mat instanceof THREE.MeshStandardMaterial) {
+              console.log("Processando material:", mat.type, "em mesh:", mesh.name);
+              if (mat instanceof THREE.MeshStandardMaterial || mat instanceof THREE.MeshPhysicalMaterial) {
+                // Forçar a textura principal
                 if (mat.map) mat.map.dispose();
                 mat.map = texture;
                 
+                // Aplicar a textura UV de sobreposição (Nome/Número/Escudo)
                 if (uvTexture) {
+                  console.log("Aplicando uvTexture ao material:", mat.name);
                   mat.emissiveMap = uvTexture;
                   mat.emissive = new THREE.Color(0xffffff);
                   mat.emissiveIntensity = 2.0;
@@ -179,7 +182,9 @@ function Model({ url, textureUrl, zones = [] }: { url: string; textureUrl?: stri
                   mat.emissiveIntensity = 0;
                 }
                 
-                mat.roughness = 1;
+                mat.transparent = true;
+                mat.alphaTest = 0.5;
+                mat.roughness = 0.5;
                 mat.metalness = 0;
                 mat.needsUpdate = true;
               }

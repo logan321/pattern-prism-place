@@ -79,7 +79,7 @@ function Model({
     const canvas = canvasRef.current;
     if (!canvas) return;
     
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', { alpha: true });
     if (!ctx) return;
 
     if (zones && zones.length > 0) {
@@ -122,6 +122,10 @@ function Model({
     });
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Debug: preencher fundo com cor semitransparente para ver se o canvas está sendo aplicado
+    // ctx.fillStyle = 'rgba(255, 0, 0, 0.1)';
+    // ctx.fillRect(0, 0, canvas.width, canvas.height);
     
     const getCoord = (uv: [number, number]): [number, number] => {
       return [uv[0] * canvas.width, (1 - uv[1]) * canvas.height];

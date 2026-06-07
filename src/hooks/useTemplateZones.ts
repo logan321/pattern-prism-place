@@ -68,7 +68,7 @@ export const useTemplateZones = () => {
         normal_3d: z.normal3d,
         size_3d: z.size3d,
         rotation_3d: z.rotation3d,
-        path_data: z.path_data,
+        path_data: z.pathData,
         shared: z.shared,
         patch_only: z.patchOnly,
       }));

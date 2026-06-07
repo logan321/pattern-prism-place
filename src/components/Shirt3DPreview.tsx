@@ -96,12 +96,20 @@ function ZoneDecal({ zone, customization }: { zone: any; customization: Customiz
   const scale = zone.size3d || 0.2;
 
   return (
-    <Decal
-      position={position}
-      rotation={rotation}
-      scale={[scale, scale, 1]}
-      map={texture}
-    />
+      <Decal
+        position={position}
+        rotation={rotation}
+        scale={[scale, scale, 0.1]}
+      >
+        <meshStandardMaterial
+          map={texture}
+          transparent
+          polygonOffset
+          polygonOffsetFactor={-1}
+          roughness={1}
+          metalness={0}
+        />
+      </Decal>
   );
 }
 

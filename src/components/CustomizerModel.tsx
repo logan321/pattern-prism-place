@@ -77,29 +77,41 @@ function ZoneDecal({ zone, customization }: { zone: any; customization: Customiz
   const normal = zone.normal3d ? new THREE.Vector3(...zone.normal3d) : new THREE.Vector3(0, 0, 1);
   const rotation = new THREE.Euler(0, 0, 0);
   
-  // Calculate orientation from normal
+  // Create rotation matrix to align decal with normal
+  const up = new THREE.Vector3(0, 1, 0);
   const lookAtMatrix = new THREE.Matrix4().lookAt(
     new THREE.Vector3(0, 0, 0),
     normal,
-    new THREE.Vector3(0, 1, 0)
+    up
   );
   rotation.setFromRotationMatrix(lookAtMatrix);
 
-  // Apply extra rotation3d (around the normal axis)
+  // Decals are rotated 90 degrees on X by default in some THREE versions/orientations
+  // but usually for a vertical surface we need to rotate around the decal's local Z
   if (zone.rotation3d) {
-    const rad = (zone.rotation3d * Math.PI) / 180;
-    rotation.z += rad;
+    rotation.z += zone.rotation3d;
   }
 
   const scale = zone.size3d || 0.2;
+  // Use a small depth (0.1 or so) to avoid z-fighting and ensure it wraps
+  const decalScale = new THREE.Vector3(scale, scale, 0.1);
 
   return (
     <Decal
       position={position}
       rotation={rotation}
-      scale={[scale, scale, 1]}
+      scale={decalScale}
       map={texture}
-    />
+    >
+      <meshStandardMaterial
+        map={texture}
+        transparent
+        polygonOffset
+        polygonOffsetFactor={-1}
+        roughness={1}
+        metalness={0}
+      />
+    </Decal>
   );
 }
 

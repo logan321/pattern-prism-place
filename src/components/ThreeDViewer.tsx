@@ -81,8 +81,19 @@ function Model({
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d', { alpha: true });
     if (!ctx) return;
+    
+    // Log all meshes in the scene
+    const meshNames: string[] = [];
+    clonedScene.traverse((child) => {
+      if ((child as THREE.Mesh).isMesh) {
+        meshNames.push(child.name);
+      }
+    });
+    console.log('--- DIAGNÓSTICO RENDER ---');
+    console.log('Meshes encontrados no GLB:', meshNames);
 
     const regras = FORMACOES[formation || ''] ?? FORMACOES['escudo-esq-nome-dir'];
+    console.log('REGRAS DE FORMAÇÃO:', regras);
     console.log('DRAW zones:', zones);
     console.log('DRAW name:', name);
     console.log('DRAW shieldUrl:', shieldUrl);
@@ -92,11 +103,23 @@ function Model({
       const normalize = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
       const normPosId = normalize(posId);
       
-      return zones?.find(z => {
+      const found = zones?.find(z => {
         if (!z.id && !z.name) return false;
         return normalize(z.id || '') === normPosId || 
                normalize(z.name || '') === normPosId;
       });
+
+      if (found) {
+        console.log(`Zona encontrada para ${posId}:`, {
+          name: found.name,
+          uv: found.uvCenter || found.uv,
+          width: found.width,
+          height: found.height
+        });
+      } else {
+        console.log(`Zona NÃO encontrada para ${posId}`);
+      }
+      return found;
     };
 
     const logoZone   = getZona(regras.logo);
@@ -110,7 +133,7 @@ function Model({
     };
 
     // Helper para desenhar conteúdo rotacionado em uma zona
-    const drawZoneContent = (zone: Zone, drawFn: (w: number, h: number) => void) => {
+    const drawZoneContent = async (zone: Zone, drawFn: (w: number, h: number) => Promise<void> | void) => {
       const uv = zone.uvCenter || zone.uv;
       if (!uv) return;
 
@@ -122,15 +145,16 @@ function Model({
       ctx.save();
       ctx.translate(cx, cy);
       ctx.rotate(rotation);
-      drawFn(w, h);
+      await drawFn(w, h);
       ctx.restore();
     };
 
     // 1. Desenhar Logo
     if (logoZone) {
-      drawZoneContent(logoZone, async (w, h) => {
+      await drawZoneContent(logoZone, async (w, h) => {
         if (shieldUrl) {
           try {
+            console.log('EXECUTANDO drawImage para logo');
             const img = new Image();
             img.crossOrigin = "anonymous";
             await new Promise((resolve, reject) => {
@@ -161,7 +185,8 @@ function Model({
 
     // 2. Desenhar Nome
     if (name && nameZone) {
-      drawZoneContent(nameZone, (w, h) => {
+      await drawZoneContent(nameZone, async (w, h) => {
+        console.log('EXECUTANDO drawText para nome:', name);
         ctx.font = `bold ${Math.floor(h)}px ${nameFont || 'Arial'}`;
         ctx.fillStyle = nameColor || '#ffffff';
         ctx.textAlign = 'center';
@@ -178,7 +203,8 @@ function Model({
 
     // 3. Desenhar Número
     if (number && numberZone) {
-      drawZoneContent(numberZone, (w, h) => {
+      await drawZoneContent(numberZone, async (w, h) => {
+        console.log('EXECUTANDO drawText para número:', number);
         ctx.font = `bold ${Math.floor(h)}px ${nameFont || 'Arial'}`;
         ctx.fillStyle = numberColor || '#ffffff';
         ctx.textAlign = 'center';
@@ -188,10 +214,12 @@ function Model({
     }
 
     if (!textureRef.current) {
+      console.log('CRIANDO nova CanvasTexture');
       textureRef.current = new THREE.CanvasTexture(canvas);
       textureRef.current.flipY = false;
       textureRef.current.colorSpace = THREE.SRGBColorSpace;
     } else {
+      console.log('CHAMANDO texture.needsUpdate = true');
       textureRef.current.needsUpdate = true;
     }
 
@@ -214,9 +242,10 @@ function Model({
         const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
         materials.forEach((mat) => {
           if (mat instanceof THREE.MeshStandardMaterial || mat instanceof THREE.MeshPhysicalMaterial) {
+            console.log(`Aplicando textura dinâmica ao material de: ${mesh.name}`);
             mat.emissiveMap = uvTexture;
             mat.emissive.set(0xffffff); 
-            mat.emissiveIntensity = 2.5; // Alta intensidade para garantir visibilidade
+            mat.emissiveIntensity = 2.5; 
             mat.needsUpdate = true;
           }
         });

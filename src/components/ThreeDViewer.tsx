@@ -9,6 +9,7 @@ import { useCustomizerStore } from '../store/useCustomizerStore';
 interface Zone {
   id: string;
   name: string;
+  tipo?: 'nome' | 'numero' | 'logo' | 'estampa' | 'outro';
   position: [number, number, number];
   rotation?: [number, number, number];
   uv?: [number, number];
@@ -64,13 +65,7 @@ function Model({
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  const drawOnCanvas = React.useCallback(async () => {
-    console.log('=== COMPOSITOR INICIADO ===');
-    console.log('zones:', zones);
-    console.log('name:', name);
-    console.log('number:', number);
-    console.log('shieldUrl:', shieldUrl);
-
+  const drawOnCanvas = async () => {
     if (!canvasRef.current) {
       canvasRef.current = document.createElement('canvas');
       canvasRef.current.width = 2048;
@@ -82,33 +77,27 @@ function Model({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
+    console.log('COMPOSITOR — zones recebidas:', zones);
+
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
     const getCoord = (uv: [number, number]): [number, number] => {
       return [uv[0] * canvas.width, (1 - uv[1]) * canvas.height];
     };
 
-    // Identificar zonas pelos nomes flexíveis
-    const shieldZone = zones?.find(z =>
-      ['escudo', 'logo', 'shield', 'emblema', 'peito esquerdo', 'peito direito'].includes(z.name?.toLowerCase())
-    );
-    
-    const nameZone = zones?.find(z =>
-      ['nome', 'name', 'nome topo', 'topo'].includes(z.name?.toLowerCase())
-    );
+    // Buscar por TIPO, não por nome
+    const logoZone   = zones?.find(z => z.tipo === 'logo');
+    const nameZone   = zones?.find(z => z.tipo === 'nome');
+    const numberZone = zones?.find(z => z.tipo === 'numero');
 
-    const numberZone = zones?.find(z =>
-      ['numero', 'number', 'número', 'numero centro', 'centro'].includes(z.name?.toLowerCase())
-    );
+    console.log('logoZone:', logoZone);
+    console.log('nameZone:', nameZone);
+    console.log('numberZone:', numberZone);
 
-    console.log('targetShieldZone:', shieldZone);
-    console.log('targetNameZone:', nameZone);
-    console.log('targetNumberZone:', numberZone);
-
-    // 1. Desenhar Escudo
-    if (shieldUrl && shieldZone?.uv) {
+    // 1. Desenhar Logo
+    if (shieldUrl && logoZone?.uv) {
       try {
-        const [sx, sy] = getCoord(shieldZone.uv as [number, number]);
+        const [sx, sy] = getCoord(logoZone.uv as [number, number]);
         const img = new Image();
         img.crossOrigin = "anonymous";
         await new Promise((resolve, reject) => {
@@ -119,28 +108,32 @@ function Model({
         const size = 180;
         ctx.drawImage(img, sx - size / 2, sy - size / 2, size, size);
       } catch (e) {
-        console.error("Erro ao carregar escudo:", e);
+        console.warn("Logo não carregou:", e);
       }
     }
 
     // 2. Desenhar Nome
     if (name && nameZone?.uv) {
       const [tx, ty] = getCoord(nameZone.uv as [number, number]);
+      ctx.save();
       ctx.font = `bold 80px ${nameFont || 'Arial'}`;
       ctx.fillStyle = nameColor || '#ffffff';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(name.toUpperCase(), tx, ty);
+      ctx.restore();
     }
 
     // 3. Desenhar Número
     if (number && numberZone?.uv) {
       const [nx, ny] = getCoord(numberZone.uv as [number, number]);
+      ctx.save();
       ctx.font = `bold 350px ${nameFont || 'Arial'}`;
       ctx.fillStyle = numberColor || '#ffffff';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(number, nx, ny);
+      ctx.restore();
     }
 
     // Aplicar ou atualizar textura
@@ -168,12 +161,11 @@ function Model({
         }
       });
     }
-  }, [zones, name, number, nameColor, numberColor, nameFont, namePosition, shieldPosition, shieldUrl, clonedScene]);
+  };
 
   useEffect(() => {
-    const timer = setTimeout(drawOnCanvas, 100);
-    return () => clearTimeout(timer);
-  }, [drawOnCanvas]);
+    drawOnCanvas();
+  }, [zones, name, number, nameColor, numberColor, nameFont, shieldUrl, clonedScene]);
 
   // 2. Efeito para carregar a Estampa Principal (textureUrl)
   useEffect(() => {

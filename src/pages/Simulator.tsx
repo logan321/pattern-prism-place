@@ -281,6 +281,7 @@ export default function Simulator() {
     return rawZones.map(z => ({
       id: z.id,
       name: z.name,
+      tipo: z.tipo || 'outro',
       uv: z.uv || [0, 0],
       position: z.position || [0, 0, 0]
     }));

@@ -180,28 +180,81 @@ export default function ZoneEditor({ modelUrl, initialZones = [], onSave, onClos
           ))}
           <button onClick={() => setIdSelecionado(null)} className="py-2 text-blue-400">+ Nova Zona</button>
         </div>
-        <div className="flex-1 relative">
-          <Canvas camera={{ position: [0, 0.5, 2.5], fov: 35 }}>
-            <ambientLight intensity={0.5} />
-            <directionalLight position={[5, 5, 5]} intensity={1} />
-            <ModeloComTextura 
-              url={modelUrl} 
-              zonas={zonas}
-              onClicar={handleClicarNoModelo}
-              onDrag={(uv) => setZonas(prev => prev.map(z => z.id === idSelecionado ? { ...z, uvCenter: [uv.x, uv.y] } : z))}
-              isDragging={isDragging}
-              idSelecionado={idSelecionado}
-            />
-            <OrbitControls enablePan={false} />
-          </Canvas>
-          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-black/80 p-4 rounded-full flex gap-4 text-white">
-            <label className="flex items-center gap-2">
-              <input type="checkbox" checked={isDragging} onChange={e => setIsDragging(e.target.checked)} />
-              Modo Arrastar
-            </label>
-          </div>
+        <div className="w-80 bg-[#111] border-l border-[#222] p-6 flex flex-col gap-6 overflow-y-auto text-white">
+          {zonaSelecionada ? (
+            <>
+              <h2 className="font-bold text-lg border-b border-[#222] pb-3">Propriedades</h2>
+              <div className="space-y-4">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-gray-400 text-xs font-bold uppercase">Nome</label>
+                  <input 
+                    type="text"
+                    value={zonaSelecionada.name}
+                    onChange={e => updateZona(zonaSelecionada.id, { name: e.target.value })}
+                    className="bg-[#1a1a1a] border border-[#333] p-2 rounded outline-none"
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-gray-400 text-xs font-bold uppercase">Tipo</label>
+                  <select 
+                    value={zonaSelecionada.type}
+                    onChange={e => updateZona(zonaSelecionada.id, { type: e.target.value as any })}
+                    className="bg-[#1a1a1a] border border-[#333] p-2 rounded"
+                  >
+                    {TIPOS_ZONA.map(t => (
+                      <option key={t.id} value={t.id}>{t.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-gray-400 text-xs font-bold uppercase">Largura ({zonaSelecionada.width.toFixed(2)})</label>
+                  <input 
+                    type="range" min="0.01" max="0.5" step="0.01"
+                    value={zonaSelecionada.width}
+                    onChange={e => updateZona(zonaSelecionada.id, { width: parseFloat(e.target.value) })}
+                    className="accent-orange-600"
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-gray-400 text-xs font-bold uppercase">Altura ({zonaSelecionada.height.toFixed(2)})</label>
+                  <input 
+                    type="range" min="0.01" max="0.5" step="0.01"
+                    value={zonaSelecionada.height}
+                    onChange={e => updateZona(zonaSelecionada.id, { height: parseFloat(e.target.value) })}
+                    className="accent-orange-600"
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-gray-400 text-xs font-bold uppercase">Rotação ({zonaSelecionada.rotation}°)</label>
+                  <input 
+                    type="range" min="-180" max="180" step="1"
+                    value={zonaSelecionada.rotation}
+                    onChange={e => updateZona(zonaSelecionada.id, { rotation: parseInt(e.target.value) })}
+                    className="accent-orange-600"
+                  />
+                </div>
+                <button 
+                  onClick={() => {
+                    setZonas(prev => prev.filter(z => z.id !== idSelecionado));
+                    setIdSelecionado(null);
+                  }}
+                  className="w-full py-2 border border-red-900/50 text-red-500 rounded hover:bg-red-500/10 transition-colors mt-4"
+                >
+                  Excluir Zona
+                </button>
+              </div>
+            </>
+          ) : (
+            <div className="h-full flex items-center justify-center text-gray-500 text-sm italic">
+              Selecione uma zona para editar
+            </div>
+          )}
         </div>
       </div>
     </div>
   );
 }
+
+const updateZonaFn = (id: string, updates: Partial<ZonaMarcada>, setZonas: React.Dispatch<React.SetStateAction<ZonaMarcada[]>>) => {
+  setZonas(prev => prev.map(z => z.id === id ? { ...z, ...updates } : z));
+};

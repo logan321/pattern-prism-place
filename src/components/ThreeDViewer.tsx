@@ -79,9 +79,9 @@ function Model({ url, textureUrl, zones = [] }: { url: string; textureUrl?: stri
       };
       
       const zonePeitoDireito = findZone('PEITO DIREITO') || findZone('DIREITO');
-      const zonePeitoEsquerdo = findZone('PEITO ESQUERDO') || findZone('ESQUERDO');
-      const zoneNomeTopo = findZone('NOME TOPO') || findZone('TOPO');
-      const zoneNumeroCentro = findZone('NUMERO CENTRO') || findZone('NÚMERO CENTRO') || findZone('NUMERO') || findZone('NÚMERO');
+      const zonePeitoEsquerdo = findZone('PEITO ESQUERDO') || findZone('ESQUERDO') || findZone('TESTE');
+      const zoneNomeTopo = findZone('NOME TOPO') || findZone('TOPO') || findZone('NOME');
+      const zoneNumeroCentro = findZone('NUMERO CENTRO') || findZone('NÚMERO CENTRO') || findZone('NUMERO') || findZone('NÚMERO') || findZone('COSTAS');
 
       // Escudo
       const targetShieldZone = shieldPosition === 'left' ? zonePeitoEsquerdo : zonePeitoDireito;
@@ -155,9 +155,9 @@ function Model({ url, textureUrl, zones = [] }: { url: string; textureUrl?: stri
           const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
           materials.forEach((mat) => {
             if (mat instanceof THREE.MeshStandardMaterial || mat instanceof THREE.MeshPhysicalMaterial) {
-              if (mat.emissiveMap) mat.emissiveMap.dispose();
               mat.emissiveMap = uvTexture;
-              mat.emissiveIntensity = 1.5;
+              mat.emissive.set(0xffffff); // Garante que a cor emissiva seja branca para mostrar a textura
+              mat.emissiveIntensity = 1.0;
               mat.needsUpdate = true;
             }
           });
@@ -165,8 +165,11 @@ function Model({ url, textureUrl, zones = [] }: { url: string; textureUrl?: stri
       });
     };
 
-    drawOnCanvas();
-    return () => { isMounted = false; };
+    const timeoutId = setTimeout(drawOnCanvas, 100);
+    return () => { 
+      isMounted = false;
+      clearTimeout(timeoutId);
+    };
   }, [zones, name, number, nameColor, numberColor, nameFont, namePosition, shieldPosition, shieldUrl, clonedScene]);
 
   // 2. Efeito para carregar a Estampa Principal (textureUrl)

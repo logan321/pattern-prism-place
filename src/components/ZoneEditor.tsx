@@ -18,10 +18,28 @@ function ModelWithUVClick({ url, onPointSelect, zones }: {
 }) {
   const { scene } = useGLTF(url);
   const [texture, setTexture] = useState<THREE.CanvasTexture | null>(null);
+  const mouseDownPos = useRef({ x: 0, y: 0 });
   
   // Criar uma textura de canvas para desenhar as marcações
   const canvasRef = useRef(document.createElement('canvas'));
   
+  // Clonar a scene para não mutar a cache do useGLTF
+  const clonedScene = useMemo(() => {
+    const clone = scene.clone(true);
+    // Clonar materiais também para não compartilhar referência
+    clone.traverse((obj) => {
+      if ((obj as THREE.Mesh).isMesh) {
+        const mesh = obj as THREE.Mesh;
+        if (Array.isArray(mesh.material)) {
+          mesh.material = mesh.material.map(m => m.clone());
+        } else {
+          mesh.material = (mesh.material as THREE.Material).clone();
+        }
+      }
+    });
+    return clone;
+  }, [scene]);
+
   useEffect(() => {
     const canvas = canvasRef.current;
     canvas.width = 2048; // Alta resolução para precisão UV
@@ -63,12 +81,10 @@ function ModelWithUVClick({ url, onPointSelect, zones }: {
   }, [zones]);
 
   useEffect(() => {
-    if (scene && texture) {
-      scene.traverse((child) => {
+    if (clonedScene && texture) {
+      clonedScene.traverse((child) => {
         if ((child as THREE.Mesh).isMesh) {
           const mesh = child as THREE.Mesh;
-          // Aplicar a textura de marcação como um overlay ou mapa principal
-          // Aqui aplicamos como emissive para que as marcas "brilhem" sobre a textura original
           if (mesh.material instanceof THREE.MeshStandardMaterial) {
             mesh.material.emissiveMap = texture;
             mesh.material.emissive = new THREE.Color(0xffffff);
@@ -78,17 +94,25 @@ function ModelWithUVClick({ url, onPointSelect, zones }: {
         }
       });
     }
-  }, [scene, texture]);
+  }, [clonedScene, texture]);
   
   return (
     <primitive 
-      object={scene} 
-      onClick={(e: any) => {
-        e.stopPropagation();
-        if (e.uv) {
-          // e.point: coordenadas do mundo
-          // e.uv: coordenadas UV do mesh no ponto de impacto
-          onPointSelect(e.point, e.uv);
+      object={clonedScene} 
+      onPointerDown={(e: any) => {
+        mouseDownPos.current = { x: e.clientX, y: e.clientY };
+      }}
+      onPointerUp={(e: any) => {
+        const dx = Math.abs(e.clientX - mouseDownPos.current.x);
+        const dy = Math.abs(e.clientY - mouseDownPos.current.y);
+        if (dx < 5 && dy < 5) {
+          // Foi clique real, não drag
+          e.stopPropagation();
+          if (e.uv) {
+            onPointSelect(e.point, e.uv);
+          } else {
+            console.warn('UV não disponível neste ponto do mesh');
+          }
         }
       }}
     />
@@ -219,7 +243,7 @@ export default function ZoneEditor({ modelUrl, initialZones = [], onSave, onClos
               <Stage intensity={0.5} environment="city" shadows="contact" adjustCamera={false}>
                 <ModelWithUVClick url={modelUrl} onPointSelect={handlePointSelect} zones={zones} />
               </Stage>
-              <OrbitControls makeDefault minDistance={0.5} maxDistance={5} enablePan={false} />
+              <OrbitControls minDistance={0.5} maxDistance={5} enablePan={false} />
             </Suspense>
           </Canvas>
           

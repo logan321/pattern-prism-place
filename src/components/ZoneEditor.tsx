@@ -208,25 +208,34 @@ function ModeloComTextura({
   const mouseDownTime = useRef(0);
 
   return (
-    <primitive
-      object={clonedScene}
-      onPointerDown={(e: any) => {
-        mouseDownTime.current = Date.now();
-      }}
-      onPointerUp={(e: any) => {
-        const duration = Date.now() - mouseDownTime.current;
-        console.log('DEBUG: onPointerUp', { duration, hasUv: !!e.uv, uv: e.uv });
-        if (duration < 200 && e.uv) {
-          e.stopPropagation();
-          onClicar(e.point, e.face.normal, e.uv);
-        }
-      }}
-      onPointerMove={(e: any) => {
-        if (isDragging && e.uv) {
-          onDrag(e.point, e.face.normal, e.uv);
-        }
-      }}
-    />
+  return (
+    <group>
+      <primitive
+        object={clonedScene}
+        onPointerDown={(e: any) => {
+          mouseDownTime.current = Date.now();
+        }}
+        onPointerUp={(e: any) => {
+          const duration = Date.now() - mouseDownTime.current;
+          console.log('DEBUG: onPointerUp', { duration, hasUv: !!e.uv, uv: e.uv });
+          if (duration < 200 && e.uv) {
+            e.stopPropagation();
+            onClicar(e.point, e.face.normal, e.uv);
+          }
+        }}
+        onPointerMove={(e: any) => {
+          if (isDragging && e.uv) {
+            onDrag(e.point, e.face.normal, e.uv);
+          }
+        }}
+      />
+      {/* CUBO DE TESTE PARA VALIDAR A TEXTURA */}
+      <mesh position={[0.8, 0, 0]}>
+        <boxGeometry args={[0.2, 0.2, 0.2]} />
+        <meshBasicMaterial map={textureRef.current!} />
+      </mesh>
+    </group>
+  );
   );
 }
 

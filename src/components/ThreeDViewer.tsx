@@ -65,7 +65,7 @@ function Model({
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  const drawOnCanvas = React.useCallback(async () => {
+  const drawOnCanvas = async () => {
     if (!canvasRef.current) {
       canvasRef.current = document.createElement('canvas');
       canvasRef.current.width = 2048;
@@ -161,12 +161,11 @@ function Model({
         }
       });
     }
-  }, [zones, name, number, nameColor, numberColor, nameFont, shieldUrl, clonedScene]);
+  };
 
   useEffect(() => {
-    const timer = setTimeout(drawOnCanvas, 100);
-    return () => clearTimeout(timer);
-  }, [drawOnCanvas]);
+    drawOnCanvas();
+  }, [zones, name, number, nameColor, numberColor, nameFont, shieldUrl, clonedScene]);
 
   // 2. Efeito para carregar a Estampa Principal (textureUrl)
   useEffect(() => {

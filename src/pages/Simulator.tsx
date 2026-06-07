@@ -516,6 +516,9 @@ export default function Simulator() {
                     <option value="Impact">Impact</option>
                   </select>
                 </div>
+              </div>
+            ) : activeTab === 'Escudo' ? (
+              <div className="col-span-2 space-y-4">
 
             ) : activeTab === 'Escudo' ? (
               <div className="col-span-2 space-y-4">

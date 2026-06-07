@@ -23,7 +23,7 @@ export default function ZoneEditor({ referenceUrl, initialZones = [], onSave, on
   const [zonas, setZonas] = useState<UVZone[]>(initialZones);
   const [idSelecionado, setIdSelecionado] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [zoom, setZoom] = useState(0.4); // Zoom para caber na tela
+  const [zoom, setZoom] = useState(0.3); // Zoom ajustado para visualização inicial
   
   const canvasSize = 2048;
   const zonaSelecionada = zonas.find(z => z.id === idSelecionado);
@@ -101,15 +101,30 @@ export default function ZoneEditor({ referenceUrl, initialZones = [], onSave, on
         {/* Viewport 2D */}
         <div className="flex-1 relative bg-[#050505] overflow-auto flex items-center justify-center p-20" ref={containerRef}>
           <div 
-            className="relative shadow-2xl bg-white"
+            className="relative shadow-2xl bg-[#111] overflow-hidden"
             style={{ 
               width: canvasSize * zoom, 
               height: canvasSize * zoom,
-              backgroundImage: referenceUrl ? `url(${referenceUrl})` : 'none',
-              backgroundSize: 'contain'
+              backgroundColor: '#111',
+              position: 'relative'
             }}
             onClick={handleCanvasClick}
           >
+            {/* Background Image (UV Template) */}
+            {referenceUrl && (
+              <img 
+                src={referenceUrl} 
+                alt="UV Template" 
+                className="absolute inset-0 w-full h-full object-contain pointer-events-none opacity-80"
+                style={{ mixBlendMode: 'screen' }}
+              />
+            )}
+            
+            {/* Grid Helper */}
+            <div className="absolute inset-0 pointer-events-none opacity-10" style={{ 
+              backgroundImage: 'linear-gradient(#444 1px, transparent 1px), linear-gradient(90deg, #444 1px, transparent 1px)',
+              backgroundSize: `${(canvasSize * zoom) / 20}px ${(canvasSize * zoom) / 20}px`
+            }}></div>
             {zonas.map(z => {
               const isSelected = z.id === idSelecionado;
               return (

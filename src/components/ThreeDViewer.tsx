@@ -22,8 +22,17 @@ function Model({ url, finalTexture }: { url: string; finalTexture?: THREE.Textur
           const newMaterials = materials.map((mat) => {
             const m = mat.clone();
             if (m instanceof THREE.MeshStandardMaterial || m instanceof THREE.MeshPhysicalMaterial) {
-              m.map = finalTexture || null;
-              if (!finalTexture) m.color.set(0xffffff);
+              if (finalTexture) {
+                m.map = finalTexture;
+                m.color.set(0xffffff);
+                m.emissive.set(0x000000); // Reset emissive to not interfere with standard lighting
+                m.emissiveIntensity = 0;
+                m.emissiveMap = null;
+                m.roughness = 0.5;
+                m.metalness = 0.0;
+              } else {
+                m.color.set(0xcccccc); // Light gray if no texture
+              }
               m.needsUpdate = true;
             }
             return m;
@@ -114,11 +123,12 @@ export const ThreeDViewer = forwardRef<ThreeDViewerRef, {
 
   return (
     <div className="w-full h-full relative group">
-      <Canvas shadows camera={{ position: [0, 0, 2], fov: 45 }}>
+      <Canvas shadows camera={{ position: [0, 0, 2], fov: 45 }} gl={{ antialias: true, preserveDrawingBuffer: true, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.2 }}>
         <Suspense fallback={null}>
-          <ambientLight intensity={0.8} />
-          <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} intensity={1} castShadow />
-          <pointLight position={[-10, -10, -10]} intensity={0.5} />
+          <ambientLight intensity={1.5} />
+          <directionalLight position={[5, 5, 5]} intensity={1.2} castShadow />
+          <directionalLight position={[-5, 5, -5]} intensity={0.8} />
+          <pointLight position={[0, -5, 0]} intensity={0.5} />
           <Model url={modelUrl} finalTexture={finalTexture} />
           <OrbitControls 
             ref={orbitRef}

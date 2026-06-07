@@ -21,6 +21,7 @@ import { twMerge } from 'tailwind-merge';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../integrations/supabase/client';
 import ZoneEditor from '../components/ZoneEditor';
+import { Zone3DEditor } from '../components/Zone3DEditor';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -454,7 +455,7 @@ export default function Admin() {
     }
   });
 
-  const [activeView, setActiveView] = useState<'models' | 'patterns' | 'config'>('models');
+  const [activeView, setActiveView] = useState<'models' | 'patterns' | 'config' | 'zones3d'>('models');
   
   const { data: uvMatrices } = useQuery({
     queryKey: ['uv_matrices'],
@@ -770,6 +771,13 @@ export default function Admin() {
             <Settings className="w-5 h-5" />
             <span className="font-medium text-sm">Configuração UV</span>
           </button>
+          <button 
+            onClick={() => setActiveView('zones3d')}
+            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeView === 'zones3d' ? 'bg-orange-600 text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}
+          >
+            <Target className="w-5 h-5" />
+            <span className="font-medium text-sm">Posicionar Zonas 3D</span>
+          </button>
         </nav>
 
         <div className="p-4 border-t border-gray-800">
@@ -786,17 +794,19 @@ export default function Admin() {
           <div className="flex items-center justify-between mb-8">
             <div>
               <h2 className="text-2xl font-bold text-gray-900">
-                {activeView === 'models' ? 'Modelos 3D' : activeView === 'patterns' ? 'Gerenciamento de Estampas' : 'Configuração de UV Universal'}
+                {activeView === 'models' ? 'Modelos 3D' : activeView === 'patterns' ? 'Gerenciamento de Estampas' : activeView === 'config' ? 'Configuração de UV Universal' : 'Posicionamento de Zonas 3D'}
               </h2>
               <p className="text-gray-500 text-sm mt-1">
                 {activeView === 'models' 
                   ? 'Gerencie os arquivos GLB/GLTF dos seus produtos.' 
                   : activeView === 'patterns' 
                     ? 'Importe e configure as estampas disponíveis para personalização.'
-                    : 'Configure o mapa UV universal para posicionamento de textos e escudos.'}
+                    : activeView === 'config'
+                      ? 'Configure o mapa UV universal para posicionamento de textos e escudos.'
+                      : 'Posicione as zonas 2D no modelo 3D para definir onde as estampas aparecerão.'}
               </p>
             </div>
-            {activeView !== 'config' ? (
+            {activeView !== 'config' && activeView !== 'zones3d' ? (
               <button 
                 onClick={() => {
                   if (activeView === 'models') {
@@ -979,13 +989,17 @@ export default function Admin() {
 
                )}
             </div>
-          ) : (
+          ) : activeView === 'config' ? (
             <UVConfigView 
               models={models} 
               queryClient={queryClient} 
               modelsLoading={modelsLoading} 
               onOpenMatrizModal={() => setShowUVMatrizModal(true)}
             />
+          ) : (
+            <div className="bg-black rounded-2xl overflow-hidden border border-gray-100 shadow-lg h-[800px]">
+              <Zone3DEditor />
+            </div>
           )}
         </div>
       </main>

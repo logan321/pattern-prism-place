@@ -312,7 +312,7 @@ export default function Simulator() {
       try {
         const canvas = await generateFinalTexture({
           baseTextureUrl: textureUrl,
-          zones: (activeUVMatriz?.zones as UVZone[]) || [],
+          zones: (activeUVMatriz?.zones as unknown as UVZone[]) || [],
           customizations: {
             name: customName,
             number: customNumber,

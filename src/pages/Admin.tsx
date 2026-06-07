@@ -257,11 +257,15 @@ function UVMatrizImportModal({ isOpen, onClose, queryClient }: { isOpen: boolean
       let referenceUrl = null;
 
       if (referenceFile) {
-        const fileExt = referenceFile.name.split('.').pop();
+        const fileExt = referenceFile.name.split('.').pop()?.toLowerCase();
         const fileName = `${Date.now()}_ref_${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
+        
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from('textures')
-          .upload(fileName, referenceFile);
+          .upload(fileName, referenceFile, {
+            contentType: fileExt === 'svg' ? 'image/svg+xml' : undefined,
+            cacheControl: '3600'
+          });
 
         if (uploadError) throw uploadError;
         referenceUrl = supabase.storage.from('textures').getPublicUrl(uploadData.path).data.publicUrl;

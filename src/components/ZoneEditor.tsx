@@ -196,6 +196,7 @@ function ModeloComTextura({
       }}
       onPointerUp={(e: any) => {
         const duration = Date.now() - mouseDownTime.current;
+        console.log('DEBUG: onPointerUp', { duration, hasUv: !!e.uv, uv: e.uv });
         if (duration < 200 && e.uv) {
           e.stopPropagation();
           onClicar(e.point, e.face.normal, e.uv);
@@ -212,6 +213,7 @@ function ModeloComTextura({
 
 // ---- COMPONENTE PRINCIPAL ----
 export default function ZoneEditor({ modelUrl, initialZones = [], onSave, onClose }: any) {
+  console.log('DEBUG: ZoneEditor render', { modelUrl, numInitialZones: initialZones?.length });
   const [zonas, setZonas] = useState<ZonaMarcada[]>(() => {
     return initialZones.map((z: any) => ({
       id: z.id || crypto.randomUUID(),
@@ -232,6 +234,7 @@ export default function ZoneEditor({ modelUrl, initialZones = [], onSave, onClos
   const zonaSelecionada = zonas.find(z => z.id === idSelecionado);
 
   const handleClicarNoModelo = (point: THREE.Vector3, normal: THREE.Vector3, uv: THREE.Vector2) => {
+    console.log('DEBUG: handleClicarNoModelo', { uv });
     // Se não houver nada selecionado, cria uma nova zona
     if (!idSelecionado) {
       const novaId = crypto.randomUUID();

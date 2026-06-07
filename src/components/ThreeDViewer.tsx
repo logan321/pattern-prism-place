@@ -137,10 +137,6 @@ function Model({ url, textureUrl, zones = [] }: { url: string; textureUrl?: stri
     }
   }, [scene, textureUrl, uvTexture]);
 
-  const name = useCustomizerStore(state => state.name);
-  const number = useCustomizerStore(state => state.number);
-  const nameColor = useCustomizerStore(state => state.nameColor);
-  const numberColor = useCustomizerStore(state => state.numberColor);
 
   return (
     <group>

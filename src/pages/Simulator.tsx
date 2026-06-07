@@ -290,10 +290,6 @@ export default function Simulator() {
     currentPattern?.svg_url || currentPattern?.image_url || undefined
   , [currentPattern]);
 
-  console.log('=== CURRENT PATTERN ===', currentPattern);
-  console.log('=== ACTIVE UV MATRIZ ===', activeUVMatriz);
-  console.log('=== ZONES ===', currentZones);
-
   // Efeito para trocar a vista automaticamente ao mudar de aba
   useEffect(() => {
     if (activeTab === 'Nome/Número') {
@@ -304,6 +300,10 @@ export default function Simulator() {
       viewerRef.current?.setView('front');
     }
   }, [activeTab]);
+
+  console.log('=== CURRENT PATTERN ===', currentPattern);
+  console.log('=== ACTIVE UV MATRIZ ===', activeUVMatriz);
+  console.log('=== ZONES ===', currentZones);
 
 
 

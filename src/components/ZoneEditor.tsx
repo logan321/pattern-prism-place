@@ -208,7 +208,6 @@ function ModeloComTextura({
   const mouseDownTime = useRef(0);
 
   return (
-  return (
     <group>
       <primitive
         object={clonedScene}
@@ -235,7 +234,6 @@ function ModeloComTextura({
         <meshBasicMaterial map={textureRef.current!} />
       </mesh>
     </group>
-  );
   );
 }
 

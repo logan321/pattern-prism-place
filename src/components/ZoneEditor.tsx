@@ -25,84 +25,46 @@ const TIPOS_ZONA = [
   { id: 'sponsor', label: 'Patrocinador' },
 ];
 
-// ---- RETÂNGULO 3D EDITÁVEL ----
-function ZonaVisual({ 
+// ---- ÁREA EDITÁVEL NA TEXTURA UV ----
+// Não usamos componentes 3D independentes (meshes/planos)
+// A visualização é feita via CSS Overlay transparente sobre o Canvas
+function AreaEditavelOverlay({ 
   zona, 
   onUpdate, 
   isSelected, 
-  onSelect 
+  onSelect,
+  canvasBounds 
 }: { 
   zona: ZonaMarcada; 
   onUpdate: (updates: Partial<ZonaMarcada>) => void;
   isSelected: boolean;
   onSelect: () => void;
+  canvasBounds: DOMRect | null;
 }) {
-  const meshRef = useRef<THREE.Mesh>(null);
-  
-  // Posiciona e orienta o plano com base no ponto e normal
-  useEffect(() => {
-    if (meshRef.current) {
-      const pos = new THREE.Vector3(...zona.point);
-      const normal = new THREE.Vector3(...zona.normal);
-      
-      // Offset para evitar z-fighting
-      meshRef.current.position.copy(pos.clone().addScaledVector(normal, 0.005));
-      
-      // Orienta o plano para a normal
-      const lookAtTarget = pos.clone().add(normal);
-      meshRef.current.lookAt(lookAtTarget);
-      
-      // Aplica a rotação do usuário (em torno do eixo Z local do plano)
-      meshRef.current.rotateZ(zona.rotation * (Math.PI / 180));
-    }
-  }, [zona.point, zona.normal, zona.rotation]);
+  if (!canvasBounds) return null;
 
-  // Escala o plano com base no width/height
-  // Usamos um fator de escala arbitrário para converter UV width/height em unidades 3D visíveis
-  // Geralmente, o modelo tem cerca de 1-2 unidades de altura
-  const scaleX = zona.width * 2; 
-  const scaleY = zona.height * 2;
+  // Converte coordenadas UV (0-1) para pixels na tela (baseado no canvasBounds)
+  // Nota: Y é invertido no UV (0 embaixo, 1 cima)
+  const left = canvasBounds.left + (zona.uvCenter[0] * canvasBounds.width) - ((zona.width * canvasBounds.width) / 2);
+  const top = canvasBounds.top + ((1 - zona.uvCenter[1]) * canvasBounds.height) - ((zona.height * canvasBounds.height) / 2);
 
   return (
-    <mesh 
-      ref={meshRef} 
-      onClick={(e) => {
-        e.stopPropagation();
-        onSelect();
+    <div
+      onClick={(e) => { e.stopPropagation(); onSelect(); }}
+      className={`absolute border-2 cursor-move ${isSelected ? 'border-orange-500 bg-orange-500/20' : 'border-blue-500 bg-blue-500/10'}`}
+      style={{
+        left: `${left}px`,
+        top: `${top}px`,
+        width: `${zona.width * canvasBounds.width}px`,
+        height: `${zona.height * canvasBounds.height}px`,
+        transform: `rotate(${zona.rotation}deg)`,
+        pointerEvents: 'auto'
       }}
     >
-      <planeGeometry args={[scaleX, scaleY]} />
-      <meshBasicMaterial 
-        color={isSelected ? "#ea580c" : "#3b82f6"} 
-        transparent 
-        opacity={0.5} 
-        side={THREE.DoubleSide}
-        depthTest={false}
-      />
-      <Html
-        center
-        distanceFactor={1.5}
-        style={{
-          pointerEvents: 'none',
-          background: isSelected ? '#ea580c' : '#3b82f6',
-          color: 'white',
-          padding: '2px 6px',
-          borderRadius: 4,
-          fontSize: 10,
-          fontWeight: 'bold',
-          whiteSpace: 'nowrap',
-          opacity: 0.9
-        }}
-      >
+      <div className="text-[10px] text-white p-1 font-bold pointer-events-none truncate">
         {zona.name}
-      </Html>
-      
-      {/* Bordas */}
-      <lineSegments>
-        <edgesGeometry args={[new THREE.PlaneGeometry(scaleX, scaleY)]} />
-        <lineBasicMaterial color={isSelected ? "#ffffff" : "#3b82f6"} />
-      </lineSegments>
-    </mesh>
+      </div>
+    </div>
   );
 }
 

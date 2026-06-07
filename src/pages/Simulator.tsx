@@ -254,7 +254,8 @@ export default function Simulator() {
       const { data, error } = await supabase.from('uv_matrices').select('*');
       if (error) throw error;
       return data;
-    }
+    },
+    staleTime: 0, // Garante que pegue sempre a versão mais recente ao mudar de página
   });
 
   const allModels = React.useMemo(() => [...LOCAL_MODELS, ...(models ?? [])], [models]);
@@ -264,40 +265,33 @@ export default function Simulator() {
   const currentPattern = React.useMemo(() => patterns?.find(p => p.id === selectedPattern), [patterns, selectedPattern]);
   const modelUrl = currentModel?.glb_url || FALLBACK_MODEL_URL;
 
-  // Encontrar as zonas baseadas na UV Matriz vinculada à estampa
+  // Encontrar as zonas baseadas na UV Matriz vinculada à estampa ou modelo
   const activeUVMatriz = React.useMemo(() => {
-    // 1. Tentar encontrar a matriz vinculada ao modelo atual
-    let matriz = uvMatrices?.find(m => m.modelo_id === selectedModel);
+    if (!uvMatrices) return null;
+
+    // 1. Tentar encontrar a matriz vinculada ao modelo atual (pelo ID)
+    let matriz = uvMatrices.find(m => m.modelo_id === selectedModel);
     
-    // 2. Se não achar, tentar pela estampa selecionada
+    // 2. Tentar pelo modelo especial 'local-gola-padre' que pode estar salvo como null no modelo_id do banco
+    // mas que queremos que funcione. Se só houver uma matriz e o modelo for local, usamos ela.
+    if (!matriz && selectedModel === 'local-gola-padre') {
+      // Se houver uma matriz sem modelo_id, pode ser essa
+      matriz = uvMatrices.find(m => !m.modelo_id);
+    }
+
+    // 3. Tentar pela estampa selecionada
     if (!matriz && currentPattern?.uv_matriz_id) {
-      matriz = uvMatrices?.find(m => m.id === currentPattern.uv_matriz_id);
+      matriz = uvMatrices.find(m => m.id === currentPattern.uv_matriz_id);
     }
     
-    // 3. Fallback para a primeira disponível (para evitar que o sistema quebre se nada for configurado)
-    if (!matriz && uvMatrices && uvMatrices.length > 0) {
+    // 4. Fallback para a primeira disponível
+    if (!matriz && uvMatrices.length > 0) {
       matriz = uvMatrices[0];
     }
     
+    console.log('Simulator: UV Matriz Selecionada:', matriz?.name, 'ID:', matriz?.id);
     return matriz;
   }, [uvMatrices, selectedModel, currentPattern]);
-  
-  // Converter as zonas para o formato esperado pelo viewer
-  const currentZones = React.useMemo(() => {
-    const rawZones = activeUVMatriz?.zones as any[] || [];
-    
-    // Log para confirmar — remover depois:
-    console.log('uvMatrizAtiva:', activeUVMatriz?.name);
-    console.log('currentZones:', rawZones);
-
-    return rawZones.map(z => ({
-      id: z.id,
-      name: z.name,
-      tipo: z.tipo || 'outro',
-      uv: z.uv || [0, 0],
-      position: z.position || [0, 0, 0]
-    }));
-  }, [activeUVMatriz]);
 
   const textureUrl = React.useMemo(() => 
     currentPattern?.svg_url || currentPattern?.image_url || undefined

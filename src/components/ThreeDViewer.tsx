@@ -17,6 +17,9 @@ interface Zone {
 function Model({ url, textureUrl, zones = [] }: { url: string; textureUrl?: string; zones?: Zone[] }) {
   console.log("Zones recebidas no Model:", zones);
   const { scene } = useGLTF(url);
+  
+  // Clone da cena para garantir que mudanças de material sejam aplicadas corretamente a cada instância
+  const clonedScene = React.useMemo(() => scene.clone(), [scene, url]);
   const [uvTexture, setUvTexture] = React.useState<THREE.CanvasTexture | null>(null);
   
   const name = useCustomizerStore(state => state.name);
@@ -38,25 +41,22 @@ function Model({ url, textureUrl, zones = [] }: { url: string; textureUrl?: stri
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
-    // Desenhar Zonas
+    // Desenhar Zonas (para debug visual)
     zones.forEach((zone) => {
       if (zone.uv) {
-        console.log(`Renderizando visualmente a zona na textura UV: ${zone.name}`, zone.uv);
+        console.log(`Desenhando zona na textura: ${zone.name}`, zone.uv);
         const x = zone.uv[0] * canvas.width;
         const y = (1 - zone.uv[1]) * canvas.height;
 
         ctx.beginPath();
-        ctx.arc(x, y, 15, 0, Math.PI * 2);
-        ctx.fillStyle = '#ea580c';
+        ctx.arc(x, y, 10, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(234, 88, 12, 0.5)'; // Laranja semi-transparente
         ctx.fill();
-        ctx.strokeStyle = 'white';
-        ctx.lineWidth = 4;
-        ctx.stroke();
-
-        ctx.font = 'bold 24px Arial';
-        ctx.fillStyle = 'white';
+        
+        ctx.font = 'bold 12px Arial';
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
         ctx.textAlign = 'center';
-        ctx.fillText(zone.name, x, y - 25);
+        ctx.fillText(zone.name, x, y - 15);
       }
     });
 
@@ -158,18 +158,21 @@ function Model({ url, textureUrl, zones = [] }: { url: string; textureUrl?: stri
         texture.anisotropy = 16;
         texture.needsUpdate = true;
 
-        scene.traverse((child) => {
+        clonedScene.traverse((child) => {
           const mesh = child as THREE.Mesh;
           if (mesh.isMesh && mesh.material) {
             const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
             console.log("Mesh encontrado:", mesh.name, "Materials count:", materials.length);
             materials.forEach((mat) => {
-              console.log("Processando material:", mat.type);
-              if (mat instanceof THREE.MeshStandardMaterial) {
+              console.log("Processando material:", mat.type, "em mesh:", mesh.name);
+              if (mat instanceof THREE.MeshStandardMaterial || mat instanceof THREE.MeshPhysicalMaterial) {
+                // Forçar a textura principal
                 if (mat.map) mat.map.dispose();
                 mat.map = texture;
                 
+                // Aplicar a textura UV de sobreposição (Nome/Número/Escudo)
                 if (uvTexture) {
+                  console.log("Aplicando uvTexture ao material:", mat.name);
                   mat.emissiveMap = uvTexture;
                   mat.emissive = new THREE.Color(0xffffff);
                   mat.emissiveIntensity = 2.0;
@@ -179,7 +182,9 @@ function Model({ url, textureUrl, zones = [] }: { url: string; textureUrl?: stri
                   mat.emissiveIntensity = 0;
                 }
                 
-                mat.roughness = 1;
+                mat.transparent = true;
+                mat.alphaTest = 0.5;
+                mat.roughness = 0.5;
                 mat.metalness = 0;
                 mat.needsUpdate = true;
               }
@@ -198,12 +203,12 @@ function Model({ url, textureUrl, zones = [] }: { url: string; textureUrl?: stri
         applyTexture(textureUrl);
       }
     }
-  }, [scene, textureUrl, uvTexture]);
+  }, [clonedScene, textureUrl, uvTexture]);
 
 
   return (
     <group>
-      <primitive object={scene} />
+      <primitive object={clonedScene} />
       
       {/* Removemos o mapeamento redundante das zonas para evitar duplicação no 3D */}
 

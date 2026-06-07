@@ -14,6 +14,7 @@ interface Zone {
 }
 
 function Model({ url, textureUrl, zones = [] }: { url: string; textureUrl?: string; zones?: Zone[] }) {
+  console.log("Zones recebidas no Model:", zones);
   const { scene } = useGLTF(url);
   const name = useCustomizerStore(state => state.name);
   const number = useCustomizerStore(state => state.number);
@@ -66,6 +67,7 @@ function Model({ url, textureUrl, zones = [] }: { url: string; textureUrl?: stri
       <primitive object={scene} />
       
       {zones.map((zone) => {
+        console.log(`Renderizando zona: ${zone.name}`, zone);
         const isName = zone.name.toLowerCase().includes('nome');
         const isNumber = zone.name.toLowerCase().includes('número') || zone.name.toLowerCase().includes('numero');
         const isShield = zone.name.toLowerCase().includes('escudo');

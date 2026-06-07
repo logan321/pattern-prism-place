@@ -454,11 +454,15 @@ export default function Simulator() {
               ))
             ) : activeTab === 'Nome/Número' ? (
               <div className="col-span-2 space-y-4">
-                {!activeUVMatriz && (
-                  <div className="bg-amber-50 border border-amber-200 p-2 rounded text-[10px] text-amber-700 font-medium">
-                    ⚠️ Esta estampa não possui uma Matriz UV vinculada. As marcações podem não aparecer corretamente.
-                  </div>
-                )}
+                <div className={cn(
+                  "p-2 rounded text-[10px] font-medium border",
+                  activeUVMatriz ? "bg-green-50 border-green-200 text-green-700" : "bg-amber-50 border-amber-200 text-amber-700"
+                )}>
+                  {activeUVMatriz 
+                    ? `✅ Matriz UV Ativa: ${activeUVMatriz.name}` 
+                    : "⚠️ Nenhuma Matriz UV vinculada. As marcações podem não aparecer corretamente."
+                  }
+                </div>
                 <div className="space-y-3">
                   <label className="text-[10px] font-bold text-gray-500 uppercase">Formação de Escudo e Nome</label>
                   <div className="grid grid-cols-2 gap-2">

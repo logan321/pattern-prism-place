@@ -81,8 +81,8 @@ function Model({ url, textureUrl, zones = [] }: { url: string; textureUrl?: stri
         scene.traverse((child) => {
           const mesh = child as THREE.Mesh;
           if (mesh.isMesh && mesh.material) {
-            console.log("Mesh encontrado:", mesh.name, "Material:", mesh.material.type);
             const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+            console.log("Mesh encontrado:", mesh.name, "Materials count:", materials.length);
             materials.forEach((mat) => {
               console.log("Processando material:", mat.type);
               if (mat instanceof THREE.MeshStandardMaterial) {

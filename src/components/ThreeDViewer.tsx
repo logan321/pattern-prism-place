@@ -108,14 +108,6 @@ function Model({
       return [uv[0] * canvas.width, (1 - uv[1]) * canvas.height];
     };
 
-    const regras = FORMACOES[formation || ''] ?? FORMACOES['escudo-esq-nome-dir'];
-
-    const getZona = (posId: string | null) =>
-      posId ? zones?.find(z => z.id === posId || z.name === posId) : null;
-
-    const logoZone   = getZona(regras.logo);
-    const nameZone   = getZona(regras.nome);
-    const numberZone = getZona(regras.numero);
 
     // 1. Desenhar Logo
     if (shieldUrl && logoZone?.uv) {

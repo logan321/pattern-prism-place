@@ -88,6 +88,20 @@ function Model({
     console.log('DRAW number:', number);
     console.log('DRAW shieldUrl:', shieldUrl);
 
+    const regras = FORMACOES[formation || ''] ?? FORMACOES['escudo-esq-nome-dir'];
+    console.log('DRAW regras:', regras);
+
+    const getZona = (posId: string | null) =>
+      posId ? zones?.find(z => z.id === posId || z.name === posId) : null;
+
+    const logoZone   = getZona(regras.logo);
+    const nameZone   = getZona(regras.nome);
+    const numberZone = getZona(regras.number || regras.numero); // Ensure backward compatibility with 'numero'
+
+    console.log('DRAW logoZone:', logoZone);
+    console.log('DRAW nameZone:', nameZone);
+    console.log('DRAW numberZone:', numberZone);
+
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
     const getCoord = (uv: [number, number]): [number, number] => {

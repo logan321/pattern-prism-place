@@ -177,7 +177,7 @@ function Model({ url, textureUrl, zones = [] }: { url: string; textureUrl?: stri
       isMounted = false;
       clearTimeout(timeoutId);
     };
-  }, [zones, name, number, nameColor, numberColor, nameFont, namePosition, shieldPosition, shieldUrl, clonedScene]);
+  }, [zones, name, number, nameColor, numberColor, nameFont, namePosition, shieldPosition, shieldUrl, clonedScene, textureUrl]);
 
   // 2. Efeito para carregar a Estampa Principal (textureUrl)
   useEffect(() => {

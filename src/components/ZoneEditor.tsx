@@ -93,7 +93,7 @@ function HTMLMarkersUpdater({ zones, scene, onUpdate }: { zones: Zone[], scene: 
 
 function ModelWithClick({ url, onPointSelect, zones, updateMarkerPos }: { 
   url: string, 
-  onPointSelect: (hit: any) => void, 
+  onPointSelect: (hit: any, screenPos: { x: number, y: number }) => void, 
   zones: Zone[],
   updateMarkerPos: (id: string, x: number, y: number, visible: boolean) => void
 }) {

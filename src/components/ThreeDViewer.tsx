@@ -386,20 +386,50 @@ export const ThreeDViewer = forwardRef<ThreeDViewerRef, {
       if (debugCanvas && debugCanvasRef.current) {
         const ctx = debugCanvasRef.current.getContext('2d');
         if (ctx) {
-          ctx.clearRect(0, 0, 256, 256);
-          // Desenha um fundo quadriculado para ver transparência
-          ctx.fillStyle = '#eee';
-          ctx.fillRect(0, 0, 256, 256);
-          ctx.fillStyle = '#ccc';
+          const size = 256;
+          ctx.clearRect(0, 0, size, size);
+          
+          // Fundo quadriculado
+          ctx.fillStyle = '#f0f0f0';
+          ctx.fillRect(0, 0, size, size);
+          ctx.fillStyle = '#e0e0e0';
+          const step = size / 8;
           for(let i=0; i<8; i++) {
             for(let j=0; j<8; j++) {
-              if((i+j)%2 === 0) ctx.fillRect(i*32, j*32, 32, 32);
+              if((i+j)%2 === 0) ctx.fillRect(i*step, j*step, step, step);
             }
           }
-          ctx.drawImage(debugCanvas, 0, 0, 256, 256);
+
+          // Desenha o conteúdo real do canvas UV (redimensionado)
+          ctx.drawImage(debugCanvas, 0, 0, size, size);
+
+          // Desenha as bordas das zonas para debug visual
+          ctx.strokeStyle = 'rgba(255, 0, 0, 0.5)';
+          ctx.lineWidth = 1;
+          zones.forEach(zone => {
+            const uv = zone.uvCenter || zone.uv;
+            if (uv) {
+              const x = uv[0] * size;
+              const y = (1 - uv[1]) * size;
+              const w = (zone.width || 0.1) * size;
+              const h = (zone.height || 0.1) * size;
+              const rot = (zone.rotation || 0) * (Math.PI / 180);
+
+              ctx.save();
+              ctx.translate(x, y);
+              ctx.rotate(rot);
+              ctx.strokeRect(-w/2, -h/2, w, h);
+              
+              // Pequena label com id da zona
+              ctx.fillStyle = 'red';
+              ctx.font = '8px monospace';
+              ctx.fillText(zone.id?.substring(0, 5) || '?', -w/2, -h/2 - 2);
+              ctx.restore();
+            }
+          });
         }
       }
-    }, [debugCanvas, name, number, shieldUrl]); // Re-render when content changes
+    }, [debugCanvas, zones, name, number, shieldUrl]);
 
     useImperativeHandle(ref, () => ({
       setView: (view) => {

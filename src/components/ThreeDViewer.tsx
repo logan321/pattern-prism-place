@@ -82,6 +82,10 @@ function Model({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
+    if (zones.length > 0) {
+      console.log('ThreeDViewer: Desenhando zonas no canvas:', zones.map(z => z.id));
+    }
+
     // console.log('DRAW zones:', zones);
     // console.log('DRAW formation:', formation);
     // console.log('DRAW name:', name);

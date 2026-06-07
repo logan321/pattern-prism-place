@@ -1,6 +1,7 @@
 import React, { useState, useRef, Suspense, useMemo, useEffect } from 'react';
 import { Canvas, useThree } from '@react-three/fiber';
 import { OrbitControls, useGLTF, Html, TransformControls } from '@react-three/drei';
+import { Trash2 } from 'lucide-react';
 import * as THREE from 'three';
 
 // ---- TIPOS ----

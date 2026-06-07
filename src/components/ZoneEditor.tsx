@@ -86,22 +86,43 @@ function ModeloComTextura({
   idSelecionado: string | null;
 }) {
   const { scene } = useGLTF(url);
-  const canvasRef = useRef<HTMLCanvasElement>(document.createElement('canvas'));
+  const canvasRef = useRef<HTMLCanvasElement>(null!);
   const textureRef = useRef<THREE.CanvasTexture | null>(null);
+
+  // Inicializa o canvas uma única vez com o tamanho correto
+  if (!canvasRef.current) {
+    const c = document.createElement('canvas');
+    c.width = 2048;
+    c.height = 2048;
+    // @ts-ignore - We know we're setting it
+    canvasRef.current = c;
+  }
 
   // Efeito para desenhar o overlay UV no canvas
   useEffect(() => {
     const canvas = canvasRef.current;
-    canvas.width = 2048;
-    canvas.height = 2048;
+    if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Limpa com fundo transparente para não esconder a textura base
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // Fundo sólido escuro para o canvas (AJUDA A VER A MALHA NO TESTE)
+    ctx.fillStyle = '#111111';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // TESTE UV: Desenha uma borda e uma cruz em todo o espaço UV
+    ctx.strokeStyle = '#ff00ff';
+    ctx.lineWidth = 40;
+    ctx.strokeRect(0, 0, canvas.width, canvas.height);
+    ctx.beginPath();
+    ctx.moveTo(0, 0); ctx.lineTo(canvas.width, canvas.height);
+    ctx.moveTo(canvas.width, 0); ctx.lineTo(0, canvas.height);
+    ctx.stroke();
+    
+    console.log('DEBUG: Desenhando zonas no canvas:', zonas.length);
     
     // Desenha cada zona
     zonas.forEach(z => {
+      console.log('DEBUG: Desenhando zona:', z.name, z.uvCenter);
       const isSelected = z.id === idSelecionado;
       const x = z.uvCenter[0] * canvas.width;
       const y = (1 - z.uvCenter[1]) * canvas.height;
@@ -114,32 +135,32 @@ function ModeloComTextura({
       
       // Retângulo da área - Bordas mais visíveis
       ctx.strokeStyle = isSelected ? '#ea580c' : '#3b82f6';
-      ctx.lineWidth = isSelected ? 12 : 6;
+      ctx.lineWidth = 20; // Muito mais grosso
       ctx.strokeRect(-w / 2, -h / 2, w, h);
       
-      // Preenchimento semitransparente
-      ctx.fillStyle = isSelected ? 'rgba(234, 88, 12, 0.4)' : 'rgba(59, 130, 246, 0.25)';
+      // Preenchimento Totalmente Opaco para Teste
+      ctx.fillStyle = isSelected ? '#ea580c' : '#3b82f6';
       ctx.fillRect(-w / 2, -h / 2, w, h);
 
-      // Texto no UV maior e com sombra para contraste
-      ctx.shadowColor = 'black';
-      ctx.shadowBlur = 10;
+      // Texto
       ctx.fillStyle = 'white';
-      ctx.font = 'bold 50px Arial';
+      ctx.font = 'bold 120px Arial'; // Maior
       ctx.textAlign = 'center';
-      ctx.fillText(z.name.toUpperCase(), 0, 15);
+      ctx.fillText(z.name.toUpperCase(), 0, 40);
       
       ctx.restore();
     });
 
     if (textureRef.current) {
+      console.log('DEBUG: Atualizando textura');
       textureRef.current.needsUpdate = true;
     }
   }, [zonas, idSelecionado]);
 
   const clonedScene = useMemo(() => {
+    console.log('DEBUG: Clonando cena e criando textura UV');
     const clone = scene.clone(true);
-    const tex = new THREE.CanvasTexture(canvasRef.current);
+    const tex = new THREE.CanvasTexture(canvasRef.current as HTMLCanvasElement);
     tex.flipY = false;
     tex.colorSpace = THREE.SRGBColorSpace;
     textureRef.current = tex;
@@ -147,23 +168,38 @@ function ModeloComTextura({
     clone.traverse((obj) => {
       if ((obj as THREE.Mesh).isMesh) {
         const mesh = obj as THREE.Mesh;
+        
+        // Verifica UVs
+        if (!mesh.geometry.attributes.uv) {
+          console.warn(`DEBUG: Malha ${mesh.name} não possui coordenadas UV!`);
+        }
+
         const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+        console.log(`DEBUG: Malha ${mesh.name} tem ${materials.length} materiais. Tipos:`, materials.map(m => m.type));
         
         const newMaterials = materials.map(m => {
-          if (m instanceof THREE.MeshStandardMaterial || m instanceof THREE.MeshPhysicalMaterial) {
-            const newMat = m.clone();
-            // Usamos emissiveMap para as zonas, assim a textura original (map) continua visível
+          // Tentando ser mais abrangente nos materiais
+          const newMat = m.clone();
+          console.log(`DEBUG: Clonando material ${m.name} do tipo ${m.type}`);
+          
+          if (newMat instanceof THREE.MeshStandardMaterial || newMat instanceof THREE.MeshPhysicalMaterial || newMat instanceof THREE.MeshBasicMaterial) {
+            // @ts-ignore
+            newMat.map = tex; // USAR MAP DIRETAMENTE PARA TESTE AGRESSIVO
+            // @ts-ignore
             newMat.emissiveMap = tex;
+            // @ts-ignore
             newMat.emissive = new THREE.Color(0xffffff);
-            newMat.emissiveIntensity = 2.0; 
-            newMat.transparent = true;
+            // @ts-ignore
+            newMat.emissiveIntensity = 1.0; 
+            
             newMat.needsUpdate = true;
             return newMat;
           }
-          return m;
+          return newMat;
         });
 
         mesh.material = Array.isArray(mesh.material) ? newMaterials : newMaterials[0];
+        console.log(`DEBUG: Material configurado para malha: ${mesh.name}`);
       }
     });
     return clone;
@@ -172,31 +208,40 @@ function ModeloComTextura({
   const mouseDownTime = useRef(0);
 
   return (
-    <primitive
-      object={clonedScene}
-      onPointerDown={(e: any) => {
-        mouseDownTime.current = Date.now();
-      }}
-      onPointerUp={(e: any) => {
-        const duration = Date.now() - mouseDownTime.current;
-        if (duration < 200 && e.uv) {
-          e.stopPropagation();
-          onClicar(e.point, e.face.normal, e.uv);
-        }
-      }}
-      onPointerMove={(e: any) => {
-        if (isDragging && e.uv) {
-          onDrag(e.point, e.face.normal, e.uv);
-        }
-      }}
-    />
+    <group>
+      <primitive
+        object={clonedScene}
+        onPointerDown={(e: any) => {
+          mouseDownTime.current = Date.now();
+        }}
+        onPointerUp={(e: any) => {
+          const duration = Date.now() - mouseDownTime.current;
+          console.log('DEBUG: onPointerUp', { duration, hasUv: !!e.uv, uv: e.uv });
+          if (duration < 200 && e.uv) {
+            e.stopPropagation();
+            onClicar(e.point, e.face.normal, e.uv);
+          }
+        }}
+        onPointerMove={(e: any) => {
+          if (isDragging && e.uv) {
+            onDrag(e.point, e.face.normal, e.uv);
+          }
+        }}
+      />
+      {/* CUBO DE TESTE PARA VALIDAR A TEXTURA */}
+      <mesh position={[0.8, 0, 0]}>
+        <boxGeometry args={[0.2, 0.2, 0.2]} />
+        <meshBasicMaterial map={textureRef.current!} />
+      </mesh>
+    </group>
   );
 }
 
 // ---- COMPONENTE PRINCIPAL ----
 export default function ZoneEditor({ modelUrl, initialZones = [], onSave, onClose }: any) {
+  console.log('DEBUG: ZoneEditor render', { modelUrl, numInitialZones: initialZones?.length });
   const [zonas, setZonas] = useState<ZonaMarcada[]>(() => {
-    return initialZones.map((z: any) => ({
+    const base = initialZones.map((z: any) => ({
       id: z.id || crypto.randomUUID(),
       name: z.name || 'Nova Zona',
       type: z.type || 'text',
@@ -207,6 +252,22 @@ export default function ZoneEditor({ modelUrl, initialZones = [], onSave, onClos
       point: z.point || [0, 0, 0],
       normal: z.normal || [0, 1, 0],
     }));
+
+    // Se não houver zonas, adiciona uma de teste central para validar visualização
+    if (base.length === 0) {
+      base.push({
+        id: 'debug-center',
+        name: 'DEBUG CENTER',
+        type: 'text',
+        uvCenter: [0.5, 0.5],
+        width: 0.2,
+        height: 0.2,
+        rotation: 0,
+        point: [0, 0, 0],
+        normal: [0, 1, 0],
+      });
+    }
+    return base;
   });
 
   const [idSelecionado, setIdSelecionado] = useState<string | null>(null);
@@ -215,6 +276,7 @@ export default function ZoneEditor({ modelUrl, initialZones = [], onSave, onClos
   const zonaSelecionada = zonas.find(z => z.id === idSelecionado);
 
   const handleClicarNoModelo = (point: THREE.Vector3, normal: THREE.Vector3, uv: THREE.Vector2) => {
+    console.log('DEBUG: handleClicarNoModelo', { uv });
     // Se não houver nada selecionado, cria uma nova zona
     if (!idSelecionado) {
       const novaId = crypto.randomUUID();

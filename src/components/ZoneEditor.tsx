@@ -25,124 +25,142 @@ const TIPOS_ZONA = [
   { id: 'sponsor', label: 'Patrocinador' },
 ];
 
-// ---- RETÂNGULO 3D EDITÁVEL ----
-function ZonaVisual({ 
+// ---- ÁREA EDITÁVEL NA TEXTURA UV ----
+// Não usamos componentes 3D independentes (meshes/planos)
+// A visualização é feita via CSS Overlay transparente sobre o Canvas
+function AreaEditavelOverlay({ 
   zona, 
   onUpdate, 
   isSelected, 
-  onSelect 
+  onSelect,
+  canvasBounds 
 }: { 
   zona: ZonaMarcada; 
   onUpdate: (updates: Partial<ZonaMarcada>) => void;
   isSelected: boolean;
   onSelect: () => void;
+  canvasBounds: DOMRect | null;
 }) {
-  const meshRef = useRef<THREE.Mesh>(null);
-  
-  // Posiciona e orienta o plano com base no ponto e normal
-  useEffect(() => {
-    if (meshRef.current) {
-      const pos = new THREE.Vector3(...zona.point);
-      const normal = new THREE.Vector3(...zona.normal);
-      
-      // Offset para evitar z-fighting
-      meshRef.current.position.copy(pos.clone().addScaledVector(normal, 0.005));
-      
-      // Orienta o plano para a normal
-      const lookAtTarget = pos.clone().add(normal);
-      meshRef.current.lookAt(lookAtTarget);
-      
-      // Aplica a rotação do usuário (em torno do eixo Z local do plano)
-      meshRef.current.rotateZ(zona.rotation * (Math.PI / 180));
-    }
-  }, [zona.point, zona.normal, zona.rotation]);
+  if (!canvasBounds) return null;
 
-  // Escala o plano com base no width/height
-  // Usamos um fator de escala arbitrário para converter UV width/height em unidades 3D visíveis
-  // Geralmente, o modelo tem cerca de 1-2 unidades de altura
-  const scaleX = zona.width * 2; 
-  const scaleY = zona.height * 2;
+  // Converte coordenadas UV (0-1) para pixels na tela (baseado no canvasBounds)
+  // Nota: Y é invertido no UV (0 embaixo, 1 cima)
+  const left = canvasBounds.left + (zona.uvCenter[0] * canvasBounds.width) - ((zona.width * canvasBounds.width) / 2);
+  const top = canvasBounds.top + ((1 - zona.uvCenter[1]) * canvasBounds.height) - ((zona.height * canvasBounds.height) / 2);
 
   return (
-    <mesh 
-      ref={meshRef} 
-      onClick={(e) => {
-        e.stopPropagation();
-        onSelect();
+    <div
+      onClick={(e) => { e.stopPropagation(); onSelect(); }}
+      className={`absolute border-2 cursor-move ${isSelected ? 'border-orange-500 bg-orange-500/20' : 'border-blue-500 bg-blue-500/10'}`}
+      style={{
+        left: `${left}px`,
+        top: `${top}px`,
+        width: `${zona.width * canvasBounds.width}px`,
+        height: `${zona.height * canvasBounds.height}px`,
+        transform: `rotate(${zona.rotation}deg)`,
+        pointerEvents: 'auto'
       }}
     >
-      <planeGeometry args={[scaleX, scaleY]} />
-      <meshBasicMaterial 
-        color={isSelected ? "#ea580c" : "#3b82f6"} 
-        transparent 
-        opacity={0.5} 
-        side={THREE.DoubleSide}
-        depthTest={false}
-      />
-      <Html
-        center
-        distanceFactor={1.5}
-        style={{
-          pointerEvents: 'none',
-          background: isSelected ? '#ea580c' : '#3b82f6',
-          color: 'white',
-          padding: '2px 6px',
-          borderRadius: 4,
-          fontSize: 10,
-          fontWeight: 'bold',
-          whiteSpace: 'nowrap',
-          opacity: 0.9
-        }}
-      >
+      <div className="text-[10px] text-white p-1 font-bold pointer-events-none truncate">
         {zona.name}
-      </Html>
-      
-      {/* Bordas */}
-      <lineSegments>
-        <edgesGeometry args={[new THREE.PlaneGeometry(scaleX, scaleY)]} />
-        <lineBasicMaterial color={isSelected ? "#ffffff" : "#3b82f6"} />
-      </lineSegments>
-    </mesh>
+      </div>
+    </div>
   );
 }
 
 // ---- MODELO INTERATIVO ----
-function ModeloInterativo({
+function ModeloComTextura({
   url,
+  zonas,
   onClicar,
   onDrag,
-  isDragging
+  isDragging,
+  idSelecionado
 }: {
   url: string;
+  zonas: ZonaMarcada[];
   onClicar: (point: THREE.Vector3, normal: THREE.Vector3, uv: THREE.Vector2) => void;
   onDrag: (point: THREE.Vector3, normal: THREE.Vector3, uv: THREE.Vector2) => void;
   isDragging: boolean;
+  idSelecionado: string | null;
 }) {
   const { scene } = useGLTF(url);
-  const mouseDownTime = useRef(0);
+  const canvasRef = useRef<HTMLCanvasElement>(document.createElement('canvas'));
+  const textureRef = useRef<THREE.CanvasTexture | null>(null);
+
+  // Efeito para desenhar o overlay UV no canvas
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    canvas.width = 2048;
+    canvas.height = 2048;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // Limpa
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Fundo semitransparente para ver as áreas no modelo
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Desenha cada zona
+    zonas.forEach(z => {
+      const isSelected = z.id === idSelecionado;
+      const x = z.uvCenter[0] * canvas.width;
+      const y = (1 - z.uvCenter[1]) * canvas.height;
+      const w = z.width * canvas.width;
+      const h = z.height * canvas.height;
+
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate((z.rotation * Math.PI) / 180);
+      
+      // Retângulo da área
+      ctx.strokeStyle = isSelected ? '#ea580c' : '#3b82f6';
+      ctx.lineWidth = isSelected ? 8 : 4;
+      ctx.strokeRect(-w / 2, -h / 2, w, h);
+      
+      // Preenchimento
+      ctx.fillStyle = isSelected ? 'rgba(234, 88, 12, 0.3)' : 'rgba(59, 130, 246, 0.2)';
+      ctx.fillRect(-w / 2, -h / 2, w, h);
+
+      // Texto no UV
+      ctx.fillStyle = 'white';
+      ctx.font = 'bold 40px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText(z.name.toUpperCase(), 0, 10);
+      
+      ctx.restore();
+    });
+
+    if (textureRef.current) {
+      textureRef.current.needsUpdate = true;
+    }
+  }, [zonas, idSelecionado]);
 
   const clonedScene = useMemo(() => {
     const clone = scene.clone(true);
+    const tex = new THREE.CanvasTexture(canvasRef.current);
+    tex.flipY = false;
+    tex.colorSpace = THREE.SRGBColorSpace;
+    textureRef.current = tex;
+
     clone.traverse((obj) => {
       if ((obj as THREE.Mesh).isMesh) {
         const mesh = obj as THREE.Mesh;
-        const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
-        mats.forEach((m: any) => {
-          m = m.clone();
-          m.map = null;
-          m.color = new THREE.Color(0xdddddd);
-          m.needsUpdate = true;
-          if (Array.isArray(mesh.material)) {
-            const index = mesh.material.indexOf(m);
-            if (index !== -1) mesh.material[index] = m;
-          } else {
-            mesh.material = m;
-          }
+        const mat = new THREE.MeshStandardMaterial({
+          map: tex,
+          transparent: true,
+          roughness: 0.3,
+          metalness: 0.1
         });
+        mesh.material = mat;
       }
     });
     return clone;
   }, [scene]);
+
+  const mouseDownTime = useRef(0);
 
   return (
     <primitive
@@ -152,13 +170,13 @@ function ModeloInterativo({
       }}
       onPointerUp={(e: any) => {
         const duration = Date.now() - mouseDownTime.current;
-        if (duration < 200 && e.face && e.uv) {
+        if (duration < 200 && e.uv) {
           e.stopPropagation();
           onClicar(e.point, e.face.normal, e.uv);
         }
       }}
       onPointerMove={(e: any) => {
-        if (isDragging && e.face && e.uv) {
+        if (isDragging && e.uv) {
           onDrag(e.point, e.face.normal, e.uv);
         }
       }}
@@ -299,24 +317,18 @@ export default function ZoneEditor({ modelUrl, initialZones = [], onSave, onClos
             <Suspense fallback={null}>
               <ambientLight intensity={0.7} />
               <directionalLight position={[5, 5, 5]} intensity={1} />
-              <ModeloInterativo 
+              <ModeloComTextura 
                 url={modelUrl} 
+                zonas={zonas}
                 onClicar={handleClicarNoModelo}
                 onDrag={handleDragNoModelo}
                 isDragging={isDragging}
+                idSelecionado={idSelecionado}
               />
-              {zonas.map(z => (
-                <ZonaVisual 
-                  key={z.id} 
-                  zona={z} 
-                  isSelected={idSelecionado === z.id}
-                  onSelect={() => setIdSelecionado(z.id)}
-                  onUpdate={(updates) => updateZona(z.id, updates)}
-                />
-              ))}
               <OrbitControls enabled={!isDragging} enablePan={false} />
             </Suspense>
           </Canvas>
+          {/* O overlay 2D sobre o Canvas foi removido para manter tudo no 3D UV */}
 
           {idSelecionado && (
             <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-black/80 backdrop-blur-md border border-orange-600/30 p-2 rounded-full flex items-center gap-4 px-6 text-white text-sm shadow-2xl">

@@ -51,6 +51,8 @@ function ZonePreview({ zone }: { zone: Zone3D }) {
         opacity={0.6} 
         side={THREE.DoubleSide}
         depthTest={false}
+        polygonOffset
+        polygonOffsetFactor={-4}
       />
       <group rotation={[0, 0, rotation]}>
         <mesh>

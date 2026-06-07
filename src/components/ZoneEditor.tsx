@@ -317,24 +317,18 @@ export default function ZoneEditor({ modelUrl, initialZones = [], onSave, onClos
             <Suspense fallback={null}>
               <ambientLight intensity={0.7} />
               <directionalLight position={[5, 5, 5]} intensity={1} />
-              <ModeloInterativo 
+              <ModeloComTextura 
                 url={modelUrl} 
+                zonas={zonas}
                 onClicar={handleClicarNoModelo}
                 onDrag={handleDragNoModelo}
                 isDragging={isDragging}
+                idSelecionado={idSelecionado}
               />
-              {zonas.map(z => (
-                <ZonaVisual 
-                  key={z.id} 
-                  zona={z} 
-                  isSelected={idSelecionado === z.id}
-                  onSelect={() => setIdSelecionado(z.id)}
-                  onUpdate={(updates) => updateZona(z.id, updates)}
-                />
-              ))}
               <OrbitControls enabled={!isDragging} enablePan={false} />
             </Suspense>
           </Canvas>
+          {/* O overlay 2D sobre o Canvas foi removido para manter tudo no 3D UV */}
 
           {idSelecionado && (
             <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-black/80 backdrop-blur-md border border-orange-600/30 p-2 rounded-full flex items-center gap-4 px-6 text-white text-sm shadow-2xl">

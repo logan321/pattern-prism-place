@@ -29,6 +29,8 @@ import { ThreeDViewer, type ThreeDViewerRef } from '../components/ThreeDViewer';
 import { CustomizerModel } from '../components/CustomizerModel';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../integrations/supabase/client';
+import { generateFinalTexture, UVZone } from '../lib/textureGenerator';
+import * as THREE from 'three';
 import golaPadreAsset from '../assets/GOLA_PADRE_otimizado.glb.asset.json';
 
 const LOCAL_MODELS = [
@@ -302,6 +304,36 @@ export default function Simulator() {
       viewerRef.current?.setView('front');
     }
   }, [activeTab]);
+
+  const [finalTexture, setFinalTexture] = useState<THREE.CanvasTexture | undefined>(undefined);
+
+  useEffect(() => {
+    const updateTexture = async () => {
+      try {
+        const canvas = await generateFinalTexture({
+          baseTextureUrl: textureUrl,
+          zones: (activeUVMatriz?.zones as unknown as UVZone[]) || [],
+          customizations: {
+            name: customName,
+            number: customNumber,
+            shieldUrl: shieldUrl,
+            nameColor: nameColor,
+            numberColor: numberColor,
+            nameFont: nameFont
+          }
+        });
+        
+        const tex = new THREE.CanvasTexture(canvas);
+        tex.flipY = false;
+        tex.colorSpace = THREE.SRGBColorSpace;
+        setFinalTexture(tex);
+      } catch (err) {
+        console.error('Error generating final texture:', err);
+      }
+    };
+    
+    updateTexture();
+  }, [textureUrl, activeUVMatriz, customName, customNumber, shieldUrl, nameColor, numberColor, nameFont]);
 
   // Logs removidos para evitar poluição no console e possíveis erros de hook indiretos
 
@@ -603,15 +635,7 @@ export default function Simulator() {
             <ThreeDViewer 
               ref={viewerRef}
               modelUrl={modelUrl} 
-              textureUrl={textureUrl}
-              zones={currentZones as any}
-              name={customName}
-              number={customNumber}
-              nameColor={nameColor}
-              numberColor={numberColor}
-              nameFont={nameFont}
-              shieldUrl={shieldUrl}
-              formation={formation}
+              finalTexture={finalTexture}
             />
 
           </div>

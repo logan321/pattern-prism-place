@@ -25,7 +25,7 @@ function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-function UVConfigView({ models, queryClient, modelsLoading }: { models: any[] | undefined, queryClient: any, modelsLoading: boolean }) {
+function UVConfigView({ models, queryClient, modelsLoading, onOpenMatrizModal }: { models: any[] | undefined, queryClient: any, modelsLoading: boolean, onOpenMatrizModal: () => void }) {
   const [editingZonesFor, setEditingZonesFor] = useState<any | null>(null);
   const [selectedModelId, setSelectedModelId] = useState<string>('');
   const [selectedMatrizId, setSelectedMatrizId] = useState<string>('');

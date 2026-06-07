@@ -810,12 +810,24 @@ export default function Admin() {
                           <Upload className="w-4 h-4" />
                         </button>
                         <button 
-                          onClick={() => handleDelete(model.id, 'models', model.glb_url)}
-                          className="bg-red-500 p-2 rounded-lg text-white hover:bg-red-600"
-                          title="Excluir Modelo"
+                          onClick={() => {
+                            setActiveView('config');
+                            alert(`Vá para o Editor de Marcação e selecione "${model.nome}" para configurar as zonas.`);
+                          }}
+                          className="bg-white p-2 rounded-lg text-orange-600 hover:bg-gray-100"
+                          title="Abrir Editor de Marcação"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Edit3 className="w-4 h-4" />
                         </button>
+                        {!model.id.startsWith('local-') && (
+                          <button 
+                            onClick={() => handleDelete(model.id, 'models', model.glb_url)}
+                            className="bg-red-500 p-2 rounded-lg text-white hover:bg-red-600"
+                            title="Excluir Modelo"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
                       </div>
                     </div>
                     <div className="p-3">

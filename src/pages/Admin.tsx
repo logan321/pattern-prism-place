@@ -778,7 +778,12 @@ export default function Admin() {
                )}
             </div>
           ) : (
-            <UVConfigView models={models} queryClient={queryClient} modelsLoading={modelsLoading} />
+            <UVConfigView 
+              models={models} 
+              queryClient={queryClient} 
+              modelsLoading={modelsLoading} 
+              onOpenMatrizModal={() => setShowUVMatrizModal(true)}
+            />
           )}
         </div>
       </main>
@@ -787,7 +792,6 @@ export default function Admin() {
         isOpen={showUVMatrizModal} 
         onClose={() => setShowUVMatrizModal(false)} 
         queryClient={queryClient} 
-        models={models}
       />
 
     </div>

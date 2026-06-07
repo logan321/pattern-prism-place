@@ -574,6 +574,54 @@ export default function Simulator() {
               ))
             ) : activeTab === 'Nome/Número' ? (
               <div className="col-span-2 space-y-4">
+                {uvZonesActive && (
+                  <div className="col-span-2 space-y-3 mb-4">
+                    <div className="p-2 rounded text-[10px] font-medium border bg-green-50 border-green-200 text-green-700">
+                      ✅ Zonas UV ativas: {Object.keys(uvMapZones).length} zona(s)
+                    </div>
+                    {Object.entries(uvMapZones).map(([zoneKey, zone]) => {
+                      const textLayer = uvLayers.find(l => l.zoneKey === zoneKey && l.type === 'text') as any;
+                      const imageLayer = uvLayers.find(l => l.zoneKey === zoneKey && l.type === 'image');
+                      return (
+                        <div key={zoneKey} className="border rounded-lg p-3 space-y-2 bg-gray-50">
+                          <p className="text-[10px] font-bold text-gray-600 uppercase">
+                            {zone.label || zoneKey}
+                          </p>
+                          <input
+                            type="text"
+                            value={uvTextDrafts[zoneKey] ?? textLayer?.content ?? ''}
+                            onChange={(e) => setUvLayerText(zoneKey, e.target.value)}
+                            placeholder="Digite o texto..."
+                            className="w-full border rounded p-2 text-sm"
+                          />
+                          <div className="flex gap-2">
+                            <label className="flex-1 text-center border rounded p-1 text-[10px] cursor-pointer bg-white hover:bg-gray-100">
+                              📎 Imagem
+                              <input
+                                type="file"
+                                accept="image/png,image/jpeg,image/webp"
+                                className="hidden"
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file) setUvLayerImage(zoneKey, file);
+                                  e.currentTarget.value = '';
+                                }}
+                              />
+                            </label>
+                            {(textLayer || imageLayer) && (
+                              <button
+                                onClick={() => removeUvLayer(zoneKey)}
+                                className="px-2 py-1 text-[10px] border rounded text-red-600 bg-white hover:bg-red-50"
+                              >
+                                Limpar
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
                 <div className={cn(
                   "p-2 rounded text-[10px] font-medium border",
                   activeUVMatriz ? "bg-green-50 border-green-200 text-green-700" : "bg-amber-50 border-amber-200 text-amber-700"

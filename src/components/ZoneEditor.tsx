@@ -175,9 +175,9 @@ function ModeloComTextura({
             // @ts-ignore
             newMat.emissiveMap = tex;
             // @ts-ignore
-            newMat.emissive = new THREE.Color(0xffffff);
+            newMat.emissive = new THREE.Color(0xff00ff); // MAGENTA para depuração
             // @ts-ignore
-            newMat.emissiveIntensity = 10.0; // Brilho extremo
+            newMat.emissiveIntensity = 20.0; // Brilho EXTREMO para teste
             
             // Para garantir que apareça mesmo se não for StandardMaterial
             if (newMat instanceof THREE.MeshBasicMaterial) {
@@ -226,7 +226,7 @@ function ModeloComTextura({
 export default function ZoneEditor({ modelUrl, initialZones = [], onSave, onClose }: any) {
   console.log('DEBUG: ZoneEditor render', { modelUrl, numInitialZones: initialZones?.length });
   const [zonas, setZonas] = useState<ZonaMarcada[]>(() => {
-    return initialZones.map((z: any) => ({
+    const base = initialZones.map((z: any) => ({
       id: z.id || crypto.randomUUID(),
       name: z.name || 'Nova Zona',
       type: z.type || 'text',
@@ -237,6 +237,22 @@ export default function ZoneEditor({ modelUrl, initialZones = [], onSave, onClos
       point: z.point || [0, 0, 0],
       normal: z.normal || [0, 1, 0],
     }));
+
+    // Se não houver zonas, adiciona uma de teste central para validar visualização
+    if (base.length === 0) {
+      base.push({
+        id: 'debug-center',
+        name: 'DEBUG CENTER',
+        type: 'text',
+        uvCenter: [0.5, 0.5],
+        width: 0.2,
+        height: 0.2,
+        rotation: 0,
+        point: [0, 0, 0],
+        normal: [0, 1, 0],
+      });
+    }
+    return base;
   });
 
   const [idSelecionado, setIdSelecionado] = useState<string | null>(null);

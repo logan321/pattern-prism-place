@@ -1,10 +1,9 @@
-import React, { Suspense, useEffect, useRef, useImperativeHandle, forwardRef, useState } from 'react';
+import React, { Suspense, useEffect, useRef, useImperativeHandle, forwardRef, useState, useMemo } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Stage, useGLTF } from '@react-three/drei';
 import * as THREE from 'three';
 import { ErrorBoundary } from 'react-error-boundary';
 import { gsap } from 'gsap';
-import { useCustomizerStore } from '../store/useCustomizerStore';
 
 interface Zone {
   id: string;
@@ -40,8 +39,9 @@ function Model({
 }) {
   const { scene } = useGLTF(url);
   const textureRef = useRef<THREE.CanvasTexture | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
   
-  const clonedScene = React.useMemo(() => {
+  const clonedScene = useMemo(() => {
     const clone = scene.clone();
     clone.traverse((child) => {
       if ((child as THREE.Mesh).isMesh) {
@@ -50,9 +50,10 @@ function Model({
           const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
           materials.forEach((mat) => {
             if (mat instanceof THREE.MeshStandardMaterial || mat instanceof THREE.MeshPhysicalMaterial) {
-              mat.emissive = new THREE.Color(0x000000);
-              mat.emissiveIntensity = 0;
-              mat.needsUpdate = true;
+              const m = mat.clone();
+              m.emissive = new THREE.Color(0x000000);
+              m.emissiveIntensity = 0;
+              mesh.material = m; // Apply the clone back
             }
           });
         }
@@ -60,8 +61,6 @@ function Model({
     });
     return clone;
   }, [scene]);
-
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   const FORMACOES: Record<string, any> = {
     'escudo-esq-nome-dir': { logo: 'peito-esquerdo', nome: 'peito-direito',  numero: 'costas-centro' },
@@ -77,29 +76,13 @@ function Model({
       canvasRef.current.height = 2048;
     }
     const canvas = canvasRef.current;
-    if (!canvas) return;
-    
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', { alpha: true });
     if (!ctx) return;
 
-    if (zones && zones.length > 0) {
-      console.log('ThreeDViewer: Desenhando zonas no canvas:', zones.map(z => z.id));
-    } else {
-      console.log('ThreeDViewer: Nenhuma zona para desenhar.');
-    }
-
-    // console.log('DRAW zones:', zones);
-    // console.log('DRAW formation:', formation);
-    // console.log('DRAW name:', name);
-    // console.log('DRAW number:', number);
-    // console.log('DRAW shieldUrl:', shieldUrl);
-
     const regras = FORMACOES[formation || ''] ?? FORMACOES['escudo-esq-nome-dir'];
-    // console.log('DRAW regras:', regras);
 
     const getZona = (posId: string | null) => {
       if (!posId) return null;
-      // Normalizar IDs e nomes para comparação (remover hifens e converter para minúsculo)
       const normalize = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
       const normPosId = normalize(posId);
       
@@ -114,21 +97,16 @@ function Model({
     const nameZone   = getZona(regras.nome);
     const numberZone = getZona(regras.numero || regras.number);
 
-    // console.log('DRAW logoZone:', logoZone);
-    // console.log('DRAW nameZone:', nameZone);
-    // console.log('DRAW numberZone:', numberZone);
-
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
     const getCoord = (uv: [number, number]): [number, number] => {
       return [uv[0] * canvas.width, (1 - uv[1]) * canvas.height];
     };
 
-
     // 1. Desenhar Logo ou Placeholder
     if (logoZone?.uv) {
       const [sx, sy] = getCoord(logoZone.uv as [number, number]);
-      const size = 180;
+      const size = 200;
       
       if (shieldUrl) {
         try {
@@ -141,25 +119,22 @@ function Model({
           });
           ctx.drawImage(img, sx - size / 2, sy - size / 2, size, size);
         } catch (e) {
-          console.warn("Logo não carregou:", e);
+          console.warn("ThreeDViewer: Logo não carregou:", e);
         }
       } else {
-        // Placeholder circular para o escudo (conforme pedido pelo cliente)
         ctx.save();
         ctx.beginPath();
         ctx.arc(sx, sy, size / 2.5, 0, Math.PI * 2);
-        ctx.strokeStyle = 'white';
-        ctx.lineWidth = 4;
-        ctx.setLineDash([10, 5]); // Pontilhado para parecer marcação
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 6;
+        ctx.setLineDash([15, 10]);
         ctx.stroke();
-        
         ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
         ctx.fill();
-        
-        ctx.font = 'bold 20px Arial';
+        ctx.font = 'bold 32px Arial';
         ctx.fillStyle = 'white';
         ctx.textAlign = 'center';
-        ctx.fillText('ESCUDO', sx, sy);
+        ctx.fillText('ESCUDO', sx, sy + 10);
         ctx.restore();
       }
     }
@@ -168,13 +143,13 @@ function Model({
     if (name && nameZone?.uv) {
       const [tx, ty] = getCoord(nameZone.uv as [number, number]);
       ctx.save();
-      ctx.font = `bold 80px ${nameFont || 'Arial'}`;
+      ctx.font = `bold 100px ${nameFont || 'Arial'}`;
       ctx.fillStyle = nameColor || '#ffffff';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      // Limitar largura para não extrapolar a zona do peito
-      const maxWidth = 400;
-      ctx.fillText(name.toUpperCase(), tx, ty, maxWidth);
+      ctx.shadowColor = 'rgba(0,0,0,0.5)';
+      ctx.shadowBlur = 10;
+      ctx.fillText(name.toUpperCase(), tx, ty, 450);
       ctx.restore();
     }
 
@@ -182,19 +157,20 @@ function Model({
     if (number && numberZone?.uv) {
       const [nx, ny] = getCoord(numberZone.uv as [number, number]);
       ctx.save();
-      ctx.font = `bold 350px ${nameFont || 'Arial'}`;
+      ctx.font = `bold 400px ${nameFont || 'Arial'}`;
       ctx.fillStyle = numberColor || '#ffffff';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
+      ctx.shadowColor = 'rgba(0,0,0,0.5)';
+      ctx.shadowBlur = 15;
       ctx.fillText(number, nx, ny);
       ctx.restore();
     }
 
     if (!textureRef.current) {
-      const uvTexture = new THREE.CanvasTexture(canvas);
-      uvTexture.flipY = false;
-      uvTexture.colorSpace = THREE.SRGBColorSpace;
-      textureRef.current = uvTexture;
+      textureRef.current = new THREE.CanvasTexture(canvas);
+      textureRef.current.flipY = false;
+      textureRef.current.colorSpace = THREE.SRGBColorSpace;
     } else {
       textureRef.current.needsUpdate = true;
     }
@@ -205,7 +181,6 @@ function Model({
         const mesh = child as THREE.Mesh;
         const meshName = mesh.name.toLowerCase();
         
-        // Pular aviamentos ao aplicar o emissive (nomes/números)
         const isHardware = meshName.includes('zipper') || 
                           meshName.includes('ziper') || 
                           meshName.includes('button') || 
@@ -219,13 +194,9 @@ function Model({
         const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
         materials.forEach((mat) => {
           if (mat instanceof THREE.MeshStandardMaterial || mat instanceof THREE.MeshPhysicalMaterial) {
-            const matName = mat.name.toLowerCase();
-            if (matName.includes('zipper') || matName.includes('ziper') || matName.includes('button') || matName.includes('trim')) return;
-
             mat.emissiveMap = uvTexture;
             mat.emissive.set(0xffffff); 
-            mat.emissiveIntensity = 1.0;
-            // REMOVIDO mat.transparent = true que podia afetar a renderização do tecido
+            mat.emissiveIntensity = 2.5; // Alta intensidade para garantir visibilidade
             mat.needsUpdate = true;
           }
         });
@@ -260,11 +231,7 @@ function Model({
           const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
           materials.forEach((mat) => {
             if (mat instanceof THREE.MeshStandardMaterial || mat instanceof THREE.MeshPhysicalMaterial) {
-              const matName = mat.name.toLowerCase();
-              if (matName.includes('zipper') || matName.includes('ziper') || matName.includes('button') || matName.includes('trim')) return;
-
               mat.map = tex;
-              // Se não tiver textura, definir uma cor base neutra/branca para o tecido
               if (!tex) mat.color.set(0xffffff);
               mat.needsUpdate = true;
             }
@@ -273,44 +240,30 @@ function Model({
       });
     };
 
-    if (!textureUrl || typeof textureUrl !== 'string') {
+    if (!textureUrl) {
       applyTexture(null);
       return;
     }
 
-    const loadAndApply = (url: string) => {
-      loader.load(url, (tex) => {
-        tex.flipY = false;
-        tex.colorSpace = THREE.SRGBColorSpace;
-        tex.needsUpdate = true;
-        applyTexture(tex);
-      });
-    };
-
-    if (textureUrl.includes('svg')) {
-      fetch(textureUrl)
-        .then(r => r.blob())
-        .then(blob => {
-          const url = URL.createObjectURL(blob);
-          loadAndApply(url);
-          return () => URL.revokeObjectURL(url);
-        })
-        .catch(err => console.error("Erro ao carregar SVG:", err));
-    } else {
-      loadAndApply(textureUrl);
-    }
+    loader.load(textureUrl, (tex) => {
+      tex.flipY = false;
+      tex.colorSpace = THREE.SRGBColorSpace;
+      tex.needsUpdate = true;
+      applyTexture(tex);
+    }, undefined, (err) => {
+      console.error("ThreeDViewer: Erro ao carregar textura:", textureUrl, err);
+    });
   }, [textureUrl, clonedScene]);
 
-  // Adicionar uma key ao primitive para forçar o React Three Fiber a remontar se o modelo mudar drasticamente
-  return <primitive key={url} object={clonedScene} />;
+  return <primitive object={clonedScene} />;
 }
 
 function FallbackError({ error }: { error: any }) {
-  console.error('Erro ThreeDViewer:', error);
+  console.error('ThreeDViewer Error Boundary:', error);
   return (
     <div className="w-full h-full flex flex-col items-center justify-center bg-gray-100 gap-2">
-      <p className="text-red-500 font-bold">Erro ao carregar o modelo 3D</p>
-      <p className="text-red-400 text-sm text-center px-4">{error?.message}</p>
+      <p className="text-red-500 font-bold">Erro ao renderizar o modelo 3D</p>
+      <p className="text-red-400 text-xs text-center px-4">{error?.message}</p>
     </div>
   );
 }
@@ -418,27 +371,27 @@ export const ThreeDViewer = forwardRef<ThreeDViewerRef, {
       <ErrorBoundary FallbackComponent={FallbackError}>
         <Canvas shadows camera={{ position: [0, 0, 2.0], fov: 45 }}>
           <Suspense fallback={null}>
-          <Stage intensity={0.5} environment="city" shadows="contact" adjustCamera={false} preset="rembrandt">
-            <Model 
-              url={modelUrl} 
-              textureUrl={textureUrl} 
-              zones={zones} 
-              name={name}
-              number={number}
-              nameColor={nameColor}
-              numberColor={numberColor}
-              nameFont={nameFont}
-              shieldUrl={shieldUrl}
-              formation={formation}
+            <Stage intensity={0.5} environment="city" shadows="contact" adjustCamera={false} preset="rembrandt">
+              <Model 
+                url={modelUrl} 
+                textureUrl={textureUrl} 
+                zones={zones} 
+                name={name}
+                number={number}
+                nameColor={nameColor}
+                numberColor={numberColor}
+                nameFont={nameFont}
+                shieldUrl={shieldUrl}
+                formation={formation}
+              />
+            </Stage>
+            <OrbitControls 
+              ref={orbitRef} 
+              makeDefault 
+              minDistance={1.0} 
+              maxDistance={6} 
+              enablePan={false}
             />
-          </Stage>
-          <OrbitControls 
-            ref={orbitRef} 
-            makeDefault 
-            minDistance={1.0} 
-            maxDistance={6} 
-            enablePan={false}
-          />
           </Suspense>
         </Canvas>
       </ErrorBoundary>

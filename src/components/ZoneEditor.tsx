@@ -285,12 +285,21 @@ export default function ZoneEditor({ modelUrl, initialZones = [], onSave, onClos
       <div className="flex flex-1 overflow-hidden">
         {/* Painel Esquerdo: Lista de Zonas */}
         <div className="w-72 bg-[#111] border-r border-[#222] p-4 flex flex-col gap-4 overflow-y-auto">
-          <button
-            onClick={() => setIdSelecionado(null)}
-            className={`w-full py-2 px-4 rounded-lg border-2 transition-all ${!idSelecionado ? 'border-orange-600 bg-orange-600/10 text-orange-600' : 'border-[#333] text-gray-400'}`}
-          >
-            + Criar Nova Área
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setIdSelecionado(null)}
+              className={`flex-1 py-2 px-4 rounded-lg border-2 transition-all ${!idSelecionado ? 'border-orange-600 bg-orange-600/10 text-orange-600' : 'border-[#333] text-gray-400'}`}
+            >
+              + Nova Área
+            </button>
+            <button
+              onClick={() => { if(window.confirm('Excluir todas as zonas?')) setZonas([]); }}
+              className="px-3 py-2 rounded-lg border-2 border-red-900/30 text-red-500 hover:bg-red-500/10 transition-all"
+              title="Limpar Tudo"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </div>
 
           <div className="space-y-2">
             <h2 className="text-gray-500 text-xs font-bold uppercase tracking-wider">Zonas Ativas ({zonas.length})</h2>

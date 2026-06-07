@@ -69,42 +69,98 @@ function AreaEditavelOverlay({
 }
 
 // ---- MODELO INTERATIVO ----
-function ModeloInterativo({
+function ModeloComTextura({
   url,
+  zonas,
   onClicar,
   onDrag,
-  isDragging
+  isDragging,
+  idSelecionado
 }: {
   url: string;
+  zonas: ZonaMarcada[];
   onClicar: (point: THREE.Vector3, normal: THREE.Vector3, uv: THREE.Vector2) => void;
   onDrag: (point: THREE.Vector3, normal: THREE.Vector3, uv: THREE.Vector2) => void;
   isDragging: boolean;
+  idSelecionado: string | null;
 }) {
   const { scene } = useGLTF(url);
-  const mouseDownTime = useRef(0);
+  const canvasRef = useRef<HTMLCanvasElement>(document.createElement('canvas'));
+  const textureRef = useRef<THREE.CanvasTexture | null>(null);
+
+  // Efeito para desenhar o overlay UV no canvas
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    canvas.width = 2048;
+    canvas.height = 2048;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // Limpa
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Fundo semitransparente para ver as áreas no modelo
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Desenha cada zona
+    zonas.forEach(z => {
+      const isSelected = z.id === idSelecionado;
+      const x = z.uvCenter[0] * canvas.width;
+      const y = (1 - z.uvCenter[1]) * canvas.height;
+      const w = z.width * canvas.width;
+      const h = z.height * canvas.height;
+
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate((z.rotation * Math.PI) / 180);
+      
+      // Retângulo da área
+      ctx.strokeStyle = isSelected ? '#ea580c' : '#3b82f6';
+      ctx.lineWidth = isSelected ? 8 : 4;
+      ctx.strokeRect(-w / 2, -h / 2, w, h);
+      
+      // Preenchimento
+      ctx.fillStyle = isSelected ? 'rgba(234, 88, 12, 0.3)' : 'rgba(59, 130, 246, 0.2)';
+      ctx.fillRect(-w / 2, -h / 2, w, h);
+
+      // Texto no UV
+      ctx.fillStyle = 'white';
+      ctx.font = 'bold 40px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText(z.name.toUpperCase(), 0, 10);
+      
+      ctx.restore();
+    });
+
+    if (textureRef.current) {
+      textureRef.current.needsUpdate = true;
+    }
+  }, [zonas, idSelecionado]);
 
   const clonedScene = useMemo(() => {
     const clone = scene.clone(true);
+    const tex = new THREE.CanvasTexture(canvasRef.current);
+    tex.flipY = false;
+    tex.colorSpace = THREE.SRGBColorSpace;
+    textureRef.current = tex;
+
     clone.traverse((obj) => {
       if ((obj as THREE.Mesh).isMesh) {
         const mesh = obj as THREE.Mesh;
-        const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
-        mats.forEach((m: any) => {
-          m = m.clone();
-          m.map = null;
-          m.color = new THREE.Color(0xdddddd);
-          m.needsUpdate = true;
-          if (Array.isArray(mesh.material)) {
-            const index = mesh.material.indexOf(m);
-            if (index !== -1) mesh.material[index] = m;
-          } else {
-            mesh.material = m;
-          }
+        const mat = new THREE.MeshStandardMaterial({
+          map: tex,
+          transparent: true,
+          roughness: 0.3,
+          metalness: 0.1
         });
+        mesh.material = mat;
       }
     });
     return clone;
   }, [scene]);
+
+  const mouseDownTime = useRef(0);
 
   return (
     <primitive
@@ -114,13 +170,13 @@ function ModeloInterativo({
       }}
       onPointerUp={(e: any) => {
         const duration = Date.now() - mouseDownTime.current;
-        if (duration < 200 && e.face && e.uv) {
+        if (duration < 200 && e.uv) {
           e.stopPropagation();
           onClicar(e.point, e.face.normal, e.uv);
         }
       }}
       onPointerMove={(e: any) => {
-        if (isDragging && e.face && e.uv) {
+        if (isDragging && e.uv) {
           onDrag(e.point, e.face.normal, e.uv);
         }
       }}

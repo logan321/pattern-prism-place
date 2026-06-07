@@ -17,6 +17,9 @@ interface Zone {
 function Model({ url, textureUrl, zones = [] }: { url: string; textureUrl?: string; zones?: Zone[] }) {
   console.log("Zones recebidas no Model:", zones);
   const { scene } = useGLTF(url);
+  
+  // Clone da cena para garantir que mudanças de material sejam aplicadas corretamente a cada instância
+  const clonedScene = React.useMemo(() => scene.clone(), [scene, url]);
   const [uvTexture, setUvTexture] = React.useState<THREE.CanvasTexture | null>(null);
   
   const name = useCustomizerStore(state => state.name);
@@ -155,7 +158,7 @@ function Model({ url, textureUrl, zones = [] }: { url: string; textureUrl?: stri
         texture.anisotropy = 16;
         texture.needsUpdate = true;
 
-        scene.traverse((child) => {
+        clonedScene.traverse((child) => {
           const mesh = child as THREE.Mesh;
           if (mesh.isMesh && mesh.material) {
             const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
@@ -200,12 +203,12 @@ function Model({ url, textureUrl, zones = [] }: { url: string; textureUrl?: stri
         applyTexture(textureUrl);
       }
     }
-  }, [scene, textureUrl, uvTexture]);
+  }, [clonedScene, textureUrl, uvTexture]);
 
 
   return (
     <group>
-      <primitive object={scene} />
+      <primitive object={clonedScene} />
       
       {/* Removemos o mapeamento redundante das zonas para evitar duplicação no 3D */}
 

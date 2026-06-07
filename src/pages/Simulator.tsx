@@ -716,6 +716,5 @@ export default function Simulator() {
         </div>
       </footer>
     </div>
-    </>
   );
 }

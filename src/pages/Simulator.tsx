@@ -411,7 +411,7 @@ export default function Simulator() {
                 />
               ))
             ) : activeTab === 'Cores' ? (
-              patterns?.map(pattern => (
+              patterns?.filter(p => p.image_url).map(pattern => (
                 <PatternCard 
                   key={pattern.id}
                   name={pattern.name}

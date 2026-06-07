@@ -130,8 +130,15 @@ export default function Simulator() {
   } = useCustomizerStore();
   const customName = useCustomizerStore(state => state.name);
   const customNumber = useCustomizerStore(state => state.number);
+  const nameColor = useCustomizerStore(state => state.nameColor);
+  const numberColor = useCustomizerStore(state => state.numberColor);
+  const nameFont = useCustomizerStore(state => state.nameFont);
+  
   const setName = useCustomizerStore(state => state.setName);
   const setNumber = useCustomizerStore(state => state.setNumber);
+  const setNameColor = useCustomizerStore(state => state.setNameColor);
+  const setNumberColor = useCustomizerStore(state => state.setNumberColor);
+  const setNameFont = useCustomizerStore(state => state.setNameFont);
   const setFormation = useCustomizerStore(state => state.setFormation);
 
   const { data: models } = useQuery({

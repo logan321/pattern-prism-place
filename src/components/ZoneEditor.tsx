@@ -79,7 +79,7 @@ export default function ZoneEditor({ referenceUrl, onClose }: any) {
 
   return (
     <div className="fixed inset-0 bg-[#0a0a0a] z-[70] flex flex-col animate-in fade-in duration-300">
-      <header className="flex justify-between items-center p-4 bg-[#111] border-b border-[#222]">
+      <header className="flex justify-between items-center p-4 bg-[#161616] border-b border-[#222]">
         <div className="flex items-center gap-3">
           <div className="bg-orange-600 p-2 rounded-lg">
             <Crosshair className="w-5 h-5 text-white" />
@@ -106,9 +106,9 @@ export default function ZoneEditor({ referenceUrl, onClose }: any) {
         </div>
       </header>
 
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden p-4 gap-4 bg-[#0a0a0a]">
         {/* Left Panel - Layer List */}
-        <div className="w-72 bg-[#111] border-r border-[#222] p-4 flex flex-col gap-4">
+        <div className="w-72 bg-[#161616] rounded-xl border border-[#222] p-4 flex flex-col gap-4 shadow-xl">
            <div className="flex items-center justify-between px-2">
               <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Camadas / Zonas</span>
               <span className="text-[10px] bg-orange-600/20 text-orange-600 px-2 py-0.5 rounded-full font-bold">{zones.length}</span>
@@ -155,7 +155,7 @@ export default function ZoneEditor({ referenceUrl, onClose }: any) {
         </div>
 
         {/* Center - UV Map Canvas */}
-        <div className="flex-1 relative bg-[#050505] overflow-auto flex items-center justify-center p-20 select-none">
+        <div className="flex-1 relative bg-[#161616] rounded-xl border border-[#222] overflow-auto flex items-center justify-center p-20 select-none shadow-xl">
           <div 
             className="relative bg-[#f8f8f8] shadow-[0_0_100px_rgba(0,0,0,0.5)] transition-transform duration-200"
             style={{ 
@@ -258,16 +258,16 @@ export default function ZoneEditor({ referenceUrl, onClose }: any) {
           
           {/* Zoom Controls Overlay */}
           <div className="absolute bottom-8 right-8 flex flex-col gap-2">
-             <button onClick={() => setZoom(prev => Math.min(prev + 0.1, 2))} className="p-3 bg-[#111] text-white rounded-xl hover:bg-[#222] border border-[#333] shadow-xl"><Maximize className="w-5 h-5"/></button>
-             <button onClick={() => setZoom(prev => Math.max(prev - 0.1, 0.1))} className="p-3 bg-[#111] text-white rounded-xl hover:bg-[#222] border border-[#333] shadow-xl"><RotateCcw className="w-5 h-5"/></button>
-             <div className="bg-[#111] px-4 py-2 rounded-xl border border-[#333] text-white text-[10px] font-bold text-center">
+             <button onClick={() => setZoom(prev => Math.min(prev + 0.1, 2))} className="p-3 bg-[#161616] text-white rounded-xl hover:bg-[#222] border border-[#333] shadow-xl"><Maximize className="w-5 h-5"/></button>
+             <button onClick={() => setZoom(prev => Math.max(prev - 0.1, 0.1))} className="p-3 bg-[#161616] text-white rounded-xl hover:bg-[#222] border border-[#333] shadow-xl"><RotateCcw className="w-5 h-5"/></button>
+             <div className="bg-[#161616] px-4 py-2 rounded-xl border border-[#333] text-white text-[10px] font-bold text-center">
                 {Math.round(zoom * 100)}%
              </div>
           </div>
         </div>
 
         {/* Right Panel - Adjustments */}
-        <div className="w-80 bg-[#111] border-l border-[#222] p-6 flex flex-col gap-6 overflow-y-auto">
+        <div className="w-80 bg-[#161616] rounded-xl border border-[#222] p-6 flex flex-col gap-6 overflow-y-auto shadow-xl">
           {zonaSelecionada ? (
             <div className="space-y-6 animate-in slide-in-from-right duration-300">
               <div className="flex items-center justify-between border-b border-[#222] pb-4">
@@ -372,7 +372,7 @@ export default function ZoneEditor({ referenceUrl, onClose }: any) {
       {/* Preview Modal */}
       {showPreview && previewUrl && (
         <div className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center p-10 backdrop-blur-md animate-in zoom-in-95 duration-200">
-           <div className="bg-[#111] rounded-3xl overflow-hidden max-w-5xl w-full flex flex-col max-h-full border border-white/5 shadow-[0_0_100px_rgba(0,0,0,0.8)]">
+           <div className="bg-[#161616] rounded-3xl overflow-hidden max-w-5xl w-full flex flex-col max-h-full border border-white/5 shadow-[0_0_100px_rgba(0,0,0,0.8)]">
               <div className="p-6 border-b border-white/5 flex justify-between items-center bg-[#161616]">
                  <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-orange-600/10 rounded-xl flex items-center justify-center">

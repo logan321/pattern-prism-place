@@ -301,9 +301,10 @@ export default function Simulator() {
     }
   }, [activeTab]);
 
-  console.log('=== CURRENT PATTERN ===', currentPattern);
-  console.log('=== ACTIVE UV MATRIZ ===', activeUVMatriz);
-  console.log('=== ZONES ===', currentZones);
+  console.log('DRAW_SIMULATOR patterns:', patterns);
+  console.log('DRAW_SIMULATOR selectedPattern:', selectedPattern);
+  console.log('DRAW_SIMULATOR activeUVMatriz:', activeUVMatriz);
+  console.log('DRAW_SIMULATOR currentZones:', currentZones);
 
 
 

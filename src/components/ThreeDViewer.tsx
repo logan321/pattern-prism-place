@@ -156,7 +156,9 @@ function Model({
       ctx.fillStyle = nameColor || '#ffffff';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(name.toUpperCase(), tx, ty);
+      // Limitar largura para não extrapolar a zona do peito
+      const maxWidth = 400;
+      ctx.fillText(name.toUpperCase(), tx, ty, maxWidth);
       ctx.restore();
     }
 

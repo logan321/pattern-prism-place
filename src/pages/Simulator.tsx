@@ -816,7 +816,8 @@ export default function Simulator() {
                 number: customNumber,
                 nameColor,
                 numberColor,
-                nameFont
+                nameFont,
+                shieldUrl
               }}
             />
 

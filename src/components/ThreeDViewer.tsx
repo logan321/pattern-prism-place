@@ -16,6 +16,7 @@ interface CustomizationState {
   nameColor: string;
   numberColor: string;
   nameFont: string;
+  shieldUrl?: string | null;
 }
 
 function ZoneDecal({ zone, customization }: { zone: any; customization: CustomizationState }) {
@@ -48,6 +49,7 @@ function ZoneDecal({ zone, customization }: { zone: any; customization: Customiz
     let content = '';
     let color = customization.nameColor || '#ffffff';
     let fontSize = 40;
+    let imageToRender: string | null = null;
 
     if (name.includes('nome') || name.includes('name')) {
       content = customization.name || '';
@@ -57,21 +59,61 @@ function ZoneDecal({ zone, customization }: { zone: any; customization: Customiz
       content = customization.number || '';
       color = customization.numberColor;
       fontSize = 120;
+    } else if ((name.includes('escudo') || name.includes('shield')) && customization.shieldUrl) {
+      imageToRender = customization.shieldUrl;
     } else {
       content = zone.name;
     }
 
-    if (!content) return;
+    if (!content && !imageToRender) return;
 
-    ctx.fillStyle = color;
-    ctx.font = `bold ${fontSize}px sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(content, canvas.width / 2, canvas.height / 2);
+    if (imageToRender) {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.src = imageToRender;
+      img.onload = () => {
+        // Clear background
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Re-apply pathData mask if present (needed after clear)
+        if (zone.pathData && zone.pathData.length > 2) {
+          ctx.save();
+          ctx.beginPath();
+          zone.pathData.forEach((point: { x: number; y: number }, index: number) => {
+            const x = (point.x / 100) * canvas.width;
+            const y = (point.y / 100) * canvas.height;
+            if (index === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+          });
+          ctx.closePath();
+          ctx.clip();
+        }
 
-    const newTexture = new THREE.CanvasTexture(canvas);
-    newTexture.needsUpdate = true;
-    setTexture(newTexture);
+        // Draw image centered and scaled to fit
+        const scale = Math.min(canvas.width / img.width, canvas.height / img.height) * 0.9;
+        const w = img.width * scale;
+        const h = img.height * scale;
+        ctx.drawImage(img, (canvas.width - w) / 2, (canvas.height - h) / 2, w, h);
+        
+        if (zone.pathData && zone.pathData.length > 2) {
+          ctx.restore();
+        }
+
+        const newTexture = new THREE.CanvasTexture(canvas);
+        newTexture.needsUpdate = true;
+        setTexture(newTexture);
+      };
+    } else {
+      ctx.fillStyle = color;
+      ctx.font = `bold ${fontSize}px ${customization.nameFont || 'sans-serif'}`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(content, canvas.width / 2, canvas.height / 2);
+
+      const newTexture = new THREE.CanvasTexture(canvas);
+      newTexture.needsUpdate = true;
+      setTexture(newTexture);
+    }
   }, [zone, customization]);
 
   if (!texture || !zone.position3d) return null;

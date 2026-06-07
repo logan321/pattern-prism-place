@@ -145,21 +145,6 @@ function ModelWithUVClick({ url, onPointSelect, zones }: {
     setTexture(newTexture);
   }, [zones]);
 
-  useEffect(() => {
-    if (clonedScene && texture) {
-      clonedScene.traverse((child) => {
-        if ((child as THREE.Mesh).isMesh) {
-          const mesh = child as THREE.Mesh;
-          if (mesh.material instanceof THREE.MeshStandardMaterial) {
-            mesh.material.emissiveMap = texture;
-            mesh.material.emissive = new THREE.Color(0xffffff);
-            mesh.material.emissiveIntensity = 1;
-            mesh.material.needsUpdate = true;
-          }
-        }
-      });
-    }
-  }, [clonedScene, texture]);
   
   return (
     <primitive 

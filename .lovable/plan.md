@@ -1,22 +1,18 @@
-Desenvolveremos o simulador 3D para o Macro Master focado na flexibilidade de estampas via UV Map.
+Para permitir que o usuário edite o texto ou logo e aplique na estampa via UV Matriz de forma invisível, mas renderizada no 3D, seguiremos este plano:
 
-### Estrutura do Projeto
-1. **Visualizador 3D (R3F):** Componente principal usando React Three Fiber para renderizar o modelo da camisa (exportado do CLO3D).
-2. **Sistema de Materiais:** Uso de texturas dinâmicas. O UV Map da estampa será aplicado como um `Decal` ou substituindo o `map` principal do material, dependendo da complexidade do modelo.
-3. **Painel de Customização:** 
-    - Seletor de Modelo (baseado nas imagens PNG da frente).
-    - Grade de Estampas (miniaturas).
-    - Editor de Cores (usando as texturas de máscara UV para colorir partes específicas).
-    - Upload de Logotipos (posicionamento via Decals).
+1.  **Atualizar o `useCustomizerStore`**:
+    *   Adicionar estado para `zonesConfiguration` (opcional, para mapear nomes de zonas para posições UV predefinidas se necessário).
+    *   Manter a lógica atual de desenho em canvas que utiliza as zonas da `activeUVMatriz`.
 
-### Detalhes Técnicos
-- **Modelos 3D:** Devem ser exportados do CLO3D em formato `.glb` com UVs bem definidos.
-- **Mapeamento de Estampas:** Cada estampa terá uma miniatura (PNG/JPG) e um arquivo de textura correspondente (UV Map) que se encaixa perfeitamente no modelo 3D.
-- **Performance:** Carregamento progressivo das texturas e uso de `compressed textures` (Basis/KTX2) se necessário para mobile.
+2.  **Aprimorar `ThreeDViewer.tsx`**:
+    *   Ajustar a função `drawOnCanvas` para aceitar um objeto de `zones` vindo diretamente da `activeUVMatriz` vinculada ao padrão selecionado.
+    *   Garantir que a renderização `CanvasTexture` trate a estampa base (cor de fundo) e sobreponha os elementos (nome, número, escudo) nas coordenadas UV exatas definidas na matriz.
+    *   Isso fará com que qualquer alteração no simulador (texto/imagem) seja projetada dinamicamente no 3D sem que o usuário precise gerenciar camadas, apenas editando as zonas.
 
-### Próximos Passos
-1. Implementar a estrutura básica do layout (Header, Canvas 3D lateral, Menu de opções).
-2. Adicionar o primeiro modelo 3D de camisa (usaremos um modelo genérico de alta qualidade para começar, ou um placeholder se você ainda não tiver o do CLO3D).
-3. Criar o fluxo de troca de estampas baseado no mapeamento UV solicitado.
+3.  **Fluxo de Edição**:
+    *   O usuário seleciona a estampa.
+    *   O sistema carrega a `uv_matriz` associada.
+    *   Ao editar Nome/Número/Escudo, o `ThreeDViewer` redesenha o canvas baseado nas coordenadas UV da matriz do padrão.
+    *   A textura é aplicada no material do modelo 3D.
 
-Deseja que eu comece pela interface do editor ou pela integração do primeiro modelo 3D?
+Dessa forma, o usuário apenas "preenche as zonas" e o sistema cuida da projeção no UV Map.

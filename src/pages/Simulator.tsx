@@ -275,7 +275,14 @@ export default function Simulator() {
 
   // Encontrar as zonas baseadas na UV Matriz vinculada à estampa
   const activeUVMatriz = uvMatrices?.find(m => m.id === currentPattern?.uv_matriz_id);
-  const currentZones = activeUVMatriz?.zones || [];
+  // Converter as zonas para o formato esperado pelo viewer
+  const rawZones = activeUVMatriz?.zones as any[] || [];
+  const currentZones = rawZones.map(z => ({
+    id: z.id,
+    name: z.name,
+    uv: z.uv || [0, 0],
+    position: z.position || [0, 0, 0]
+  }));
 
   console.log('=== CURRENT PATTERN ===', currentPattern);
   console.log('=== ACTIVE UV MATRIZ ===', activeUVMatriz);

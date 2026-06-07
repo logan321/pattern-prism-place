@@ -124,18 +124,18 @@ function ModeloComTextura({
       
       // Retângulo da área - Bordas mais visíveis
       ctx.strokeStyle = isSelected ? '#ea580c' : '#3b82f6';
-      ctx.lineWidth = 15;
+      ctx.lineWidth = 20; // Muito mais grosso
       ctx.strokeRect(-w / 2, -h / 2, w, h);
       
-      // Preenchimento semitransparente - mudando para opaco para testar
-      ctx.fillStyle = isSelected ? 'rgba(234, 88, 12, 0.8)' : 'rgba(59, 130, 246, 0.8)';
+      // Preenchimento Totalmente Opaco para Teste
+      ctx.fillStyle = isSelected ? '#ea580c' : '#3b82f6';
       ctx.fillRect(-w / 2, -h / 2, w, h);
 
       // Texto
       ctx.fillStyle = 'white';
-      ctx.font = 'bold 80px Arial';
+      ctx.font = 'bold 120px Arial'; // Maior
       ctx.textAlign = 'center';
-      ctx.fillText(z.name.toUpperCase(), 0, 30);
+      ctx.fillText(z.name.toUpperCase(), 0, 40);
       
       ctx.restore();
     });
@@ -164,19 +164,30 @@ function ModeloComTextura({
         }
 
         const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+        console.log(`DEBUG: Malha ${mesh.name} tem ${materials.length} materiais. Tipos:`, materials.map(m => m.type));
         
         const newMaterials = materials.map(m => {
-          if (m instanceof THREE.MeshStandardMaterial || m instanceof THREE.MeshPhysicalMaterial) {
-            const newMat = m.clone();
-            // Usamos emissiveMap para sobrepor as zonas à textura original
+          // Tentando ser mais abrangente nos materiais
+          const newMat = m.clone();
+          console.log(`DEBUG: Clonando material ${m.name} do tipo ${m.type}`);
+          
+          if (newMat instanceof THREE.MeshStandardMaterial || newMat instanceof THREE.MeshPhysicalMaterial || newMat instanceof THREE.MeshBasicMaterial) {
+            // @ts-ignore
             newMat.emissiveMap = tex;
+            // @ts-ignore
             newMat.emissive = new THREE.Color(0xffffff);
-            newMat.emissiveIntensity = 5.0; // Aumentado para máximo contraste
-            // Garante que o material não ignore o emissive
+            // @ts-ignore
+            newMat.emissiveIntensity = 10.0; // Brilho extremo
+            
+            // Para garantir que apareça mesmo se não for StandardMaterial
+            if (newMat instanceof THREE.MeshBasicMaterial) {
+              newMat.map = tex; // BasicMaterial não tem emissiveMap
+            }
+            
             newMat.needsUpdate = true;
             return newMat;
           }
-          return m;
+          return newMat;
         });
 
         mesh.material = Array.isArray(mesh.material) ? newMaterials : newMaterials[0];

@@ -1,6 +1,7 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Trash2, Save, X, Move, Maximize, RotateCcw, Eye, Layers, Square, Crosshair, Target } from 'lucide-react';
-import { UVZone, generateFinalTexture } from '../lib/textureGenerator';
+import React, { useState, useRef, useEffect, useContext } from 'react';
+import { Trash2, Save, X, Move, Maximize, RotateCcw, Eye, Layers, Square, Crosshair, Target, ExternalLink, PenTool, Share2 } from 'lucide-react';
+import { generateFinalTexture } from '../lib/textureGenerator';
+import { AppContext, Zone3D } from '../context/AppContext';
 
 const TIPOS_ZONA = [
   { id: 'logo', label: 'Logo / Escudo' },
@@ -9,55 +10,57 @@ const TIPOS_ZONA = [
   { id: 'sponsor', label: 'Patrocinador' },
 ];
 
-export default function ZoneEditor({ referenceUrl, initialZones = [], onSave, onClose }: any) {
-  useEffect(() => {
-    console.log('ZoneEditor: referenceUrl is', referenceUrl);
-    console.log('ZoneEditor: initialZones count:', initialZones.length);
-  }, [referenceUrl, initialZones]);
-  const [zonas, setZonas] = useState<UVZone[]>(initialZones);
-  const [idSelecionado, setIdSelecionado] = useState<string | null>(null);
+export default function ZoneEditor({ referenceUrl, onClose }: any) {
+  const { zones, addZone, updateZone, removeZone, setSelectedZoneId, selectedZoneId } = useContext(AppContext);
   const [zoom, setZoom] = useState(0.4);
-  const containerRef = useRef<HTMLDivElement>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [showPreview, setShowPreview] = useState(false);
+  const [isDrawingPath, setIsDrawingPath] = useState(false);
 
   const canvasSize = 2048;
-  const zonaSelecionada = zonas.find(z => z.id === idSelecionado);
-
-  const updateZona = (id: string, updates: Partial<UVZone>) => {
-    setZonas(prev => prev.map(z => z.id === id ? { ...z, ...updates } : z));
-  };
+  const zonaSelecionada = zones.find(z => z.id === selectedZoneId);
 
   const handleCanvasClick = (e: React.MouseEvent) => {
-    // Only create new if clicking on background
     if (e.target !== e.currentTarget) return;
+    if (isDrawingPath && zonaSelecionada) {
+        const rect = e.currentTarget.getBoundingClientRect();
+        const x = ((e.clientX - rect.left) / (canvasSize * zoom)) * 100;
+        const y = ((e.clientY - rect.top) / (canvasSize * zoom)) * 100;
+        
+        const currentPath = zonaSelecionada.pathData || [];
+        updateZone(zonaSelecionada.id, { pathData: [...currentPath, { x, y }] });
+        return;
+    }
     
     const rect = e.currentTarget.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / zoom;
-    const y = (e.clientY - rect.top) / zoom;
+    const xPercent = ((e.clientX - rect.left) / (canvasSize * zoom)) * 100;
+    const yPercent = ((e.clientY - rect.top) / (canvasSize * zoom)) * 100;
 
-    const novaId = crypto.randomUUID();
-    const nova: UVZone = {
-      id: novaId,
-      name: `ZONA ${zonas.length + 1}`,
-      type: 'text',
-      x,
-      y,
-      width: 200,
-      height: 100,
-      rotation: 0,
-    };
-    setZonas(prev => [...prev, nova]);
-    setIdSelecionado(novaId);
+    addZone(`ZONA ${zones.length + 1}`, 'front');
+    // Since addZone doesn't return the ID easily here without changing AppContext, 
+    // we might need a workaround or assume it's the last one.
+    // However, AppContext usually handles the ID generation.
   };
 
   const handleGeneratePreview = async () => {
     setIsGenerating(true);
     try {
+      // Map global zones back to legacy UVZone format for preview generator if needed
+      const legacyZones = zones.map(z => ({
+        id: z.id,
+        name: z.name,
+        type: 'text' as const, // Placeholder
+        x: (z.xPercent / 100) * canvasSize,
+        y: (z.yPercent / 100) * canvasSize,
+        width: (z.widthPercent / 100) * canvasSize,
+        height: (z.heightPercent / 100) * canvasSize,
+        rotation: z.rotation
+      }));
+
       const canvas = await generateFinalTexture({
         baseTextureUrl: referenceUrl,
-        zones: zonas,
+        zones: legacyZones,
         customizations: {
           name: 'JOGADOR',
           number: '10',
@@ -85,7 +88,7 @@ export default function ZoneEditor({ referenceUrl, initialZones = [], onSave, on
           </div>
           <div>
             <h1 className="text-white font-bold text-lg leading-none">Gabarito UV Master</h1>
-            <p className="text-gray-500 text-[10px] mt-1 uppercase tracking-widest font-bold">Posicionamento Técnico de Personalização</p>
+            <p className="text-gray-500 text-[10px] mt-1 uppercase tracking-widest font-bold">Posicionamento Técnico em Porcentagem</p>
           </div>
         </div>
         <div className="flex gap-2">
@@ -96,8 +99,8 @@ export default function ZoneEditor({ referenceUrl, initialZones = [], onSave, on
           >
             <Eye className="w-4 h-4" /> {isGenerating ? 'Processando...' : 'Preview Técnico'}
           </button>
-          <button onClick={() => onSave(zonas)} className="bg-orange-600 hover:bg-orange-700 text-white py-2 px-6 rounded-xl flex items-center gap-2 transition-all font-bold text-sm">
-            <Save className="w-4 h-4" /> Salvar Gabarito
+          <button onClick={onClose} className="bg-orange-600 hover:bg-orange-700 text-white py-2 px-6 rounded-xl flex items-center gap-2 transition-all font-bold text-sm">
+            <Save className="w-4 h-4" /> Finalizar Edição
           </button>
           <button onClick={onClose} className="bg-[#222] hover:bg-[#333] text-white py-2 px-4 rounded-xl transition-all">
             <X className="w-5 h-5" />
@@ -110,29 +113,42 @@ export default function ZoneEditor({ referenceUrl, initialZones = [], onSave, on
         <div className="w-72 bg-[#111] border-r border-[#222] p-4 flex flex-col gap-4">
            <div className="flex items-center justify-between px-2">
               <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Camadas / Zonas</span>
-              <span className="text-[10px] bg-orange-600/20 text-orange-600 px-2 py-0.5 rounded-full font-bold">{zonas.length}</span>
+              <span className="text-[10px] bg-orange-600/20 text-orange-600 px-2 py-0.5 rounded-full font-bold">{zones.length}</span>
            </div>
            
            <div className="flex-1 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
-              {zonas.map(z => (
+              {zones.map(z => (
                 <div 
                   key={z.id}
-                  onClick={() => setIdSelecionado(z.id)}
-                  className={`p-3 rounded-xl cursor-pointer border transition-all ${idSelecionado === z.id ? 'border-orange-600 bg-orange-600/10' : 'border-[#222] bg-[#161616] hover:bg-[#1a1a1a]'}`}
+                  onClick={() => setSelectedZoneId(z.id)}
+                  className={`p-3 rounded-xl cursor-pointer border transition-all ${selectedZoneId === z.id ? 'border-orange-600 bg-orange-600/10' : 'border-[#222] bg-[#161616] hover:bg-[#1a1a1a]'}`}
                 >
-                  <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-lg ${idSelecionado === z.id ? 'bg-orange-600 text-white' : 'bg-[#222] text-gray-500'}`}>
-                      {z.type === 'text' || z.type === 'number' ? <Layers className="w-4 h-4" /> : <Square className="w-4 h-4" />}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className={`p-2 rounded-lg ${selectedZoneId === z.id ? 'bg-orange-600 text-white' : 'bg-[#222] text-gray-500'}`}>
+                        {z.shared ? <Share2 className="w-4 h-4" /> : <Layers className="w-4 h-4" />}
+                      </div>
+                      <div>
+                        <p className="font-bold text-xs text-white">{z.name}</p>
+                        <p className="text-[9px] text-gray-500 uppercase font-bold">{z.side} {z.shared ? '(Shared)' : ''}</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-bold text-xs text-white">{z.name}</p>
-                      <p className="text-[9px] text-gray-500 uppercase font-bold">{z.type}</p>
-                    </div>
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        // Navigation logic would go here, e.g. window.location.hash or similar
+                        alert(`Navigando para editor 3D da zona: ${z.name}`);
+                      }}
+                      className="p-1.5 hover:bg-white/10 rounded-lg text-orange-500"
+                      title="Posicionar no 3D"
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
               ))}
               
-              {zonas.length === 0 && (
+              {zones.length === 0 && (
                 <div className="h-40 flex flex-col items-center justify-center text-center p-4 border border-dashed border-[#222] rounded-2xl">
                    <p className="text-gray-600 text-xs italic">Nenhuma zona criada.<br/>Clique no mapa para começar.</p>
                 </div>

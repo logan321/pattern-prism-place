@@ -77,11 +77,15 @@ function UVConfigView({ models, queryClient, modelsLoading, onOpenMatrizModal }:
 
   const handleSaveZones = async (zones: any[]) => {
     try {
+      // Validate if selectedModelId is a valid UUID
+      const isUUID = (str: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
+      const modelo_id = selectedModelId && isUUID(selectedModelId) ? selectedModelId : null;
+
       const { error } = await supabase
         .from('uv_matrices')
         .update({ 
           zones,
-          modelo_id: selectedModelId || null
+          modelo_id
         } as any)
         .eq('id', selectedMatrizId);
       

@@ -19,14 +19,15 @@ function Model({ url, textureUrl, zones = [] }: { url: string; textureUrl?: stri
   const { scene } = useGLTF(url);
   const [uvTexture, setUvTexture] = React.useState<THREE.CanvasTexture | null>(null);
   
+  const name = useCustomizerStore(state => state.name);
+  const number = useCustomizerStore(state => state.number);
+  const nameColor = useCustomizerStore(state => state.nameColor);
+  const numberColor = useCustomizerStore(state => state.numberColor);
+  const nameFont = useCustomizerStore(state => state.nameFont);
+
   // Efeito para criar a textura de zonas baseada em UV
   useEffect(() => {
-    if (!zones.length) {
-      setUvTexture(null);
-      return;
-    }
-
-    console.log("Criando textura UV para zones:", zones);
+    console.log("Criando textura UV para zones e texto:", { zones, name, number, nameColor, numberColor, nameFont });
     const canvas = document.createElement('canvas');
     canvas.width = 2048;
     canvas.height = 2048;
@@ -35,13 +36,13 @@ function Model({ url, textureUrl, zones = [] }: { url: string; textureUrl?: stri
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
+    // Desenhar Zonas
     zones.forEach((zone) => {
       if (zone.uv) {
         console.log(`Renderizando visualmente a zona na textura UV: ${zone.name}`, zone.uv);
         const x = zone.uv[0] * canvas.width;
         const y = (1 - zone.uv[1]) * canvas.height;
 
-        // Desenhar círculo
         ctx.beginPath();
         ctx.arc(x, y, 15, 0, Math.PI * 2);
         ctx.fillStyle = '#ea580c';
@@ -50,7 +51,6 @@ function Model({ url, textureUrl, zones = [] }: { url: string; textureUrl?: stri
         ctx.lineWidth = 4;
         ctx.stroke();
 
-        // Texto
         ctx.font = 'bold 24px Arial';
         ctx.fillStyle = 'white';
         ctx.textAlign = 'center';
@@ -58,10 +58,47 @@ function Model({ url, textureUrl, zones = [] }: { url: string; textureUrl?: stri
       }
     });
 
+    // Desenhar Nome e Número
+    // Primeiro tenta encontrar zonas específicas para nome/número
+    const nameZone = zones.find(z => z.name.toUpperCase() === 'NOME');
+    const numberZone = zones.find(z => z.name.toUpperCase() === 'NÚMERO' || z.name.toUpperCase() === 'NUMERO');
+
+    if (name) {
+      ctx.font = `bold 120px ${nameFont}`;
+      ctx.fillStyle = nameColor;
+      ctx.textAlign = 'center';
+      
+      let x = canvas.width * 0.5;
+      let y = canvas.height * 0.2;
+      
+      if (nameZone?.uv) {
+        x = nameZone.uv[0] * canvas.width;
+        y = (1 - nameZone.uv[1]) * canvas.height;
+      }
+      
+      ctx.fillText(name.toUpperCase(), x, y);
+    }
+
+    if (number) {
+      ctx.font = `bold 300px ${nameFont}`;
+      ctx.fillStyle = numberColor;
+      ctx.textAlign = 'center';
+      
+      let x = canvas.width * 0.5;
+      let y = canvas.height * 0.45;
+      
+      if (numberZone?.uv) {
+        x = numberZone.uv[0] * canvas.width;
+        y = (1 - numberZone.uv[1]) * canvas.height;
+      }
+      
+      ctx.fillText(number, x, y);
+    }
+
     const texture = new THREE.CanvasTexture(canvas);
     texture.flipY = false;
     setUvTexture(texture);
-  }, [zones]);
+  }, [zones, name, number, nameColor, numberColor, nameFont]);
 
   useEffect(() => {
     const applyTexture = (imageSrc: string) => {
@@ -120,10 +157,6 @@ function Model({ url, textureUrl, zones = [] }: { url: string; textureUrl?: stri
     }
   }, [scene, textureUrl, uvTexture]);
 
-  const name = useCustomizerStore(state => state.name);
-  const number = useCustomizerStore(state => state.number);
-  const nameColor = useCustomizerStore(state => state.nameColor);
-  const numberColor = useCustomizerStore(state => state.numberColor);
 
   return (
     <group>

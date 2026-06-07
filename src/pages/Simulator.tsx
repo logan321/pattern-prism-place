@@ -128,6 +128,11 @@ export default function Simulator() {
     selectedPattern,
     setSelectedPattern
   } = useCustomizerStore();
+  const customName = useCustomizerStore(state => state.name);
+  const customNumber = useCustomizerStore(state => state.number);
+  const setName = useCustomizerStore(state => state.setName);
+  const setNumber = useCustomizerStore(state => state.setNumber);
+  const setFormation = useCustomizerStore(state => state.setFormation);
 
   const { data: models } = useQuery({
     queryKey: ['models'],
@@ -385,8 +390,8 @@ export default function Simulator() {
                   <label className="text-[10px] font-bold text-gray-500 uppercase">Nome</label>
                   <input 
                     type="text" 
-                    value={useCustomizerStore(state => state.name)}
-                    onChange={(e) => useCustomizerStore.getState().setName(e.target.value)}
+                    value={customName}
+                    onChange={(e) => setName(e.target.value)}
                     className="w-full border rounded p-2 text-sm"
                     placeholder="DIGITE O NOME"
                   />
@@ -395,8 +400,8 @@ export default function Simulator() {
                   <label className="text-[10px] font-bold text-gray-500 uppercase">Número</label>
                   <input 
                     type="text" 
-                    value={useCustomizerStore(state => state.number)}
-                    onChange={(e) => useCustomizerStore.getState().setNumber(e.target.value)}
+                    value={customNumber}
+                    onChange={(e) => setNumber(e.target.value)}
                     className="w-full border rounded p-2 text-sm"
                     placeholder="00"
                   />
@@ -405,19 +410,19 @@ export default function Simulator() {
                   <label className="text-[10px] font-bold text-gray-500 uppercase">Formação</label>
                   <div className="grid grid-cols-1 gap-2">
                     <button 
-                      onClick={() => useCustomizerStore.getState().setFormation('left-shield')}
+                      onClick={() => setFormation('left-shield')}
                       className="text-[10px] border p-2 rounded hover:bg-orange-50"
                     >
                       NOME DIR / ESCUDO ESQ
                     </button>
                     <button 
-                      onClick={() => useCustomizerStore.getState().setFormation('right-shield')}
+                      onClick={() => setFormation('right-shield')}
                       className="text-[10px] border p-2 rounded hover:bg-orange-50"
                     >
                       NOME ESQ / ESCUDO DIR
                     </button>
                     <button 
-                      onClick={() => useCustomizerStore.getState().setFormation('center-name')}
+                      onClick={() => setFormation('center-name')}
                       className="text-[10px] border p-2 rounded hover:bg-orange-50"
                     >
                       NOME CENTRAL

@@ -29,8 +29,9 @@ import { ThreeDViewer, type ThreeDViewerRef } from '../components/ThreeDViewer';
 import { CustomizerModel } from '../components/CustomizerModel';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../integrations/supabase/client';
-import { generateFinalTexture, UVZone } from '../lib/textureGenerator';
+import { generateFinalTexture, UVZone, UvLayer } from '../lib/textureGenerator';
 import * as THREE from 'three';
+import { useUvCompositor } from '../hooks/useUvCompositor';
 import golaPadreAsset from '../assets/GOLA_PADRE_otimizado.glb.asset.json';
 
 const LOCAL_MODELS = [
@@ -145,6 +146,12 @@ export default function Simulator() {
     setShieldUrl
   } = useCustomizerStore();
 
+  const {
+    uvMapZones, uvMapDims, uvLayers, uvTextDrafts, uvBaseUrl,
+    setUvMapZones, setUvMapDims, setUvLayers, setUvTextDrafts,
+    setUvBaseUrl, clearUvState,
+  } = useCustomizerStore();
+
   const { data: models } = useQuery({
     queryKey: ['models'],
     queryFn: async () => {
@@ -248,6 +255,96 @@ export default function Simulator() {
     staleTime: 1000 * 60 * 5, // 5 minutos
   });
 
+  const allModels = React.useMemo(() => [...LOCAL_MODELS, ...(models ?? [])], [models]);
+  const currentPattern = React.useMemo(() => patterns?.find(p => p.id === selectedPattern), [patterns, selectedPattern]);
+
+  const uvZonesActive = Object.keys(uvMapZones).length > 0;
+
+  const uvComposite = useUvCompositor({
+    baseUrl: uvZonesActive ? uvBaseUrl : null,
+    zones: uvMapZones,
+    layers: uvLayers,
+    uvWidth: uvMapDims.w,
+    uvHeight: uvMapDims.h,
+  });
+
+  // Quando o padrão (pattern) selecionado mudar, busca o UV map vinculado
+  useEffect(() => {
+    let cancelled = false;
+    // Usamos uv_matriz_id que já existe no pattern como referência para carregar a matriz se necessário
+    // ou se o pattern tiver um uv_map_id (assumindo que pode ser adicionado futuramente)
+    const mapId = (currentPattern as any)?.uv_map_id;
+    if (!mapId) {
+      clearUvState();
+      return;
+    }
+    (async () => {
+      // Nota: Certifique-se que a tabela 'uv_maps' existe ou use 'uv_matrices' se for o caso
+      const { data } = await supabase
+        .from('uv_matrices') 
+        .select('image_url:reference_url, uv_zones:zones, uv_width, uv_height')
+        .eq('id', mapId)
+        .maybeSingle();
+      if (cancelled || !data) return;
+      
+      const d = data as any;
+      setUvBaseUrl(d.image_url ?? null);
+      setUvMapZones(
+        d.uv_zones && typeof d.uv_zones === 'object'
+          ? (d.uv_zones as Record<string, any>)
+          : {}
+      );
+      setUvMapDims({ w: d.uv_width ?? null, h: d.uv_height ?? null });
+      setUvLayers([]);
+      setUvTextDrafts({});
+    })();
+    return () => { cancelled = true; };
+  }, [selectedPattern]);
+
+  // Funções para manipular layers de texto
+  const uvTextCommitRef = useRef<number | null>(null);
+
+  const setUvLayerText = (zoneKey: string, content: string) => {
+    setUvTextDrafts(prev => ({ ...prev, [zoneKey]: content }));
+    if (uvTextCommitRef.current != null) window.clearTimeout(uvTextCommitRef.current);
+    uvTextCommitRef.current = window.setTimeout(() => {
+      uvTextCommitRef.current = null;
+      setUvLayers(prev => {
+        const existing = prev.find(l => l.zoneKey === zoneKey && l.type === 'text');
+        if (existing) {
+          if (!content) return prev.filter(l => l !== existing);
+          return prev.map(l => l === existing
+            ? { ...l, content, color: nameColor, fontFamily: nameFont, fontWeight: 900 } as UvLayer
+            : l);
+        }
+        if (!content) return prev;
+        return [...prev, {
+          id: `${zoneKey}_${Date.now()}`, zoneKey, type: 'text',
+          content, color: nameColor, fontFamily: nameFont, fontWeight: 900
+        } as UvLayer];
+      });
+    }, 180);
+  };
+
+  const setUvLayerImage = (zoneKey: string, file: File) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const url = typeof reader.result === 'string' ? reader.result : '';
+      if (!url) return;
+      setUvLayers(prev => [
+        ...prev.filter(l => !(l.zoneKey === zoneKey && l.type === 'image')),
+        { id: `${zoneKey}_image_${Date.now()}`, zoneKey, type: 'image', url, scale: 0.9, opacity: 1 } as UvLayer,
+      ]);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const removeUvLayer = (zoneKey: string) => {
+    setUvLayers(prev => prev.filter(l => l.zoneKey !== zoneKey));
+    setUvTextDrafts(prev => ({ ...prev, [zoneKey]: '' }));
+  };
+
+
   const { data: uvMatrices } = useQuery({
     queryKey: ['uv_matrices'],
     queryFn: async () => {
@@ -258,11 +355,9 @@ export default function Simulator() {
     staleTime: 0, // Garante que pegue sempre a versão mais recente ao mudar de página
   });
 
-  const allModels = React.useMemo(() => [...LOCAL_MODELS, ...(models ?? [])], [models]);
   const currentModel = React.useMemo(() => allModels.find(m => m.id === selectedModel), [allModels, selectedModel]);
   
   const FALLBACK_MODEL_URL = golaPadreAsset.url;
-  const currentPattern = React.useMemo(() => patterns?.find(p => p.id === selectedPattern), [patterns, selectedPattern]);
   const modelUrl = currentModel?.glb_url || FALLBACK_MODEL_URL;
 
   // Encontrar as zonas baseadas na UV Matriz vinculada à estampa ou modelo
@@ -320,25 +415,27 @@ export default function Simulator() {
     let active = true;
     const updateTexture = async () => {
       if (!active) return;
-      
       try {
-        console.log(`Simulator: Gerando textura final... Zonas: ${activeUVMatriz?.zones ? (activeUVMatriz.zones as any).length : 0}`);
-        
-        const canvas = await generateFinalTexture({
-          baseTextureUrl: textureUrl,
-          zones: (activeUVMatriz?.zones as unknown as UVZone[]) || [],
-          customizations: {
-            name: customName,
-            number: customNumber,
-            shieldUrl: shieldUrl,
-            nameColor: nameColor,
-            numberColor: numberColor,
-            nameFont: nameFont
-          }
-        });
-        
+        let canvas: HTMLCanvasElement;
+        if (uvZonesActive && uvComposite.canvas && uvComposite.ready) {
+          // Novo sistema: usa o canvas do compositor UV
+          canvas = uvComposite.canvas;
+        } else {
+          // Sistema legado: textureGenerator
+          canvas = await generateFinalTexture({
+            baseTextureUrl: textureUrl,
+            zones: (activeUVMatriz?.zones as unknown as UVZone[]) || [],
+            customizations: {
+              name: customName,
+              number: customNumber,
+              shieldUrl,
+              nameColor,
+              numberColor,
+              nameFont,
+            },
+          });
+        }
         if (!active) return;
-
         const tex = new THREE.CanvasTexture(canvas);
         tex.flipY = false;
         tex.colorSpace = THREE.SRGBColorSpace;
@@ -348,10 +445,13 @@ export default function Simulator() {
         console.error('Error generating final texture:', err);
       }
     };
-    
     updateTexture();
     return () => { active = false; };
-  }, [textureUrl, activeUVMatriz, customName, customNumber, shieldUrl, nameColor, numberColor, nameFont]);
+  }, [
+    textureUrl, activeUVMatriz, customName, customNumber,
+    shieldUrl, nameColor, numberColor, nameFont,
+    uvZonesActive, uvComposite.canvas, uvComposite.version, uvComposite.ready
+  ]);
 
   // Logs removidos para evitar poluição no console e possíveis erros de hook indiretos
 

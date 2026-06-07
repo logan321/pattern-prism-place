@@ -355,11 +355,9 @@ export default function Simulator() {
     staleTime: 0, // Garante que pegue sempre a versão mais recente ao mudar de página
   });
 
-  const allModels = React.useMemo(() => [...LOCAL_MODELS, ...(models ?? [])], [models]);
   const currentModel = React.useMemo(() => allModels.find(m => m.id === selectedModel), [allModels, selectedModel]);
   
   const FALLBACK_MODEL_URL = golaPadreAsset.url;
-  const currentPattern = React.useMemo(() => patterns?.find(p => p.id === selectedPattern), [patterns, selectedPattern]);
   const modelUrl = currentModel?.glb_url || FALLBACK_MODEL_URL;
 
   // Encontrar as zonas baseadas na UV Matriz vinculada à estampa ou modelo

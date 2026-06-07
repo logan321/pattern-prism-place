@@ -48,18 +48,14 @@ function UVConfigView({ models, queryClient, modelsLoading, onOpenMatrizModal }:
   };
 
   const handleOpenEditor = () => {
-    if (!selectedModelId || !selectedMatrizId) {
-      alert('Selecione um Modelo 3D e uma UV Matriz primeiro.');
+    if (!selectedMatrizId) {
+      alert('Selecione uma UV Matriz primeiro.');
       return;
     }
     const matriz = uvMatrices?.find(m => m.id === selectedMatrizId);
-    const model = models?.find(m => m.id === selectedModelId);
     
-    if (matriz && model) {
-      setEditingZonesFor({
-        ...matriz,
-        modelos: model // Pass the selected model details
-      });
+    if (matriz) {
+      setEditingZonesFor(matriz);
     }
   };
 
@@ -218,7 +214,7 @@ function UVConfigView({ models, queryClient, modelsLoading, onOpenMatrizModal }:
 
       {editingZonesFor && (
         <ZoneEditor 
-          modelUrl={editingZonesFor.modelos?.glb_url}
+          referenceUrl={editingZonesFor.reference_url}
           initialZones={editingZonesFor.zones || []}
           onSave={handleSaveZones}
           onClose={() => setEditingZonesFor(null)}

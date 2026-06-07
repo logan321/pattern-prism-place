@@ -1,14 +1,12 @@
-import React, { useState, useRef, Suspense, useMemo, useEffect } from 'react';
-import { Canvas } from '@react-three/fiber';
-import { OrbitControls, useGLTF } from '@react-three/drei';
-import { Trash2, Plus, Save, X } from 'lucide-react';
-import * as THREE from 'three';
+import React, { useState, useRef, useEffect } from 'react';
+import { Trash2, Plus, Save, X, Move, Maximize, RotateCcw } from 'lucide-react';
 
-interface ZonaMarcada {
+interface UVZone {
   id: string;
   name: string;
   type: 'text' | 'logo' | 'sponsor' | 'number';
-  uvCenter: [number, number];
+  x: number;
+  y: number;
   width: number;
   height: number;
   rotation: number;
@@ -21,155 +19,51 @@ const TIPOS_ZONA = [
   { id: 'sponsor', label: 'Patrocinador' },
 ];
 
-function ModeloComTextura({
-  url,
-  zonas,
-  onClicar,
-  onDrag,
-  isDragging,
-  idSelecionado
-}: {
-  url: string;
-  zonas: ZonaMarcada[];
-  onClicar: (uv: THREE.Vector2) => void;
-  onDrag: (uv: THREE.Vector2) => void;
-  isDragging: boolean;
-  idSelecionado: string | null;
-}) {
-  const { scene } = useGLTF(url);
-  const canvasRef = useRef<HTMLCanvasElement>(document.createElement('canvas'));
-  const textureRef = useRef<THREE.CanvasTexture | null>(null);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    canvas.width = 2048;
-    canvas.height = 2048;
-    const ctx = canvas.getContext('2d', { alpha: true });
-    if (!ctx) return;
-
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
-    zonas.forEach(z => {
-      const isSelected = z.id === idSelecionado;
-      const x = z.uvCenter[0] * canvas.width;
-      const y = (1 - z.uvCenter[1]) * canvas.height;
-      const w = z.width * canvas.width;
-      const h = z.height * canvas.height;
-
-      ctx.save();
-      ctx.translate(x, y);
-      ctx.rotate((z.rotation * Math.PI) / 180);
-      
-      // Estilo Gabarito Profissional
-      ctx.fillStyle = isSelected ? 'rgba(234, 88, 12, 0.4)' : 'rgba(59, 130, 246, 0.2)';
-      ctx.fillRect(-w / 2, -h / 2, w, h);
-      
-      ctx.strokeStyle = isSelected ? '#ea580c' : '#3b82f6';
-      ctx.lineWidth = 10;
-      ctx.strokeRect(-w / 2, -h / 2, w, h);
-
-      // Label
-      ctx.fillStyle = 'white';
-      ctx.font = 'bold 60px Arial';
-      ctx.textAlign = 'center';
-      ctx.fillText(z.name.toUpperCase(), 0, 20);
-      
-      ctx.restore();
-    });
-
-    if (textureRef.current) {
-      textureRef.current.needsUpdate = true;
-    }
-  }, [zonas, idSelecionado]);
-
-  const clonedScene = useMemo(() => {
-    const clone = scene.clone(true);
-    const tex = new THREE.CanvasTexture(canvasRef.current);
-    tex.flipY = false;
-    tex.colorSpace = THREE.SRGBColorSpace;
-    textureRef.current = tex;
-
-    clone.traverse((obj) => {
-      if ((obj as THREE.Mesh).isMesh) {
-        const mesh = obj as THREE.Mesh;
-        const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
-        
-        const newMaterials = materials.map(m => {
-          const newMat = m.clone();
-          if (newMat instanceof THREE.MeshStandardMaterial || newMat instanceof THREE.MeshPhysicalMaterial) {
-            newMat.transparent = true;
-            newMat.emissiveMap = tex;
-            newMat.emissive = new THREE.Color(0xffffff);
-            newMat.emissiveIntensity = 0.8;
-            newMat.needsUpdate = true;
-          }
-          return newMat;
-        });
-
-        mesh.material = Array.isArray(mesh.material) ? newMaterials : newMaterials[0];
-      }
-    });
-    return clone;
-  }, [scene]);
-
-  return (
-    <primitive
-      object={clonedScene}
-      onPointerUp={(e: any) => {
-        if (e.uv) {
-          e.stopPropagation();
-          onClicar(e.uv);
-        }
-      }}
-      onPointerMove={(e: any) => {
-        if (isDragging && e.uv) {
-          onDrag(e.uv);
-        }
-      }}
-    />
-  );
-}
-
-export default function ZoneEditor({ modelUrl, initialZones = [], onSave, onClose }: any) {
-  const [zonas, setZonas] = useState<ZonaMarcada[]>(initialZones);
+export default function ZoneEditor({ referenceUrl, initialZones = [], onSave, onClose }: any) {
+  const [zonas, setZonas] = useState<UVZone[]>(initialZones);
   const [idSelecionado, setIdSelecionado] = useState<string | null>(null);
-  const [isDragging, setIsDragging] = useState(false);
-
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [zoom, setZoom] = useState(0.4); // Zoom para caber na tela
+  
+  const canvasSize = 2048;
   const zonaSelecionada = zonas.find(z => z.id === idSelecionado);
 
-  const updateZona = (id: string, updates: Partial<ZonaMarcada>) => {
+  const updateZona = (id: string, updates: Partial<UVZone>) => {
     setZonas(prev => prev.map(z => z.id === id ? { ...z, ...updates } : z));
   };
 
-  const handleClicarNoModelo = (uv: THREE.Vector2) => {
-    if (!idSelecionado) {
-      const novaId = crypto.randomUUID();
-      const nova: ZonaMarcada = {
-        id: novaId,
-        name: `ZONA ${zonas.length + 1}`,
-        type: 'text',
-        uvCenter: [uv.x, uv.y],
-        width: 0.15,
-        height: 0.10,
-        rotation: 0,
-      };
-      setZonas(prev => [...prev, nova]);
-      setIdSelecionado(novaId);
-    } else {
-      updateZona(idSelecionado, { uvCenter: [uv.x, uv.y] });
-    }
+  const handleCanvasClick = (e: React.MouseEvent) => {
+    if (idSelecionado) return; // Don't create if one is selected, we might be dragging
+    
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / (rect.width / canvasSize);
+    const y = (e.clientY - rect.top) / (rect.height / canvasSize);
+
+    const novaId = crypto.randomUUID();
+    const nova: UVZone = {
+      id: novaId,
+      name: `ZONA ${zonas.length + 1}`,
+      type: 'text',
+      x,
+      y,
+      width: 200,
+      height: 100,
+      rotation: 0,
+    };
+    setZonas(prev => [...prev, nova]);
+    setIdSelecionado(novaId);
   };
 
   return (
     <div className="fixed inset-0 bg-[#0a0a0a] z-[60] flex flex-col font-sans">
       <header className="flex justify-between items-center p-4 bg-[#111] border-b border-[#222]">
         <div className="flex items-center gap-4">
-          <h1 className="text-white font-bold text-lg">Editor de Gabaritos</h1>
-          <span className="text-gray-500 text-xs">Clique na malha para posicionar</span>
+          <h1 className="text-white font-bold text-lg">Editor de Gabarito UV</h1>
+          <span className="text-gray-500 text-xs">Clique no mapa para posicionar áreas</span>
         </div>
         <div className="flex gap-2">
           <button onClick={() => onSave(zonas)} className="bg-orange-600 hover:bg-orange-700 text-white py-2 px-6 rounded-xl flex items-center gap-2 transition-all">
-            <Save className="w-4 h-4" /> Salvar Alterações
+            <Save className="w-4 h-4" /> Salvar Gabarito
           </button>
           <button onClick={onClose} className="bg-[#222] hover:bg-[#333] text-white py-2 px-6 rounded-xl flex items-center gap-2 transition-all">
             <X className="w-4 h-4" /> Sair
@@ -204,39 +98,53 @@ export default function ZoneEditor({ modelUrl, initialZones = [], onSave, onClos
           </div>
         </div>
 
-        {/* Viewport 3D */}
-        <div className="flex-1 relative bg-gradient-to-b from-[#0f0f0f] to-[#050505]">
-          <Canvas camera={{ position: [0, 0.5, 2.5], fov: 35 }}>
-            <Suspense fallback={null}>
-              <ambientLight intensity={0.5} />
-              <pointLight position={[10, 10, 10]} intensity={1} />
-              <ModeloComTextura 
-                url={modelUrl} 
-                zonas={zonas}
-                onClicar={handleClicarNoModelo}
-                onDrag={(uv) => idSelecionado && updateZona(idSelecionado, { uvCenter: [uv.x, uv.y] })}
-                isDragging={isDragging}
-                idSelecionado={idSelecionado}
-              />
-              <OrbitControls enablePan={false} makeDefault />
-            </Suspense>
-          </Canvas>
-
-          {idSelecionado && (
-            <div className="absolute bottom-8 left-1/2 -translate-x-1/2 bg-black/80 backdrop-blur-xl border border-white/10 p-3 rounded-2xl flex items-center gap-6 px-8 shadow-2xl">
-              <label className="flex items-center gap-3 cursor-pointer group">
-                <input 
-                  type="checkbox" 
-                  checked={isDragging} 
-                  onChange={e => setIsDragging(e.target.checked)} 
-                  className="w-5 h-5 rounded border-gray-700 bg-gray-800 text-orange-600 focus:ring-orange-600"
-                />
-                <span className="text-sm font-medium text-white group-hover:text-orange-500 transition-colors">Modo Arrastar (Real-time)</span>
-              </label>
-              <div className="w-px h-6 bg-white/10"></div>
-              <p className="text-gray-400 text-xs">Ajuste fino clicando na malha</p>
-            </div>
-          )}
+        {/* Viewport 2D */}
+        <div className="flex-1 relative bg-[#050505] overflow-auto flex items-center justify-center p-20" ref={containerRef}>
+          <div 
+            className="relative shadow-2xl bg-white"
+            style={{ 
+              width: canvasSize * zoom, 
+              height: canvasSize * zoom,
+              backgroundImage: referenceUrl ? `url(${referenceUrl})` : 'none',
+              backgroundSize: 'contain'
+            }}
+            onClick={handleCanvasClick}
+          >
+            {zonas.map(z => {
+              const isSelected = z.id === idSelecionado;
+              return (
+                <div
+                  key={z.id}
+                  onClick={(e) => { e.stopPropagation(); setIdSelecionado(z.id); }}
+                  style={{
+                    position: 'absolute',
+                    left: (z.x - z.width/2) * zoom,
+                    top: (z.y - z.height/2) * zoom,
+                    width: z.width * zoom,
+                    height: z.height * zoom,
+                    transform: `rotate(${z.rotation}deg)`,
+                    border: isSelected ? '2px solid #ea580c' : '1px solid #3b82f6',
+                    backgroundColor: isSelected ? 'rgba(234, 88, 12, 0.3)' : 'rgba(59, 130, 246, 0.1)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'move',
+                    zIndex: isSelected ? 10 : 1
+                  }}
+                >
+                  <span className="text-[10px] font-bold text-white bg-black/50 px-1 rounded pointer-events-none">
+                    {z.name}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+          
+          {/* Zoom Control */}
+          <div className="absolute top-4 right-4 flex flex-col gap-2">
+             <button onClick={() => setZoom(prev => Math.min(prev + 0.1, 1))} className="p-2 bg-[#222] text-white rounded-lg hover:bg-[#333]"><Maximize className="w-4 h-4"/></button>
+             <button onClick={() => setZoom(prev => Math.max(prev - 0.1, 0.1))} className="p-2 bg-[#222] text-white rounded-lg hover:bg-[#333]"><RotateCcw className="w-4 h-4"/></button>
+          </div>
         </div>
 
         {/* Painel Direito */}
@@ -269,29 +177,50 @@ export default function ZoneEditor({ modelUrl, initialZones = [], onSave, onClos
                   </select>
                 </div>
 
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-gray-500 uppercase">Posição X</label>
+                    <input 
+                      type="number"
+                      value={Math.round(zonaSelecionada.x)}
+                      onChange={e => updateZona(zonaSelecionada.id, { x: parseInt(e.target.value) })}
+                      className="w-full bg-[#1a1a1a] border border-[#333] text-white p-2 rounded-lg text-sm"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-gray-500 uppercase">Posição Y</label>
+                    <input 
+                      type="number"
+                      value={Math.round(zonaSelecionada.y)}
+                      onChange={e => updateZona(zonaSelecionada.id, { y: parseInt(e.target.value) })}
+                      className="w-full bg-[#1a1a1a] border border-[#333] text-white p-2 rounded-lg text-sm"
+                    />
+                  </div>
+                </div>
+
                 <div className="space-y-4 pt-4">
                   <div className="space-y-2">
                     <div className="flex justify-between">
-                      <label className="text-[10px] font-bold text-gray-500 uppercase">Largura</label>
-                      <span className="text-orange-600 font-mono text-xs">{zonaSelecionada.width.toFixed(2)}</span>
+                      <label className="text-[10px] font-bold text-gray-500 uppercase">Largura (px)</label>
+                      <span className="text-orange-600 font-mono text-xs">{Math.round(zonaSelecionada.width)}</span>
                     </div>
                     <input 
-                      type="range" min="0.01" max="0.5" step="0.01"
+                      type="range" min="10" max="1000" step="1"
                       value={zonaSelecionada.width}
-                      onChange={e => updateZona(zonaSelecionada.id, { width: parseFloat(e.target.value) })}
+                      onChange={e => updateZona(zonaSelecionada.id, { width: parseInt(e.target.value) })}
                       className="w-full accent-orange-600"
                     />
                   </div>
 
                   <div className="space-y-2">
                     <div className="flex justify-between">
-                      <label className="text-[10px] font-bold text-gray-500 uppercase">Altura</label>
-                      <span className="text-orange-600 font-mono text-xs">{zonaSelecionada.height.toFixed(2)}</span>
+                      <label className="text-[10px] font-bold text-gray-500 uppercase">Altura (px)</label>
+                      <span className="text-orange-600 font-mono text-xs">{Math.round(zonaSelecionada.height)}</span>
                     </div>
                     <input 
-                      type="range" min="0.01" max="0.5" step="0.01"
+                      type="range" min="10" max="1000" step="1"
                       value={zonaSelecionada.height}
-                      onChange={e => updateZona(zonaSelecionada.id, { height: parseFloat(e.target.value) })}
+                      onChange={e => updateZona(zonaSelecionada.id, { height: parseInt(e.target.value) })}
                       className="w-full accent-orange-600"
                     />
                   </div>
@@ -326,10 +255,10 @@ export default function ZoneEditor({ modelUrl, initialZones = [], onSave, onClos
           ) : (
             <div className="h-full flex flex-col items-center justify-center text-center px-4">
               <div className="w-16 h-16 bg-[#1a1a1a] rounded-full flex items-center justify-center mb-4">
-                <Edit3 className="w-6 h-6 text-gray-700" />
+                <Move className="w-6 h-6 text-gray-700" />
               </div>
               <p className="text-gray-400 text-sm font-medium">Nenhuma área selecionada</p>
-              <p className="text-gray-600 text-[10px] mt-2">Clique em um ponto do modelo 3D para começar a marcar.</p>
+              <p className="text-gray-600 text-[10px] mt-2">Clique no mapa UV para criar uma nova zona editável.</p>
             </div>
           )}
         </div>
@@ -337,5 +266,3 @@ export default function ZoneEditor({ modelUrl, initialZones = [], onSave, onClos
     </div>
   );
 }
-
-import { Edit3 } from 'lucide-react';

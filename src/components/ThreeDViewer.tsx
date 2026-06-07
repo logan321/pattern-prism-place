@@ -133,7 +133,7 @@ function Model({
     };
 
     // Helper para desenhar conteúdo rotacionado em uma zona
-    const drawZoneContent = (zone: Zone, drawFn: (w: number, h: number) => void) => {
+    const drawZoneContent = async (zone: Zone, drawFn: (w: number, h: number) => Promise<void> | void) => {
       const uv = zone.uvCenter || zone.uv;
       if (!uv) return;
 
@@ -145,7 +145,7 @@ function Model({
       ctx.save();
       ctx.translate(cx, cy);
       ctx.rotate(rotation);
-      drawFn(w, h);
+      await drawFn(w, h);
       ctx.restore();
     };
 

@@ -761,7 +761,7 @@ export default function Admin() {
               ) : (
                 models?.map((model: any) => (
                   <div key={model.id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden group">
-                    <div className="aspect-video bg-gray-100 flex items-center justify-center relative">
+                    <div className="aspect-square bg-gray-50 flex items-center justify-center relative">
                       {model.thumbnail_url ? (
                         <img src={model.thumbnail_url} alt={model.nome} className="w-full h-full object-cover" />
                       ) : (

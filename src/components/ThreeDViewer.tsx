@@ -12,37 +12,45 @@ export interface ThreeDViewerRef {
 function Model({ url, finalTexture }: { url: string; finalTexture?: THREE.Texture }) {
   const { scene } = useGLTF(url);
 
+  // Clona a cena apenas quando o modelo GLTF (URL) muda
   const clonedScene = useMemo(() => {
-    const clone = scene.clone();
-    clone.traverse((child) => {
+    console.log('ThreeDViewer: Clonando cena para o modelo:', url);
+    return scene.clone();
+  }, [scene, url]);
+
+  // Atualiza as texturas sempre que a finalTexture mudar, sem precisar reclonar a cena toda
+  useEffect(() => {
+    if (!clonedScene) return;
+    
+    console.log('ThreeDViewer: Aplicando textura ao modelo. Tem textura?', !!finalTexture);
+    
+    clonedScene.traverse((child) => {
       if ((child as THREE.Mesh).isMesh) {
         const mesh = child as THREE.Mesh;
         if (mesh.material) {
           const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
-          const newMaterials = materials.map((mat) => {
-            const m = mat.clone();
-            if (m instanceof THREE.MeshStandardMaterial || m instanceof THREE.MeshPhysicalMaterial) {
+          materials.forEach((mat) => {
+            // Criar uma cópia do material se ainda não foi feita para este clone
+            // ou apenas atualizar as propriedades se for MeshStandardMaterial
+            if (mat instanceof THREE.MeshStandardMaterial || mat instanceof THREE.MeshPhysicalMaterial) {
               if (finalTexture) {
-                m.map = finalTexture;
-                m.color.set(0xffffff);
-                m.emissive.set(0x000000); // Reset emissive to not interfere with standard lighting
-                m.emissiveIntensity = 0;
-                m.emissiveMap = null;
-                m.roughness = 0.5;
-                m.metalness = 0.0;
+                mat.map = finalTexture;
+                mat.color.set(0xffffff);
+                mat.emissive.set(0x000000);
+                mat.emissiveIntensity = 0;
+                mat.emissiveMap = null;
+                mat.roughness = 0.5;
+                mat.metalness = 0.0;
               } else {
-                m.color.set(0xcccccc); // Light gray if no texture
+                mat.color.set(0xcccccc);
               }
-              m.needsUpdate = true;
+              mat.needsUpdate = true;
             }
-            return m;
           });
-          mesh.material = Array.isArray(mesh.material) ? newMaterials : newMaterials[0];
         }
       }
     });
-    return clone;
-  }, [scene, finalTexture]);
+  }, [clonedScene, finalTexture]);
 
   return <primitive object={clonedScene} />;
 }

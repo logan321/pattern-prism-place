@@ -405,8 +405,8 @@ export default function Simulator() {
                     />
                     <input 
                       type="color" 
-                      value={useCustomizerStore.getState().nameColor}
-                      onChange={(e) => useCustomizerStore.getState().setNameColor(e.target.value)}
+                      value={nameColor}
+                      onChange={(e) => setNameColor(e.target.value)}
                       className="w-10 h-9 p-1 rounded border cursor-pointer"
                     />
                   </div>
@@ -424,8 +424,8 @@ export default function Simulator() {
                     />
                     <input 
                       type="color" 
-                      value={useCustomizerStore.getState().numberColor}
-                      onChange={(e) => useCustomizerStore.getState().setNumberColor(e.target.value)}
+                      value={numberColor}
+                      onChange={(e) => setNumberColor(e.target.value)}
                       className="w-10 h-9 p-1 rounded border cursor-pointer"
                     />
                   </div>
@@ -434,8 +434,8 @@ export default function Simulator() {
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold text-gray-500 uppercase">Fonte</label>
                   <select 
-                    value={useCustomizerStore.getState().nameFont}
-                    onChange={(e) => useCustomizerStore.getState().setNameFont(e.target.value)}
+                    value={nameFont}
+                    onChange={(e) => setNameFont(e.target.value)}
                     className="w-full border rounded p-2 text-sm"
                   >
                     <option value="Arial">Arial</option>

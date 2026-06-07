@@ -162,6 +162,7 @@ function Model({ url, textureUrl, zones = [] }: { url: string; textureUrl?: stri
               }
               
               mat.emissiveMap = uvTexture;
+              mat.emissiveMap.colorSpace = THREE.SRGBColorSpace;
               mat.emissive.set(0xffffff); 
               mat.emissiveIntensity = 1.0;
               mat.transparent = true; // Importante para o overlay

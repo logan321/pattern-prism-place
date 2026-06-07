@@ -51,7 +51,7 @@ function ModelWithUVClick({ url, onPointSelect, zones }: {
     return clone;
   }, [scene]);
 
-  // Limpar materiais para modo neutro no editor para não confundir com a estampa
+  // Aplicar materiais neutros E a textura de marcação em um único efeito para garantir sincronia
   useEffect(() => {
     if (!clonedScene) return;
     
@@ -61,25 +61,31 @@ function ModelWithUVClick({ url, onPointSelect, zones }: {
         const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
         
         mats.forEach((mat: any) => {
-          if (mat instanceof THREE.MeshStandardMaterial) {
-            // Remover TODAS as texturas — queremos ver só a geometria limpa
+          if (mat instanceof THREE.MeshStandardMaterial || mat instanceof THREE.MeshPhysicalMaterial) {
+            // Configuração neutra
             mat.map = null;
             mat.normalMap = null;
             mat.roughnessMap = null;
             mat.metalnessMap = null;
             mat.aoMap = null;
-            mat.emissiveMap = null;
-            mat.emissive = new THREE.Color(0x000000);
-            mat.emissiveIntensity = 0;
-            
-            // Cor neutra para ver bem o modelo
             mat.color = new THREE.Color(0xcccccc);
+            
+            // Aplicar marcações UV via emissive
+            if (texture) {
+              mat.emissiveMap = texture;
+              mat.emissive = new THREE.Color(0xffffff);
+              mat.emissiveIntensity = 1.2; // Aumentar intensidade para visibilidade
+            } else {
+              mat.emissive = new THREE.Color(0x000000);
+              mat.emissiveIntensity = 0;
+            }
+            
             mat.needsUpdate = true;
           }
         });
       }
     });
-  }, [clonedScene]);
+  }, [clonedScene, texture]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -139,21 +145,6 @@ function ModelWithUVClick({ url, onPointSelect, zones }: {
     setTexture(newTexture);
   }, [zones]);
 
-  useEffect(() => {
-    if (clonedScene && texture) {
-      clonedScene.traverse((child) => {
-        if ((child as THREE.Mesh).isMesh) {
-          const mesh = child as THREE.Mesh;
-          if (mesh.material instanceof THREE.MeshStandardMaterial) {
-            mesh.material.emissiveMap = texture;
-            mesh.material.emissive = new THREE.Color(0xffffff);
-            mesh.material.emissiveIntensity = 1;
-            mesh.material.needsUpdate = true;
-          }
-        }
-      });
-    }
-  }, [clonedScene, texture]);
   
   return (
     <primitive 

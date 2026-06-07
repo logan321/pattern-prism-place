@@ -179,13 +179,15 @@ export default function ZoneEditor({ modelUrl, initialZones = [], onSave, onClos
         </div>
 
         {/* 3D Canvas */}
-        <div className="flex-1 bg-black relative">
+        <div className="flex-1 bg-[#111] relative">
           <Canvas shadows camera={{ position: [0, 0.5, 2], fov: 40 }} dpr={[1, 2]}>
             <Suspense fallback={null}>
+              <ambientLight intensity={0.5} />
+              <pointLight position={[10, 10, 10]} intensity={1} />
               <Stage intensity={0.5} environment="city" shadows="contact" adjustCamera={false}>
                 <ModelWithClick url={modelUrl} onPointSelect={setSelectedPoint} zones={zones} />
               </Stage>
-              <OrbitControls makeDefault minDistance={0.5} maxDistance={5} />
+              <OrbitControls makeDefault minDistance={0.1} maxDistance={10} />
             </Suspense>
           </Canvas>
           

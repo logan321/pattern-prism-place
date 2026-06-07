@@ -80,6 +80,9 @@ function Model({
     if (!ctx) return;
 
     const regras = FORMACOES[formation || ''] ?? FORMACOES['escudo-esq-nome-dir'];
+    console.log('DRAW zones:', zones);
+    console.log('DRAW name:', name);
+    console.log('DRAW shieldUrl:', shieldUrl);
 
     const getZona = (posId: string | null) => {
       if (!posId) return null;

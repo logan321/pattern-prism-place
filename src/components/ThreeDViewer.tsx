@@ -27,7 +27,8 @@ function Model({
   numberColor,
   nameFont,
   shieldUrl,
-  formation
+  formation,
+  onCanvasUpdate
 }: { 
   url: string; 
   textureUrl?: string; 
@@ -39,6 +40,7 @@ function Model({
   nameFont?: string;
   shieldUrl?: string | null;
   formation?: string;
+  onCanvasUpdate?: (canvas: HTMLCanvasElement) => void;
 }) {
   const { scene } = useGLTF(url);
   const textureRef = useRef<THREE.CanvasTexture | null>(null);
@@ -276,6 +278,10 @@ function Model({
         });
       }
     });
+
+    if (onCanvasUpdate) {
+      onCanvasUpdate(canvas);
+    }
   };
 
   useEffect(() => {
@@ -372,6 +378,58 @@ export const ThreeDViewer = forwardRef<ThreeDViewerRef, {
     formation
   }, ref) => {
     const orbitRef = useRef<any>(null);
+    const [debugCanvas, setDebugCanvas] = useState<HTMLCanvasElement | null>(null);
+    const debugCanvasRef = useRef<HTMLCanvasElement | null>(null);
+
+    // Efeito para atualizar a pré-visualização de debug
+    useEffect(() => {
+      if (debugCanvas && debugCanvasRef.current) {
+        const ctx = debugCanvasRef.current.getContext('2d');
+        if (ctx) {
+          const size = 256;
+          ctx.clearRect(0, 0, size, size);
+          
+          // Fundo quadriculado
+          ctx.fillStyle = '#f0f0f0';
+          ctx.fillRect(0, 0, size, size);
+          ctx.fillStyle = '#e0e0e0';
+          const step = size / 8;
+          for(let i=0; i<8; i++) {
+            for(let j=0; j<8; j++) {
+              if((i+j)%2 === 0) ctx.fillRect(i*step, j*step, step, step);
+            }
+          }
+
+          // Desenha o conteúdo real do canvas UV (redimensionado)
+          ctx.drawImage(debugCanvas, 0, 0, size, size);
+
+          // Desenha as bordas das zonas para debug visual
+          ctx.strokeStyle = 'rgba(255, 0, 0, 0.5)';
+          ctx.lineWidth = 1;
+          zones.forEach(zone => {
+            const uv = zone.uvCenter || zone.uv;
+            if (uv) {
+              const x = uv[0] * size;
+              const y = (1 - uv[1]) * size;
+              const w = (zone.width || 0.1) * size;
+              const h = (zone.height || 0.1) * size;
+              const rot = (zone.rotation || 0) * (Math.PI / 180);
+
+              ctx.save();
+              ctx.translate(x, y);
+              ctx.rotate(rot);
+              ctx.strokeRect(-w/2, -h/2, w, h);
+              
+              // Pequena label com id da zona
+              ctx.fillStyle = 'red';
+              ctx.font = '8px monospace';
+              ctx.fillText(zone.id?.substring(0, 5) || '?', -w/2, -h/2 - 2);
+              ctx.restore();
+            }
+          });
+        }
+      }
+    }, [debugCanvas, zones, name, number, shieldUrl]);
 
     useImperativeHandle(ref, () => ({
       setView: (view) => {
@@ -443,31 +501,58 @@ export const ThreeDViewer = forwardRef<ThreeDViewerRef, {
 
     return (
       <ErrorBoundary FallbackComponent={FallbackError}>
-        <Canvas shadows camera={{ position: [0, 0, 2.0], fov: 45 }}>
-          <Suspense fallback={null}>
-            <Stage intensity={0.5} environment="city" shadows="contact" adjustCamera={false} preset="rembrandt">
-              <Model 
-                url={modelUrl} 
-                textureUrl={textureUrl} 
-                zones={zones} 
-                name={name}
-                number={number}
-                nameColor={nameColor}
-                numberColor={numberColor}
-                nameFont={nameFont}
-                shieldUrl={shieldUrl}
-                formation={formation}
+        <div className="relative w-full h-full">
+          <Canvas shadows camera={{ position: [0, 0, 2.0], fov: 45 }}>
+            <Suspense fallback={null}>
+              <Stage intensity={0.5} environment="city" shadows="contact" adjustCamera={false} preset="rembrandt">
+                <Model 
+                  url={modelUrl} 
+                  textureUrl={textureUrl} 
+                  zones={zones} 
+                  name={name}
+                  number={number}
+                  nameColor={nameColor}
+                  numberColor={numberColor}
+                  nameFont={nameFont}
+                  shieldUrl={shieldUrl}
+                  formation={formation}
+                  onCanvasUpdate={setDebugCanvas}
+                />
+              </Stage>
+              <OrbitControls 
+                ref={orbitRef} 
+                makeDefault 
+                minDistance={1.0} 
+                maxDistance={6} 
+                enablePan={false}
               />
-            </Stage>
-            <OrbitControls 
-              ref={orbitRef} 
-              makeDefault 
-              minDistance={1.0} 
-              maxDistance={6} 
-              enablePan={false}
-            />
-          </Suspense>
-        </Canvas>
+            </Suspense>
+          </Canvas>
+
+          {/* Painel de Debug do Canvas UV */}
+          <div className="absolute bottom-4 right-4 p-2 bg-white/90 border border-gray-300 rounded-lg shadow-xl z-50 pointer-events-none">
+            <div className="text-[10px] font-mono mb-1 text-gray-500 flex justify-between">
+              <span>CANVAS UV DEBUG (2048x2048)</span>
+              <span>{debugCanvas ? 'ATIVE' : 'WAITING...'}</span>
+            </div>
+            <div className="relative border border-gray-200 bg-gray-100 overflow-hidden rounded">
+              <canvas 
+                ref={debugCanvasRef} 
+                width={256} 
+                height={256} 
+                className="w-48 h-48 block image-render-pixel"
+              />
+              {/* Overlay de guia central para facilitar visualização */}
+              <div className="absolute inset-0 border border-red-500/10 pointer-events-none flex items-center justify-center">
+                <div className="w-full h-[1px] bg-red-500/5 absolute" />
+                <div className="h-full w-[1px] bg-red-500/5 absolute" />
+              </div>
+            </div>
+            <div className="text-[9px] mt-1 text-gray-400 italic">
+              Este canvas é aplicado como emissiveMap no Three.js
+            </div>
+          </div>
+        </div>
       </ErrorBoundary>
     );
   }

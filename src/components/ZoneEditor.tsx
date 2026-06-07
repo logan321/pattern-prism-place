@@ -13,9 +13,8 @@ interface Zone {
 
 function ModelWithClick({ url, onPointSelect, zones }: { url: string, onPointSelect: (point: THREE.Vector3) => void, zones: Zone[] }) {
   const { scene } = useGLTF(url);
-  const meshRef = useRef<THREE.Group>(null);
+  const { camera } = useThree();
 
-  // Garantir que o modelo esteja pronto e centralizado para as coordenadas baterem
   useEffect(() => {
     if (scene) {
       scene.traverse((child) => {
@@ -28,29 +27,45 @@ function ModelWithClick({ url, onPointSelect, zones }: { url: string, onPointSel
   }, [scene]);
   
   return (
-    <group ref={meshRef}>
+    <group>
       <primitive 
         object={scene} 
         onClick={(e: any) => {
           e.stopPropagation();
-          // Importante: usar e.point que é a coordenada no espaço local/global do objeto clicado
-          // O Three-fiber já trata o raycasting corretamente sobre a geometria do mesh
+          // e.point é a coordenada absoluta no mundo 3D onde o clique atingiu a geometria
           onPointSelect(e.point);
         }}
       />
-      {zones.map((zone) => (
-        <group key={zone.id} position={zone.position}>
-          <mesh>
-            <sphereGeometry args={[0.015, 16, 16]} />
-            <meshStandardMaterial color="#ea580c" emissive="#ea580c" emissiveIntensity={2} />
-          </mesh>
-          <Html distanceFactor={10} position={[0, 0.03, 0]} center>
-            <div className="bg-orange-600 text-white text-[10px] px-2 py-0.5 rounded whitespace-nowrap font-bold shadow-lg pointer-events-none select-none border border-orange-400/50">
-              {zone.name}
-            </div>
-          </Html>
-        </group>
-      ))}
+      {zones.map((zone) => {
+        // Calcular direção para que o "adesivo" (marcador) fique voltado para a câmera
+        // ou simplesmente usar um sprite/mesh circular que sempre encara a câmera
+        return (
+          <group key={zone.id} position={zone.position}>
+            {/* Marcador Visual que faz parte da cena 3D */}
+            <mesh>
+              <sphereGeometry args={[0.015, 16, 16]} />
+              <meshStandardMaterial 
+                color="#ea580c" 
+                emissive="#ea580c" 
+                emissiveIntensity={2} 
+                toneMapped={false}
+              />
+            </mesh>
+            
+            {/* Um anel ao redor para dar profundidade */}
+            <mesh rotation={[Math.PI / 2, 0, 0]}>
+              <torusGeometry args={[0.02, 0.002, 16, 32]} />
+              <meshStandardMaterial color="#ffffff" opacity={0.5} transparent />
+            </mesh>
+
+            <Html distanceFactor={2} position={[0, 0.04, 0]} center zIndexRange={[0, 10]}>
+              <div className="bg-orange-600 text-white text-[10px] px-2 py-0.5 rounded whitespace-nowrap font-bold shadow-lg pointer-events-none select-none border border-orange-400/50">
+                {zone.name}
+              </div>
+            </Html>
+          </group>
+        );
+      })}
     </group>
   );
 }

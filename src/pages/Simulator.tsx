@@ -278,7 +278,7 @@ export default function Simulator() {
     let cancelled = false;
     // Usamos uv_matriz_id que já existe no pattern como referência para carregar a matriz se necessário
     // ou se o pattern tiver um uv_map_id (assumindo que pode ser adicionado futuramente)
-    const mapId = (currentPattern as any)?.uv_map_id;
+    const mapId = (currentPattern as any)?.uv_matriz_id;
     if (!mapId) {
       clearUvState();
       return;
@@ -287,7 +287,7 @@ export default function Simulator() {
       // Nota: Certifique-se que a tabela 'uv_maps' existe ou use 'uv_matrices' se for o caso
       const { data } = await supabase
         .from('uv_matrices') 
-        .select('image_url:reference_url, uv_zones:zones, uv_width, uv_height')
+        .select('image_url:reference_url, uv_zones:zones')
         .eq('id', mapId)
         .maybeSingle();
       if (cancelled || !data) return;
@@ -299,7 +299,7 @@ export default function Simulator() {
           ? (d.uv_zones as Record<string, any>)
           : {}
       );
-      setUvMapDims({ w: d.uv_width ?? null, h: d.uv_height ?? null });
+      setUvMapDims({ w: (d as any).uv_width ?? null, h: (d as any).uv_height ?? null });
       setUvLayers([]);
       setUvTextDrafts({});
     })();

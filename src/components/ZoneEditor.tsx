@@ -11,10 +11,16 @@ const TIPOS_ZONA = [
   { id: 'sponsor', label: 'Patrocinador' },
 ];
 
-export default function ZoneEditor({ referenceUrl, onClose }: any) {
+export default function ZoneEditor({ referenceUrl, onClose, onSave, initialZones }: any) {
   const context = useContext(AppContext);
   if (!context) return null;
-  const { zones, addZone, updateZone, removeZone, setSelectedZoneId, selectedZoneId } = context;
+  const { zones, addZone, updateZone, removeZone, setSelectedZoneId, selectedZoneId, setZones } = context as any;
+
+  useEffect(() => {
+    if (initialZones && initialZones.length > 0) {
+      setZones(initialZones);
+    }
+  }, [initialZones, setZones]);
 
   const [zoom, setZoom] = useState(0.4);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -97,7 +103,13 @@ export default function ZoneEditor({ referenceUrl, onClose }: any) {
           >
             <Eye className="w-4 h-4" /> {isGenerating ? 'Processando...' : 'Preview Técnico'}
           </button>
-          <button onClick={onClose} className="bg-orange-600 hover:bg-orange-700 text-white py-2 px-6 rounded-xl flex items-center gap-2 transition-all font-bold text-sm">
+          <button 
+            onClick={() => {
+              if (onSave) onSave(zones);
+              onClose();
+            }} 
+            className="bg-orange-600 hover:bg-orange-700 text-white py-2 px-6 rounded-xl flex items-center gap-2 transition-all font-bold text-sm"
+          >
             <Save className="w-4 h-4" /> Finalizar Edição
           </button>
           <button onClick={onClose} className="bg-[#222] hover:bg-[#333] text-white py-2 px-4 rounded-xl transition-all">
@@ -238,12 +250,12 @@ export default function ZoneEditor({ referenceUrl, onClose }: any) {
                     style={{ width: canvasSize * zoom, height: canvasSize * zoom }}
                 >
                     <polyline
-                        points={zonaSelecionada.pathData.map(p => `${(p.x/100) * canvasSize * zoom},${(p.y/100) * canvasSize * zoom}`).join(' ')}
+                        points={zonaSelecionada.pathData.map((p: any) => `${(p.x/100) * canvasSize * zoom},${(p.y/100) * canvasSize * zoom}`).join(' ')}
                         fill="rgba(234, 88, 12, 0.2)"
                         stroke="#ea580c"
                         strokeWidth="2"
                     />
-                    {zonaSelecionada.pathData.map((p, i) => (
+                    {zonaSelecionada.pathData.map((p: any, i: number) => (
                         <circle 
                             key={i} 
                             cx={(p.x/100) * canvasSize * zoom} 

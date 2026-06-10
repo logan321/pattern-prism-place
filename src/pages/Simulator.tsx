@@ -263,10 +263,14 @@ export default function Simulator() {
   const allModels = React.useMemo(() => [...LOCAL_MODELS, ...(models ?? [])], [models]);
   const currentPattern = React.useMemo(() => patterns?.find(p => p.id === selectedPattern), [patterns, selectedPattern]);
 
+  const textureUrl = React.useMemo(() => 
+    currentPattern?.svg_url || currentPattern?.image_url || undefined
+  , [currentPattern]);
+
   const uvZonesActive = Object.keys(uvMapZones).length > 0;
 
   const uvComposite = useUvCompositor({
-    baseUrl: uvZonesActive ? uvBaseUrl : null,
+    baseUrl: uvZonesActive ? (textureUrl || uvBaseUrl) : null,
     zones: uvMapZones,
     layers: uvLayers,
     uvWidth: uvMapDims.w,
@@ -278,7 +282,7 @@ export default function Simulator() {
     let cancelled = false;
     // Usamos uv_matriz_id que já existe no pattern como referência para carregar a matriz se necessário
     // ou se o pattern tiver um uv_map_id (assumindo que pode ser adicionado futuramente)
-    const mapId = (currentPattern as any)?.uv_map_id;
+    const mapId = (currentPattern as any)?.uv_matriz_id;
     if (!mapId) {
       clearUvState();
       return;
@@ -287,19 +291,23 @@ export default function Simulator() {
       // Nota: Certifique-se que a tabela 'uv_maps' existe ou use 'uv_matrices' se for o caso
       const { data } = await supabase
         .from('uv_matrices') 
-        .select('image_url:reference_url, uv_zones:zones, uv_width, uv_height')
+        .select('image_url:reference_url, uv_zones:zones')
         .eq('id', mapId)
         .maybeSingle();
       if (cancelled || !data) return;
       
       const d = data as any;
       setUvBaseUrl(d.image_url ?? null);
-      setUvMapZones(
-        d.uv_zones && typeof d.uv_zones === 'object'
-          ? (d.uv_zones as Record<string, any>)
-          : {}
-      );
-      setUvMapDims({ w: d.uv_width ?? null, h: d.uv_height ?? null });
+      const zonesMap: Record<string, any> = {};
+      if (Array.isArray(d.uv_zones)) {
+        d.uv_zones.forEach((z: any) => {
+          zonesMap[z.name || z.id] = z;
+        });
+      } else if (d.uv_zones && typeof d.uv_zones === 'object') {
+        Object.assign(zonesMap, d.uv_zones);
+      }
+      setUvMapZones(zonesMap);
+      setUvMapDims({ w: (d as any).uv_width ?? 2048, h: (d as any).uv_height ?? 2048 });
       setUvLayers([]);
       setUvTextDrafts({});
     })();
@@ -399,9 +407,6 @@ export default function Simulator() {
     return matriz;
   }, [uvMatrices, selectedModel, currentPattern]);
 
-  const textureUrl = React.useMemo(() => 
-    currentPattern?.svg_url || currentPattern?.image_url || undefined
-  , [currentPattern]);
 
   // Efeito para trocar a vista automaticamente ao mudar de aba
   useEffect(() => {

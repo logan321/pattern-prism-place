@@ -32,6 +32,7 @@ interface AppContextType {
   removeZone: (id: string) => void;
   setSelectedZoneId: (id: string | null) => void;
   setActiveSide: (side: 'front' | 'back') => void;
+  setZones: (zones: Zone3D[] | ((prev: Zone3D[]) => Zone3D[])) => void;
 }
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -79,6 +80,7 @@ export function AppContextProvider({ children }: { children: ReactNode }) {
         removeZone,
         setSelectedZoneId,
         setActiveSide,
+        setZones,
       }}
     >
       {children}

@@ -841,7 +841,10 @@ export default function Admin() {
           <div className="bg-orange-600 p-1.5 rounded-lg">
             <LayoutDashboard className="w-5 h-5" />
           </div>
-          <h1 className="font-bold text-lg tracking-tight">Admin Painel</h1>
+          <div className="flex flex-col">
+            <h1 className="font-bold text-lg tracking-tight">Admin Painel</h1>
+            <span className="text-[10px] text-orange-500 font-bold uppercase tracking-wider">Acesso Liberado</span>
+          </div>
         </div>
 
         <nav className="flex-1 p-4 space-y-1">

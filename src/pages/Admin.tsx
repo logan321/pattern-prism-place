@@ -434,14 +434,6 @@ export default function Admin() {
 
   const queryClient = useQueryClient();
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
-      </div>
-    );
-  }
-
   if (false && !session) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">

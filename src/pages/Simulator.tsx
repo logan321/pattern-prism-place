@@ -294,11 +294,15 @@ export default function Simulator() {
       
       const d = data as any;
       setUvBaseUrl(d.image_url ?? null);
-      setUvMapZones(
-        d.uv_zones && typeof d.uv_zones === 'object'
-          ? (d.uv_zones as Record<string, any>)
-          : {}
-      );
+      const zonesMap: Record<string, any> = {};
+      if (Array.isArray(d.uv_zones)) {
+        d.uv_zones.forEach((z: any) => {
+          zonesMap[z.name || z.id] = z;
+        });
+      } else if (d.uv_zones && typeof d.uv_zones === 'object') {
+        Object.assign(zonesMap, d.uv_zones);
+      }
+      setUvMapZones(zonesMap);
       setUvMapDims({ w: (d as any).uv_width ?? null, h: (d as any).uv_height ?? null });
       setUvLayers([]);
       setUvTextDrafts({});

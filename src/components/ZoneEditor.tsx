@@ -11,10 +11,16 @@ const TIPOS_ZONA = [
   { id: 'sponsor', label: 'Patrocinador' },
 ];
 
-export default function ZoneEditor({ referenceUrl, onClose }: any) {
+export default function ZoneEditor({ referenceUrl, onClose, onSave, initialZones }: any) {
   const context = useContext(AppContext);
   if (!context) return null;
-  const { zones, addZone, updateZone, removeZone, setSelectedZoneId, selectedZoneId } = context;
+  const { zones, addZone, updateZone, removeZone, setSelectedZoneId, selectedZoneId, setZones } = context as any;
+
+  useEffect(() => {
+    if (initialZones && initialZones.length > 0) {
+      setZones(initialZones);
+    }
+  }, [initialZones, setZones]);
 
   const [zoom, setZoom] = useState(0.4);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -97,7 +103,13 @@ export default function ZoneEditor({ referenceUrl, onClose }: any) {
           >
             <Eye className="w-4 h-4" /> {isGenerating ? 'Processando...' : 'Preview Técnico'}
           </button>
-          <button onClick={onClose} className="bg-orange-600 hover:bg-orange-700 text-white py-2 px-6 rounded-xl flex items-center gap-2 transition-all font-bold text-sm">
+          <button 
+            onClick={() => {
+              if (onSave) onSave(zones);
+              onClose();
+            }} 
+            className="bg-orange-600 hover:bg-orange-700 text-white py-2 px-6 rounded-xl flex items-center gap-2 transition-all font-bold text-sm"
+          >
             <Save className="w-4 h-4" /> Finalizar Edição
           </button>
           <button onClick={onClose} className="bg-[#222] hover:bg-[#333] text-white py-2 px-4 rounded-xl transition-all">

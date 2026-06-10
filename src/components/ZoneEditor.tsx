@@ -250,12 +250,12 @@ export default function ZoneEditor({ referenceUrl, onClose, onSave, initialZones
                     style={{ width: canvasSize * zoom, height: canvasSize * zoom }}
                 >
                     <polyline
-                        points={zonaSelecionada.pathData.map(p => `${(p.x/100) * canvasSize * zoom},${(p.y/100) * canvasSize * zoom}`).join(' ')}
+                        points={zonaSelecionada.pathData.map((p: any) => `${(p.x/100) * canvasSize * zoom},${(p.y/100) * canvasSize * zoom}`).join(' ')}
                         fill="rgba(234, 88, 12, 0.2)"
                         stroke="#ea580c"
                         strokeWidth="2"
                     />
-                    {zonaSelecionada.pathData.map((p, i) => (
+                    {zonaSelecionada.pathData.map((p: any, i: number) => (
                         <circle 
                             key={i} 
                             cx={(p.x/100) * canvasSize * zoom} 

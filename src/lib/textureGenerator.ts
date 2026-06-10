@@ -109,10 +109,10 @@ export async function composeUvTexture(opts: {
     if (!zone) continue;
     ctx.save();
     ctx.beginPath();
-    ctx.rect(zone.x, zone.y, zone.width, zone.height);
+    ctx.rect(zone.x - zone.width / 2, zone.y - zone.height / 2, zone.width, zone.height);
     ctx.clip();
-    const cx = zone.x + zone.width / 2 + (layer.offsetX ?? 0);
-    const cy = zone.y + zone.height / 2 + (layer.offsetY ?? 0);
+    const cx = zone.x + (layer.offsetX ?? 0);
+    const cy = zone.y + (layer.offsetY ?? 0);
     ctx.translate(cx, cy);
     if (layer.rotation) ctx.rotate(layer.rotation);
     const scale = layer.scale ?? 1;

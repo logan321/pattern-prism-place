@@ -263,6 +263,10 @@ export default function Simulator() {
   const allModels = React.useMemo(() => [...LOCAL_MODELS, ...(models ?? [])], [models]);
   const currentPattern = React.useMemo(() => patterns?.find(p => p.id === selectedPattern), [patterns, selectedPattern]);
 
+  const textureUrl = React.useMemo(() => 
+    currentPattern?.svg_url || currentPattern?.image_url || undefined
+  , [currentPattern]);
+
   const uvZonesActive = Object.keys(uvMapZones).length > 0;
 
   const uvComposite = useUvCompositor({
@@ -403,9 +407,6 @@ export default function Simulator() {
     return matriz;
   }, [uvMatrices, selectedModel, currentPattern]);
 
-  const textureUrl = React.useMemo(() => 
-    currentPattern?.svg_url || currentPattern?.image_url || undefined
-  , [currentPattern]);
 
   // Efeito para trocar a vista automaticamente ao mudar de aba
   useEffect(() => {

@@ -442,7 +442,7 @@ export default function Admin() {
     );
   }
 
-  if (!session) {
+  if (false && !session) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <div className="max-w-md w-full bg-white rounded-3xl shadow-xl overflow-hidden">
@@ -841,7 +841,10 @@ export default function Admin() {
           <div className="bg-orange-600 p-1.5 rounded-lg">
             <LayoutDashboard className="w-5 h-5" />
           </div>
-          <h1 className="font-bold text-lg tracking-tight">Admin Painel</h1>
+          <div className="flex flex-col">
+            <h1 className="font-bold text-lg tracking-tight">Admin Painel</h1>
+            <span className="text-[10px] text-orange-500 font-bold uppercase tracking-wider">Acesso Liberado</span>
+          </div>
         </div>
 
         <nav className="flex-1 p-4 space-y-1">
@@ -875,15 +878,17 @@ export default function Admin() {
           </button>
         </nav>
 
-        <div className="mt-auto px-4 pb-4">
-          <button 
-            onClick={handleLogout}
-            className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors text-red-400 hover:bg-red-950/30 hover:text-red-300 border border-transparent hover:border-red-900/50"
-          >
-            <X className="w-5 h-5" />
-            <span className="font-medium text-sm">Sair do Painel</span>
-          </button>
-        </div>
+        {session && (
+          <div className="mt-auto px-4 pb-4">
+            <button 
+              onClick={handleLogout}
+              className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors text-red-400 hover:bg-red-950/30 hover:text-red-300 border border-transparent hover:border-red-900/50"
+            >
+              <X className="w-5 h-5" />
+              <span className="font-medium text-sm">Sair do Painel</span>
+            </button>
+          </div>
+        )}
 
         <div className="p-4 border-t border-gray-800">
           <Link to="/" className="flex items-center space-x-2 text-gray-400 hover:text-white text-sm transition-colors">

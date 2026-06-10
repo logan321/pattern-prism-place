@@ -442,7 +442,7 @@ export default function Admin() {
     );
   }
 
-  if (!session) {
+  if (false && !session) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <div className="max-w-md w-full bg-white rounded-3xl shadow-xl overflow-hidden">

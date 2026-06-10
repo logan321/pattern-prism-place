@@ -307,7 +307,7 @@ export default function Simulator() {
         Object.assign(zonesMap, d.uv_zones);
       }
       setUvMapZones(zonesMap);
-      setUvMapDims({ w: (d as any).uv_width ?? null, h: (d as any).uv_height ?? null });
+      setUvMapDims({ w: (d as any).uv_width ?? 2048, h: (d as any).uv_height ?? 2048 });
       setUvLayers([]);
       setUvTextDrafts({});
     })();

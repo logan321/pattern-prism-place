@@ -875,6 +875,16 @@ export default function Admin() {
           </button>
         </nav>
 
+        <div className="mt-auto px-4 pb-4">
+          <button 
+            onClick={handleLogout}
+            className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors text-red-400 hover:bg-red-950/30 hover:text-red-300 border border-transparent hover:border-red-900/50"
+          >
+            <X className="w-5 h-5" />
+            <span className="font-medium text-sm">Sair do Painel</span>
+          </button>
+        </div>
+
         <div className="p-4 border-t border-gray-800">
           <Link to="/" className="flex items-center space-x-2 text-gray-400 hover:text-white text-sm transition-colors">
             <ArrowLeft className="w-4 h-4" />

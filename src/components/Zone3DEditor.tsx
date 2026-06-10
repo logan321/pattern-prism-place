@@ -15,6 +15,7 @@ import {
   Box
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import golaModelAsset from '@/assets/GOLA_PADRE_otimizado.glb.asset.json';
 
 function Model({ url, onPointerDown }: { url: string; onPointerDown: (e: any) => void }) {
   const { scene } = useGLTF(url);
@@ -108,7 +109,7 @@ export function Zone3DEditor({
   hideBackButton?: boolean;
 }) {
   const { zones, selectedZoneId, updateZone, setSelectedZoneId } = useAppContext();
-  const [modelUrl] = useState(propModelUrl || "https://vjhzocuofmbtmgyfxtqy.supabase.co/storage/v1/object/public/models/GOLA_PADRE_otimizado.glb");
+  const [modelUrl] = useState(propModelUrl || golaModelAsset.url);
   
   const selectedZone = zones.find(z => z.id === selectedZoneId);
 

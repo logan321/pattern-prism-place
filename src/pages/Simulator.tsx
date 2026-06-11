@@ -678,104 +678,7 @@ export default function Simulator() {
               ))
             ) : activeTab === 'Nome/Número' ? (
               <div className="col-span-2 space-y-4">
-                {uvZonesActive && (
-                  <div className="col-span-2 space-y-3 mb-4">
-                    <div className="p-2 rounded text-[10px] font-medium border bg-green-50 border-green-200 text-green-700">
-                      ✅ Zonas UV ativas: {Object.keys(uvMapZones).length} zona(s)
-                    </div>
-                    {Object.entries(uvMapZones).map(([zoneKey, zone]) => {
-                      const textLayer = uvLayers.find(l => l.zoneKey === zoneKey && l.type === 'text') as any;
-                      const imageLayer = uvLayers.find(l => l.zoneKey === zoneKey && l.type === 'image');
-                      return (
-                        <div key={zoneKey} className="border rounded-lg p-3 space-y-2 bg-gray-50">
-                          <p className="text-[10px] font-bold text-gray-600 uppercase">
-                            {zone.label || zoneKey}
-                          </p>
-                          <input
-                            type="text"
-                            value={uvTextDrafts[zoneKey] ?? textLayer?.content ?? ''}
-                            onChange={(e) => setUvLayerText(zoneKey, e.target.value)}
-                            placeholder="Digite o texto..."
-                            className="w-full border rounded p-2 text-sm"
-                          />
-                          <div className="flex gap-2">
-                            <label className="flex-1 text-center border rounded p-1 text-[10px] cursor-pointer bg-white hover:bg-gray-100">
-                              📎 Imagem
-                              <input
-                                type="file"
-                                accept="image/png,image/jpeg,image/webp"
-                                className="hidden"
-                                onChange={(e) => {
-                                  const file = e.target.files?.[0];
-                                  if (file) setUvLayerImage(zoneKey, file);
-                                  e.currentTarget.value = '';
-                                }}
-                              />
-                            </label>
-                            {(textLayer || imageLayer) && (
-                              <button
-                                onClick={() => removeUvLayer(zoneKey)}
-                                className="px-2 py-1 text-[10px] border rounded text-red-600 bg-white hover:bg-red-50"
-                              >
-                                Limpar
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-                <div className={cn(
-                  "p-2 rounded text-[10px] font-medium border",
-                  activeUVMatriz ? "bg-green-50 border-green-200 text-green-700" : "bg-amber-50 border-amber-200 text-amber-700"
-                )}>
-                  {activeUVMatriz 
-                    ? `✅ Matriz UV Ativa: ${activeUVMatriz.name}` 
-                    : "⚠️ Nenhuma Matriz UV vinculada. As marcações podem não aparecer corretamente."
-                  }
-                </div>
-                <div className="space-y-3">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase">Formação de Escudo e Nome</label>
-                  <div className="grid grid-cols-2 gap-2">
-                    <button 
-                      onClick={() => setFormation('escudo-esq-nome-dir')}
-                      className={cn(
-                        "text-[10px] py-2 px-1 border rounded-lg transition-all font-medium",
-                        formation === 'escudo-esq-nome-dir' ? "bg-orange-600 text-white border-orange-600 shadow-md" : "bg-white text-gray-600 border-gray-200 hover:border-orange-300"
-                      )}
-                    >
-                      🛡️ Esq | Nome Dir
-                    </button>
-                    <button 
-                      onClick={() => setFormation('escudo-dir-nome-esq')}
-                      className={cn(
-                        "text-[10px] py-2 px-1 border rounded-lg transition-all font-medium",
-                        formation === 'escudo-dir-nome-esq' ? "bg-orange-600 text-white border-orange-600 shadow-md" : "bg-white text-gray-600 border-gray-200 hover:border-orange-300"
-                      )}
-                    >
-                      Nome Esq | 🛡️ Dir
-                    </button>
-                    <button 
-                      onClick={() => setFormation('nome-centro')}
-                      className={cn(
-                        "text-[10px] py-2 px-1 border rounded-lg transition-all font-medium",
-                        formation === 'nome-centro' ? "bg-orange-600 text-white border-orange-600 shadow-md" : "bg-white text-gray-600 border-gray-200 hover:border-orange-300"
-                      )}
-                    >
-                      Nome Centro
-                    </button>
-                    <button 
-                      onClick={() => setFormation('so-numero')}
-                      className={cn(
-                        "text-[10px] py-2 px-1 border rounded-lg transition-all font-medium",
-                        formation === 'so-numero' ? "bg-orange-600 text-white border-orange-600 shadow-md" : "bg-white text-gray-600 border-gray-200 hover:border-orange-300"
-                      )}
-                    >
-                      Só Número
-                    </button>
-                  </div>
-                </div>
+                {/* Menu simplificado removendo a edição direta das zonas UV */}
 
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold text-gray-500 uppercase">Nome</label>
@@ -832,37 +735,8 @@ export default function Simulator() {
               </div>
             ) : activeTab === 'Escudo' ? (
               <div className="col-span-2 space-y-4">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase">Posição do Escudo e Nome</label>
-                  <div className="grid grid-cols-1 gap-2">
-                    <button 
-                      onClick={() => setFormation('escudo-esq-nome-dir')}
-                      className={cn(
-                        "text-[10px] border p-2 rounded transition-colors",
-                        formation === 'escudo-esq-nome-dir' ? "bg-orange-50 border-orange-500 text-orange-700 font-bold" : "hover:bg-gray-50"
-                      )}
-                    >
-                      🛡️ ESQUERDA / NOME DIREITA
-                    </button>
-                    <button 
-                      onClick={() => setFormation('escudo-dir-nome-esq')}
-                      className={cn(
-                        "text-[10px] border p-2 rounded transition-colors",
-                        formation === 'escudo-dir-nome-esq' ? "bg-orange-50 border-orange-500 text-orange-700 font-bold" : "hover:bg-gray-50"
-                      )}
-                    >
-                      🛡️ DIREITA / NOME ESQUERDA
-                    </button>
-                    <button 
-                      onClick={() => setFormation('nome-centro')}
-                      className={cn(
-                        "text-[10px] border p-2 rounded transition-colors",
-                        formation === 'nome-centro' ? "bg-orange-50 border-orange-500 text-orange-700 font-bold" : "hover:bg-gray-50"
-                      )}
-                    >
-                      NOME CENTRO
-                    </button>
-                  </div>
+                <div className="p-2 rounded text-[10px] font-medium border bg-blue-50 border-blue-200 text-blue-700">
+                  ℹ️ O escudo será aplicado automaticamente na posição correta da matriz UV.
                 </div>
                 <div className="p-4 border-2 border-dashed border-gray-200 rounded-lg text-center relative">
                   {shieldUrl ? (

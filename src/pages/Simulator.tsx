@@ -174,6 +174,7 @@ export default function Simulator() {
     nameColor,
     numberColor,
     nameFont,
+    numberFont,
     formationCostas,
     formationFrente,
     shieldUrl,
@@ -185,6 +186,7 @@ export default function Simulator() {
     setNameColor,
     setNumberColor,
     setNameFont,
+    setNumberFont,
     setFormationCostas,
     setFormationFrente,
     setShieldUrl,
@@ -458,7 +460,7 @@ export default function Simulator() {
           type: 'text',
           content: customNumber || '10',
           color: numberColor,
-          fontFamily: nameFont,
+          fontFamily: numberFont,
           fontWeight: 900,
           scale: numberSize
         } as UvLayer);
@@ -501,7 +503,7 @@ export default function Simulator() {
       setUvTextDrafts(autoDrafts);
     })();
     return () => { cancelled = true; };
-  }, [selectedPattern, customName, customNumber, shieldUrl, nameColor, numberColor, nameFont, formationCostas, formationFrente, nameSize, numberSize, shieldSize]);
+  }, [selectedPattern, customName, customNumber, shieldUrl, nameColor, numberColor, nameFont, numberFont, formationCostas, formationFrente, nameSize, numberSize, shieldSize]);
 
   // Funções para manipular layers de texto
   const uvTextCommitRef = useRef<number | null>(null);
@@ -625,6 +627,7 @@ export default function Simulator() {
               nameColor,
               numberColor,
               nameFont,
+              numberFont,
             },
           });
         }
@@ -642,7 +645,7 @@ export default function Simulator() {
     return () => { active = false; };
   }, [
     textureUrl, activeUVMatriz, customName, customNumber,
-    shieldUrl, nameColor, numberColor, nameFont,
+    shieldUrl, nameColor, numberColor, nameFont, numberFont,
     uvZonesActive, uvComposite.canvas, uvComposite.version, uvComposite.ready
   ]);
 
@@ -658,7 +661,7 @@ export default function Simulator() {
           return { ...layer, content: customName || 'NOME', color: nameColor, fontFamily: nameFont, scale: nameSize };
         }
         if (layer.zoneKey.includes('CENTRO COSTAS')) {
-          return { ...layer, content: customNumber || '10', color: numberColor, fontFamily: nameFont, scale: numberSize };
+          return { ...layer, content: customNumber || '10', color: numberColor, fontFamily: numberFont, scale: numberSize };
         }
       }
       if (layer.type === 'image' && (layer.zoneKey.includes('PEITO ESQUERDO') || layer.zoneKey.includes('PEITO DIREITO'))) {
@@ -667,7 +670,7 @@ export default function Simulator() {
       }
       return layer;
     }));
-  }, [customName, customNumber, shieldUrl, nameColor, numberColor, nameFont, nameSize, numberSize, shieldSize, uvZonesActive]);
+  }, [customName, customNumber, shieldUrl, nameColor, numberColor, nameFont, numberFont, nameSize, numberSize, shieldSize, uvZonesActive]);
 
   return (
     <>
@@ -810,8 +813,23 @@ export default function Simulator() {
                           onClick={() => setNameColor(color)} 
                         />
                       ))}
-                    </div>
                   </div>
+                  
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-gray-500 uppercase">Fonte do Nome</label>
+                    <select 
+                      value={nameFont}
+                      onChange={(e) => setNameFont(e.target.value)}
+                      className="w-full border rounded p-2 text-sm"
+                    >
+                      <option value="Arial">Arial</option>
+                      <option value="Verdana">Verdana</option>
+                      <option value="Times New Roman">Times New Roman</option>
+                      <option value="Courier New">Courier New</option>
+                      <option value="Impact">Impact</option>
+                    </select>
+                  </div>
+                </div>
 
                   <SizeSlider 
                     label="Tamanho do Nome" 
@@ -843,8 +861,23 @@ export default function Simulator() {
                           onClick={() => setNumberColor(color)} 
                         />
                       ))}
-                    </div>
                   </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-gray-500 uppercase">Fonte do Número</label>
+                    <select 
+                      value={numberFont}
+                      onChange={(e) => setNumberFont(e.target.value)}
+                      className="w-full border rounded p-2 text-sm"
+                    >
+                      <option value="Arial">Arial</option>
+                      <option value="Verdana">Verdana</option>
+                      <option value="Times New Roman">Times New Roman</option>
+                      <option value="Courier New">Courier New</option>
+                      <option value="Impact">Impact</option>
+                    </select>
+                  </div>
+                </div>
 
                   <SizeSlider 
                     label="Tamanho do Número" 
@@ -853,20 +886,6 @@ export default function Simulator() {
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase">Fonte</label>
-                  <select 
-                    value={nameFont}
-                    onChange={(e) => setNameFont(e.target.value)}
-                    className="w-full border rounded p-2 text-sm"
-                  >
-                    <option value="Arial">Arial</option>
-                    <option value="Verdana">Verdana</option>
-                    <option value="Times New Roman">Times New Roman</option>
-                    <option value="Courier New">Courier New</option>
-                    <option value="Impact">Impact</option>
-                  </select>
-                </div>
               </div>
             ) : activeTab === 'Escudo' ? (
               <div className="col-span-2 space-y-4">

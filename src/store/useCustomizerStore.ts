@@ -16,6 +16,7 @@ interface CustomizerState {
   nameColor: string;
   numberColor: string;
   nameFont: string;
+  numberFont: string;
   shieldUrl: string | null;
   nameSize: number;
   numberSize: number;
@@ -41,6 +42,7 @@ interface CustomizerState {
   setNameColor: (color: string) => void;
   setNumberColor: (color: string) => void;
   setNameFont: (font: string) => void;
+  setNumberFont: (font: string) => void;
   setShieldUrl: (url: string | null) => void;
   setNameSize: (size: number) => void;
   setNumberSize: (size: number) => void;
@@ -69,6 +71,7 @@ export const useCustomizerStore = create<CustomizerState>((set) => ({
   nameColor: '#ffffff',
   numberColor: '#ffffff',
   nameFont: 'Arial',
+  numberFont: 'Arial',
   shieldUrl: null,
   nameSize: 0.9,
   numberSize: 0.9,
@@ -94,6 +97,7 @@ export const useCustomizerStore = create<CustomizerState>((set) => ({
   setNameColor: (nameColor) => set({ nameColor }),
   setNumberColor: (numberColor) => set({ numberColor }),
   setNameFont: (nameFont) => set({ nameFont }),
+  setNumberFont: (numberFont) => set({ numberFont }),
   setShieldUrl: (shieldUrl) => set({ shieldUrl }),
   setNameSize: (nameSize) => set({ nameSize }),
   setNumberSize: (numberSize) => set({ numberSize }),

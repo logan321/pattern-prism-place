@@ -532,15 +532,9 @@ export default function Simulator() {
   }, [uvMatrices, selectedModel, currentPattern]);
 
 
-  // Efeito para trocar a vista automaticamente ao mudar de aba
+  // Efeito para trocar a vista automaticamente ao mudar de aba - REMOVIDO a pedido do usuário
   useEffect(() => {
-    if (activeTab === 'Nome/Número') {
-      viewerRef.current?.setView('back');
-    } else if (activeTab === 'Escudo') {
-      viewerRef.current?.setView('front');
-    } else if (activeTab === 'Modelo' || activeTab === 'Cores') {
-      viewerRef.current?.setView('front');
-    }
+    // Comportamento de rotação automática desativado para melhorar a experiência de edição manual
   }, [activeTab]);
 
   const [finalTexture, setFinalTexture] = useState<THREE.CanvasTexture | undefined>(undefined);

@@ -716,7 +716,29 @@ export default function Simulator() {
               ))
             ) : activeTab === 'Nome/Número' ? (
               <div className="col-span-2 space-y-4">
-                {/* Menu simplificado removendo a edição direta das zonas UV */}
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-gray-500 uppercase">Posição do Nome</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button 
+                      onClick={() => handleChestLayoutChange('name-top-shield-center')}
+                      className={cn(
+                        "text-[10px] py-2 px-1 rounded border transition-all",
+                        chestLayout === 'name-top-shield-center' ? "bg-orange-600 text-white border-orange-600" : "bg-white text-gray-600 border-gray-200"
+                      )}
+                    >
+                      Nome no Topo
+                    </button>
+                    <button 
+                      onClick={() => handleChestLayoutChange('name-center-shield-top')}
+                      className={cn(
+                        "text-[10px] py-2 px-1 rounded border transition-all",
+                        chestLayout === 'name-center-shield-top' ? "bg-orange-600 text-white border-orange-600" : "bg-white text-gray-600 border-gray-200"
+                      )}
+                    >
+                      Nome no Centro
+                    </button>
+                  </div>
+                </div>
 
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold text-gray-500 uppercase">Nome</label>
@@ -771,6 +793,7 @@ export default function Simulator() {
                   </select>
                 </div>
               </div>
+
             ) : activeTab === 'Escudo' ? (
               <div className="col-span-2 space-y-4">
                 <div className="p-2 rounded text-[10px] font-medium border bg-blue-50 border-blue-200 text-blue-700">

@@ -88,7 +88,7 @@ function Scene({ modelUrl, onPointSelected, zones }: {
       <pointLight position={[-10, -10, -10]} intensity={0.5} />
       
       <Suspense fallback={<Html center>Carregando modelo...</Html>}>
-        <Center fit>
+        <Center bounds>
           <Model url={modelUrl} onPointerDown={handlePointerDown} />
           {zones.map(z => (
             <ZonePreview key={z.id} zone={z} />

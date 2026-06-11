@@ -700,9 +700,9 @@ export default function Simulator() {
         </div>
       </header>
 
-      <div className="flex flex-col-reverse md:flex-row flex-1 overflow-hidden">
+      <div className="flex flex-col-reverse md:flex-row flex-1 overflow-hidden relative">
         {/* Main Sidebar */}
-        <aside className="w-full md:w-20 bg-white border-t md:border-t-0 md:border-r flex md:flex-col shadow-[0_-2px_10px_rgba(0,0,0,0.1)] md:shadow-none z-30">
+        <aside className="w-full md:w-20 bg-white border-t md:border-t-0 md:border-r flex md:flex-col shadow-[0_-2px_10px_rgba(0,0,0,0.1)] md:shadow-none z-[50]">
           <SidebarItem icon={Shirt} label="Modelo" active={activeTab === 'Modelo'} onClick={() => setActiveTab('Modelo')} />
           <SidebarItem icon={Palette} label="Estampas" active={activeTab === 'Cores'} onClick={() => setActiveTab('Cores')} />
           <SidebarItem icon={Scissors} label="Acab." active={activeTab === 'Acabamentos'} onClick={() => setActiveTab('Acabamentos')} />

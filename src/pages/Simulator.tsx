@@ -796,9 +796,30 @@ export default function Simulator() {
 
             ) : activeTab === 'Escudo' ? (
               <div className="col-span-2 space-y-4">
-                <div className="p-2 rounded text-[10px] font-medium border bg-blue-50 border-blue-200 text-blue-700">
-                  ℹ️ O escudo será aplicado automaticamente na posição correta da matriz UV.
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-gray-500 uppercase">Posição do Escudo</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button 
+                      onClick={() => handleChestLayoutChange('name-top-shield-center')}
+                      className={cn(
+                        "text-[10px] py-2 px-1 rounded border transition-all",
+                        chestLayout === 'name-top-shield-center' ? "bg-orange-600 text-white border-orange-600" : "bg-white text-gray-600 border-gray-200"
+                      )}
+                    >
+                      Escudo no Centro
+                    </button>
+                    <button 
+                      onClick={() => handleChestLayoutChange('name-center-shield-top')}
+                      className={cn(
+                        "text-[10px] py-2 px-1 rounded border transition-all",
+                        chestLayout === 'name-center-shield-top' ? "bg-orange-600 text-white border-orange-600" : "bg-white text-gray-600 border-gray-200"
+                      )}
+                    >
+                      Escudo no Topo
+                    </button>
+                  </div>
                 </div>
+
                 <div className="p-4 border-2 border-dashed border-gray-200 rounded-lg text-center relative">
                   {shieldUrl ? (
                     <div className="relative group">

@@ -138,7 +138,7 @@ export default function Simulator() {
     nameFont,
     formationCostas,
     formationFrente,
-    shieldUrl = 'https://vjhzocuofmbtmgyfxtqy.supabase.co/storage/v1/object/public/textures/shield_placeholder.png',
+    shieldUrl,
     setName,
     setNumber,
     setNameColor,

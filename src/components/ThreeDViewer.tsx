@@ -1,6 +1,6 @@
 import React, { Suspense, useEffect, useRef, useImperativeHandle, forwardRef, useMemo, useState, useContext } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { OrbitControls, useGLTF, Decal } from '@react-three/drei';
+import { OrbitControls, useGLTF, Decal, Center } from '@react-three/drei';
 import * as THREE from 'three';
 import { gsap } from 'gsap';
 import { AppContext } from '../context/AppContext';
@@ -182,16 +182,18 @@ function Model({ url, finalTexture, customization }: { url: string; finalTexture
   );
 
   return (
-    <group>
-      <primitive object={clonedScene} />
-      {positionedZones.map((zone) => (
-        <ZoneDecal 
-          key={zone.id} 
-          zone={zone} 
-          customization={customization} 
-        />
-      ))}
-    </group>
+    <Center top>
+      <group>
+        <primitive object={clonedScene} />
+        {positionedZones.map((zone) => (
+          <ZoneDecal 
+            key={zone.id} 
+            zone={zone} 
+            customization={customization} 
+          />
+        ))}
+      </group>
+    </Center>
   );
 }
 

@@ -332,31 +332,32 @@ export default function Simulator() {
       setUvTextDrafts({});
 
       // Aplicar padrões automáticos solicitados pelo usuário
-      // 1. PEITO DIREITO: NOME
-      // 2. PEITO ESQUERDO: ESCUDO (ÍCONE)
-      // 3. CENTRO COSTAS: NÚMERO 10
-      // 4. NOME COSTA TOPO: NOME
-      
       const autoLayers: UvLayer[] = [];
       const autoDrafts: Record<string, string> = {};
 
-      if (zonesMap['PEITO DIREITO']) {
+      // Mapeamento de zonas padrão (tenta novas chaves primeiro, depois fallbacks)
+      const nameZone = zonesMap['chest_top_name'] ? 'chest_top_name' : (zonesMap['PEITO DIREITO'] ? 'PEITO DIREITO' : null);
+      const shieldZone = zonesMap['chest_center_shield'] ? 'chest_center_shield' : (zonesMap['PEITO ESQUERDO'] ? 'PEITO ESQUERDO' : null);
+      const backNumberZone = zonesMap['back_center_number'] ? 'back_center_number' : (zonesMap['CENTRO COSTAS'] ? 'CENTRO COSTAS' : null);
+      const backNameZone = zonesMap['back_top_name'] ? 'back_top_name' : (zonesMap['NOME COSTA TOPO'] ? 'NOME COSTA TOPO' : null);
+
+      if (nameZone) {
         autoLayers.push({
-          id: `PEITO_DIREITO_text_${Date.now()}`,
-          zoneKey: 'PEITO DIREITO',
+          id: `${nameZone}_text_${Date.now()}`,
+          zoneKey: nameZone,
           type: 'text',
           content: customName || 'NOME',
           color: nameColor,
           fontFamily: nameFont,
           fontWeight: 900
         } as UvLayer);
-        autoDrafts['PEITO DIREITO'] = customName || 'NOME';
+        autoDrafts[nameZone] = customName || 'NOME';
       }
 
-      if (zonesMap['PEITO ESQUERDO']) {
+      if (shieldZone) {
         autoLayers.push({
-          id: `PEITO_ESQUERDO_image_${Date.now()}`,
-          zoneKey: 'PEITO ESQUERDO',
+          id: `${shieldZone}_image_${Date.now()}`,
+          zoneKey: shieldZone,
           type: 'image',
           url: shieldUrl || 'https://vjhzocuofmbtmgyfxtqy.supabase.co/storage/v1/object/public/textures/shield_placeholder.png',
           scale: 0.9,
@@ -364,34 +365,35 @@ export default function Simulator() {
         } as UvLayer);
       }
 
-      if (zonesMap['CENTRO COSTAS']) {
+      if (backNumberZone) {
         autoLayers.push({
-          id: `CENTRO_COSTAS_text_${Date.now()}`,
-          zoneKey: 'CENTRO COSTAS',
+          id: `${backNumberZone}_text_${Date.now()}`,
+          zoneKey: backNumberZone,
           type: 'text',
           content: customNumber || '10',
           color: numberColor,
           fontFamily: nameFont,
           fontWeight: 900
         } as UvLayer);
-        autoDrafts['CENTRO COSTAS'] = customNumber || '10';
+        autoDrafts[backNumberZone] = customNumber || '10';
       }
 
-      if (zonesMap['NOME COSTA TOPO']) {
+      if (backNameZone) {
         autoLayers.push({
-          id: `NOME_COSTA_TOPO_text_${Date.now()}`,
-          zoneKey: 'NOME COSTA TOPO',
+          id: `${backNameZone}_text_${Date.now()}`,
+          zoneKey: backNameZone,
           type: 'text',
           content: customName || 'NOME',
           color: nameColor,
           fontFamily: nameFont,
           fontWeight: 900
         } as UvLayer);
-        autoDrafts['NOME COSTA TOPO'] = customName || 'NOME';
+        autoDrafts[backNameZone] = customName || 'NOME';
       }
 
       setUvLayers(autoLayers);
       setUvTextDrafts(autoDrafts);
+
     })();
     return () => { cancelled = true; };
   }, [selectedPattern, customName, customNumber, shieldUrl, nameColor, numberColor, nameFont]);

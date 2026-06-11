@@ -50,7 +50,7 @@ interface CustomizerState {
 }
 
 export const useCustomizerStore = create<CustomizerState>((set) => ({
-  selectedModel: null,
+  selectedModel: 'local-gola-padre',
   selectedPattern: null,
   syncShirtShorts: true,
   activeTab: 'Modelo',

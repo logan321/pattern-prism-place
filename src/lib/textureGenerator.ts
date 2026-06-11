@@ -21,6 +21,7 @@ export interface TextureGenerationParams {
     nameColor?: string;
     numberColor?: string;
     nameFont?: string;
+    numberFont?: string;
     formation?: string;
   };
 }
@@ -217,7 +218,7 @@ export async function generateFinalTexture({
     ctx.fillRect(0, 0, canvas.width, canvas.height);
   }
 
-  const { name, number, shieldUrl, nameColor, numberColor, nameFont } = customizations;
+  const { name, number, shieldUrl, nameColor, numberColor, nameFont, numberFont } = customizations;
 
   for (const zone of zones) {
     ctx.save();
@@ -246,7 +247,8 @@ export async function generateFinalTexture({
       ctx.fillText(textToDraw, 0, 0);
     } else if (zone.type === 'number' && number) {
       const fontSize = Math.floor(zone.height);
-      ctx.font = `bold ${fontSize}px ${font}`;
+      const fontNum = numberFont || nameFont || 'Arial';
+      ctx.font = `bold ${fontSize}px ${fontNum}`;
       ctx.fillStyle = numberColor || '#ffffff';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';

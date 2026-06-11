@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useContext, useCallback } from 'react';
-import { Trash2, Save, X, Move, Maximize, RotateCcw, Eye, Layers, Square, Crosshair, Target, ExternalLink, PenTool, Share2, Plus, GripVertical } from 'lucide-react';
+import { Trash2, Save, X, Move, Maximize, RotateCcw, Eye, Layers, Square, Crosshair, Target, ExternalLink, PenTool, Share2, Plus, GripVertical, ZoomIn, ZoomOut, Hand } from 'lucide-react';
 import { generateFinalTexture } from '../lib/textureGenerator';
 import { AppContext, Zone3D } from '../context/AppContext';
 import PolygonDrawer from './PolygonDrawer';
@@ -31,7 +31,10 @@ export default function ZoneEditor({ referenceUrl, onClose, onSave, initialZones
     }
   }, [initialZones, setZones]);
 
-  const [zoom, setZoom] = useState(0.4);
+  const [zoom, setZoom] = useState(0.5);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [isPanning, setIsPanning] = useState(false);
+  const [lastMousePos, setLastMousePos] = useState({ x: 0, y: 0 });
   const [isGenerating, setIsGenerating] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [showPreview, setShowPreview] = useState(false);
@@ -65,11 +68,11 @@ export default function ZoneEditor({ referenceUrl, onClose, onSave, initialZones
   });
 
   const handleCanvasClick = (e: React.MouseEvent) => {
-    if (e.target !== e.currentTarget) return;
+    if (e.target !== e.currentTarget || isPanning) return;
     
     const rect = e.currentTarget.getBoundingClientRect();
-    const xPercent = ((e.clientX - rect.left) / (canvasSize * zoom)) * 100;
-    const yPercent = ((e.clientY - rect.top) / (canvasSize * zoom)) * 100;
+    const xPercent = (((e.clientX - rect.left) / zoom)) / canvasSize * 100;
+    const yPercent = (((e.clientY - rect.top) / zoom)) / canvasSize * 100;
 
     if (isDrawingPath && zonaSelecionada) {
         const currentPath = zonaSelecionada.pathData || [];
@@ -138,6 +141,44 @@ export default function ZoneEditor({ referenceUrl, onClose, onSave, initialZones
     }
   };
 
+  const handleCanvasPointerDown = (e: React.PointerEvent) => {
+    // Middle mouse or Alt + Left
+    if (e.button === 1 || (e.button === 0 && e.altKey)) { 
+      setIsPanning(true);
+      setLastMousePos({ x: e.clientX, y: e.clientY });
+      (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    }
+  };
+
+  const handleCanvasPointerMove = (e: React.PointerEvent) => {
+    if (isPanning) {
+      const dx = e.clientX - lastMousePos.x;
+      const dy = e.clientY - lastMousePos.y;
+      setPan(prev => ({ x: prev.x + dx, y: prev.y + dy }));
+      setLastMousePos({ x: e.clientX, y: e.clientY });
+    }
+  };
+
+  const handleCanvasPointerUp = (e: React.PointerEvent) => {
+    if (isPanning) {
+      setIsPanning(false);
+      (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+    }
+  };
+
+  const handleWheel = (e: React.WheelEvent) => {
+    // Check for Ctrl/Meta key for zooming, otherwise pan
+    if (e.ctrlKey || e.metaKey) {
+      e.preventDefault();
+      const delta = -e.deltaY;
+      const factor = delta > 0 ? 1.1 : 0.9;
+      setZoom(prev => Math.min(Math.max(prev * factor, 0.1), 5));
+    } else {
+      // Natural panning with wheel
+      setPan(prev => ({ x: prev.x - e.deltaX, y: prev.y - e.deltaY }));
+    }
+  };
+
   const handleGeneratePreview = async () => {
     setIsGenerating(true);
     try {
@@ -174,7 +215,7 @@ export default function ZoneEditor({ referenceUrl, onClose, onSave, initialZones
   };
 
   return (
-    <div className="fixed inset-0 bg-[#0a0a0a] z-[70] flex flex-col animate-in fade-in duration-300">
+    <div className="fixed inset-0 bg-[#0a0a0a] z-[70] flex flex-col animate-in fade-in duration-300 overflow-hidden" onPointerMove={handleDragMove} onPointerUp={handleDragEnd}>
       <header className="flex justify-between items-center p-4 bg-[#161616] border-b border-[#222]">
         <div className="flex items-center gap-3">
           <div className="bg-orange-600 p-2 rounded-lg">
@@ -273,20 +314,28 @@ export default function ZoneEditor({ referenceUrl, onClose, onSave, initialZones
         </div>
 
         {/* Center - UV Map Canvas */}
-        <div className="flex-1 relative bg-[#161616] rounded-xl border border-[#222] overflow-auto flex items-center justify-center p-20 select-none shadow-xl">
+        <div 
+          className="flex-1 relative bg-[#050505] rounded-xl border border-[#222] overflow-hidden flex items-center justify-center select-none shadow-xl"
+          onWheel={handleWheel}
+          onPointerDown={handleCanvasPointerDown}
+          onPointerMove={handleCanvasPointerMove}
+          onPointerUp={handleCanvasPointerUp}
+          style={{ cursor: isPanning ? 'grabbing' : 'auto' }}
+        >
           <div 
-            className="relative bg-[#f8f8f8] shadow-[0_0_100px_rgba(0,0,0,0.5)] transition-transform duration-200"
+            className="relative bg-[#f8f8f8] shadow-[0_0_100px_rgba(0,0,0,0.5)] transition-transform duration-75 ease-out origin-center"
             style={{ 
-              width: canvasSize * zoom, 
-              height: canvasSize * zoom,
+              width: canvasSize, 
+              height: canvasSize,
+              transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
               backgroundImage: `
                 linear-gradient(45deg, #eee 25%, transparent 25%), 
                 linear-gradient(-45deg, #eee 25%, transparent 25%), 
                 linear-gradient(45deg, transparent 75%, #eee 75%), 
                 linear-gradient(-45deg, transparent 75%, #eee 75%)
               `,
-              backgroundSize: `${20 * zoom}px ${20 * zoom}px`,
-              backgroundPosition: `0 0, 0 ${10 * zoom}px, ${10 * zoom}px -${10 * zoom}px, -${10 * zoom}px 0px`
+              backgroundSize: '20px 20px',
+              backgroundPosition: '0 0, 0 10px, 10px -10px, -10px 0px'
             }}
             onClick={handleCanvasClick}
           >
@@ -320,14 +369,12 @@ export default function ZoneEditor({ referenceUrl, onClose, onSave, initialZones
                 <div
                   key={z.id}
                   onPointerDown={(e) => handleDragStart(e, z, 'move')}
-                  onPointerMove={handleDragMove}
-                  onPointerUp={handleDragEnd}
                   style={{
                     position: 'absolute',
-                    left: (xPixels - wPixels/2) * zoom,
-                    top: (yPixels - hPixels/2) * zoom,
-                    width: wPixels * zoom,
-                    height: hPixels * zoom,
+                    left: xPixels - wPixels/2,
+                    top: yPixels - hPixels/2,
+                    width: wPixels,
+                    height: hPixels,
                     transform: `rotate(${z.rotation}deg)`,
                     border: isSelected ? '2px solid #ea580c' : '1px solid #3b82f6',
                     backgroundColor: isSelected ? 'rgba(234, 88, 12, 0.3)' : 'rgba(59, 130, 246, 0.1)',
@@ -379,10 +426,10 @@ export default function ZoneEditor({ referenceUrl, onClose, onSave, initialZones
             {zonaSelecionada?.pathData && zonaSelecionada.pathData.length > 0 && (
                 <svg 
                     className="absolute inset-0 pointer-events-none" 
-                    style={{ width: canvasSize * zoom, height: canvasSize * zoom }}
+                    style={{ width: canvasSize, height: canvasSize }}
                 >
                     <polyline
-                        points={zonaSelecionada.pathData.map((p: any) => `${(p.x/100) * canvasSize * zoom},${(p.y/100) * canvasSize * zoom}`).join(' ')}
+                        points={zonaSelecionada.pathData.map((p: any) => `${(p.x/100) * canvasSize},${(p.y/100) * canvasSize}`).join(' ')}
                         fill="rgba(234, 88, 12, 0.2)"
                         stroke="#ea580c"
                         strokeWidth="2"
@@ -390,8 +437,8 @@ export default function ZoneEditor({ referenceUrl, onClose, onSave, initialZones
                     {zonaSelecionada.pathData.map((p: any, i: number) => (
                         <circle 
                             key={i} 
-                            cx={(p.x/100) * canvasSize * zoom} 
-                            cy={(p.y/100) * canvasSize * zoom} 
+                            cx={(p.x/100) * canvasSize} 
+                            cy={(p.y/100) * canvasSize} 
                             r="3" 
                             fill="#ea580c" 
                         />
@@ -400,13 +447,23 @@ export default function ZoneEditor({ referenceUrl, onClose, onSave, initialZones
             )}
           </div>
           
-          {/* Zoom Controls Overlay */}
-          <div className="absolute bottom-8 right-8 flex flex-col gap-2">
-             <button onClick={() => setZoom(prev => Math.min(prev + 0.1, 2))} className="p-3 bg-[#161616] text-white rounded-xl hover:bg-[#222] border border-[#333] shadow-xl"><Maximize className="w-5 h-5"/></button>
-             <button onClick={() => setZoom(prev => Math.max(prev - 0.1, 0.1))} className="p-3 bg-[#161616] text-white rounded-xl hover:bg-[#222] border border-[#333] shadow-xl"><RotateCcw className="w-5 h-5"/></button>
-             <div className="bg-[#161616] px-4 py-2 rounded-xl border border-[#333] text-white text-[10px] font-bold text-center">
+          {/* Zoom & Pan Controls Overlay */}
+          <div className="absolute top-4 left-4 flex flex-col gap-2">
+             <div className="bg-[#161616]/80 backdrop-blur-md p-2 rounded-xl border border-[#333] flex flex-col gap-1 shadow-2xl">
+                <button onClick={() => setZoom(prev => Math.min(prev * 1.2, 5))} className="p-2 hover:bg-orange-600/20 text-white rounded-lg transition-all" title="Zoom In"><ZoomIn className="w-5 h-5"/></button>
+                <div className="h-px bg-[#333] mx-1" />
+                <button onClick={() => setZoom(prev => Math.max(prev / 1.2, 0.1))} className="p-2 hover:bg-orange-600/20 text-white rounded-lg transition-all" title="Zoom Out"><ZoomOut className="w-5 h-5"/></button>
+                <div className="h-px bg-[#333] mx-1" />
+                <button onClick={() => { setZoom(0.5); setPan({ x: 0, y: 0 }); }} className="p-2 hover:bg-orange-600/20 text-white rounded-lg transition-all" title="Reset View"><RotateCcw className="w-5 h-5"/></button>
+             </div>
+             <div className="bg-[#161616]/80 backdrop-blur-md px-3 py-1 rounded-lg border border-[#333] text-white text-[10px] font-bold text-center shadow-xl">
                 {Math.round(zoom * 100)}%
              </div>
+          </div>
+
+          <div className="absolute bottom-4 left-4 p-3 bg-black/60 backdrop-blur-md rounded-xl border border-white/5 text-[9px] text-gray-400 font-bold uppercase tracking-widest pointer-events-none flex flex-col gap-1">
+             <div className="flex items-center gap-2"><Hand className="w-3 h-3" /> Scroll: Mover | Alt+Drag: Mover Canva</div>
+             <div className="flex items-center gap-2"><Maximize className="w-3 h-3" /> Ctrl + Scroll: Zoom</div>
           </div>
         </div>
 

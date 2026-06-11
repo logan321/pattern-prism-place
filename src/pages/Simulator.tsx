@@ -582,19 +582,23 @@ export default function Simulator() {
 
     setUvLayers(prev => prev.map(layer => {
       if (layer.type === 'text') {
-        if (layer.zoneKey.includes('PEITO DIREITO') || layer.zoneKey.includes('NOME COSTA TOPO')) {
+        // Sincroniza zonas de NOME
+        if (layer.zoneKey.includes('name') || layer.zoneKey.includes('NOME') || layer.zoneKey === 'PEITO DIREITO') {
           return { ...layer, content: customName || 'NOME', color: nameColor, fontFamily: nameFont };
         }
-        if (layer.zoneKey.includes('CENTRO COSTAS')) {
+        // Sincroniza zonas de NÚMERO
+        if (layer.zoneKey.includes('number') || layer.zoneKey.includes('NÚMERO') || layer.zoneKey === 'CENTRO COSTAS') {
           return { ...layer, content: customNumber || '10', color: numberColor, fontFamily: nameFont };
         }
       }
-      if (layer.type === 'image' && layer.zoneKey.includes('PEITO ESQUERDO')) {
+      // Sincroniza escudo
+      if (layer.type === 'image' && (layer.zoneKey.includes('shield') || layer.zoneKey.includes('ESCUDO') || layer.zoneKey === 'PEITO ESQUERDO')) {
         return { ...layer, url: shieldUrl || 'https://vjhzocuofmbtmgyfxtqy.supabase.co/storage/v1/object/public/textures/shield_placeholder.png' };
       }
       return layer;
     }));
   }, [customName, customNumber, shieldUrl, nameColor, numberColor, nameFont, uvZonesActive]);
+
 
   return (
     <>

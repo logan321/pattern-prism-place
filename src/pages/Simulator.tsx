@@ -787,42 +787,70 @@ export default function Simulator() {
 
                 <div className="h-px bg-gray-100 my-4" />
 
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase">Nome</label>
-                  <div className="flex gap-2">
+                <div className="space-y-3">
+                  <div className="flex flex-col gap-2">
+                    <label className="text-[10px] font-bold text-gray-500 uppercase">Nome</label>
                     <input 
                       type="text" 
                       value={customName}
                       onChange={(e) => setName(e.target.value)}
-                      className="flex-1 border rounded p-2 text-sm"
+                      className="w-full border rounded p-2 text-sm"
                       placeholder="DIGITE O NOME"
                     />
-                    <input 
-                      type="color" 
-                      value={nameColor}
-                      onChange={(e) => setNameColor(e.target.value)}
-                      className="w-10 h-9 p-1 rounded border cursor-pointer"
-                    />
                   </div>
+                  
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-gray-500 uppercase">Cor do Nome</label>
+                    <div className="flex flex-wrap gap-1.5 p-2 border rounded-lg bg-gray-50">
+                      {CMYK_COLORS.map(color => (
+                        <ColorSwatch 
+                          key={`name-${color}`} 
+                          color={color} 
+                          active={nameColor === color} 
+                          onClick={() => setNameColor(color)} 
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  <SizeSlider 
+                    label="Tamanho do Nome" 
+                    value={nameSize} 
+                    onChange={setNameSize} 
+                  />
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase">Número</label>
-                  <div className="flex gap-2">
+                <div className="space-y-3">
+                  <div className="flex flex-col gap-2">
+                    <label className="text-[10px] font-bold text-gray-500 uppercase">Número</label>
                     <input 
                       type="text" 
                       value={customNumber}
                       onChange={(e) => setNumber(e.target.value)}
-                      className="flex-1 border rounded p-2 text-sm"
+                      className="w-full border rounded p-2 text-sm"
                       placeholder="00"
                     />
-                    <input 
-                      type="color" 
-                      value={numberColor}
-                      onChange={(e) => setNumberColor(e.target.value)}
-                      className="w-10 h-9 p-1 rounded border cursor-pointer"
-                    />
                   </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-gray-500 uppercase">Cor do Número</label>
+                    <div className="flex flex-wrap gap-1.5 p-2 border rounded-lg bg-gray-50">
+                      {CMYK_COLORS.map(color => (
+                        <ColorSwatch 
+                          key={`num-${color}`} 
+                          color={color} 
+                          active={numberColor === color} 
+                          onClick={() => setNumberColor(color)} 
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  <SizeSlider 
+                    label="Tamanho do Número" 
+                    value={numberSize} 
+                    onChange={setNumberSize} 
+                  />
                 </div>
 
                 <div className="space-y-2">
@@ -877,7 +905,12 @@ export default function Simulator() {
                   />
                   {!shieldUrl && <button className="mt-2 bg-orange-600 text-white text-[10px] px-3 py-1 rounded">Selecionar Arquivo</button>}
                 </div>
-                <p className="text-[10px] text-gray-400 italic">
+                <SizeSlider 
+                  label="Tamanho do Escudo" 
+                  value={shieldSize} 
+                  onChange={setShieldSize} 
+                />
+                <p className="text-[10px] text-gray-400 italic pt-2 border-t">
                   * Enquanto não houver upload, uma marcação circular aparecerá no modelo.
                 </p>
               </div>

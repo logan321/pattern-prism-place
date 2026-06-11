@@ -856,6 +856,60 @@ export default function Simulator() {
                   * Enquanto não houver upload, uma marcação circular aparecerá no modelo.
                 </p>
               </div>
+            ) : activeTab === 'Costas' ? (
+              <div className="col-span-2 space-y-6">
+                <div className="grid grid-cols-1 gap-4">
+                  {[
+                    { key: 'back_top_name', label: 'Nome no Topo', icon: Type },
+                    { key: 'back_center_number', label: 'Número no Centro', icon: Type },
+                    { key: 'back_bottom_name', label: 'Nome no Fundo', icon: Type },
+                    { key: 'back_bottom_number', label: 'Número Inferior', icon: Type },
+                  ].map((zone) => {
+                    const isActive = uvLayers.some(l => l.zoneKey === zone.key);
+                    const isName = zone.key.includes('name');
+                    const contentValue = isName ? customName : customNumber;
+                    
+                    return (
+                      <button
+                        key={zone.key}
+                        onClick={() => {
+                          if (isActive) {
+                            removeUvLayer(zone.key);
+                          } else {
+                            if (isName) {
+                              setUvLayerText(zone.key, customName || 'NOME');
+                            } else {
+                              setUvLayerText(zone.key, customNumber || '10');
+                            }
+                          }
+                        }}
+                        className={cn(
+                          "flex items-center p-3 rounded-lg border-2 transition-all text-left",
+                          isActive 
+                            ? "border-green-500 bg-green-50" 
+                            : "border-gray-200 bg-white hover:border-gray-300"
+                        )}
+                      >
+                        <div className={cn(
+                          "w-10 h-10 rounded flex items-center justify-center mr-3",
+                          isActive ? "bg-green-100 text-green-600" : "bg-gray-100 text-gray-400"
+                        )}>
+                          <zone.icon className="w-6 h-6" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-[11px] font-bold text-gray-700 uppercase leading-none mb-1">{zone.label}</p>
+                          <p className="text-[10px] text-gray-400 truncate">{isActive ? contentValue : 'Desativado'}</p>
+                        </div>
+                        {isActive && (
+                          <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center text-white">
+                            <Send className="w-3 h-3" />
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             ) : (
               <div className="col-span-2 text-center py-8 text-gray-400 text-xs">
                 Em breve disponível

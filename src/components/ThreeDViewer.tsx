@@ -182,7 +182,7 @@ function Model({ url, finalTexture, customization }: { url: string; finalTexture
   );
 
   return (
-    <Center top>
+    <Center>
       <group>
         <primitive object={clonedScene} />
         {positionedZones.map((zone) => (

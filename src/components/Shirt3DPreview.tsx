@@ -131,7 +131,7 @@ function Model({ url, zones, customization }: { url: string; zones: any[]; custo
   );
 
   return (
-    <Center top>
+    <Center>
       <group>
         <primitive object={scene} />
         {positionedZones.map((zone) => (

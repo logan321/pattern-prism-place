@@ -863,7 +863,7 @@ export default function Simulator() {
         )}
 
         {/* Preview Area */}
-        <main className="flex-1 relative bg-gray-200">
+        <main className="flex-1 relative bg-gray-200 min-h-0">
           <div className="absolute inset-0 z-0">
             <ThreeDViewer 
               ref={viewerRef}
@@ -875,14 +875,18 @@ export default function Simulator() {
           
           {/* Top Actions - Compactadas */}
           <div className="absolute top-3 right-3 flex flex-col space-y-2 z-10">
-            <button className="bg-orange-600 text-white p-2 rounded-full shadow-lg"><Send className="w-4 h-4" /></button>
-            <button className="bg-blue-600 text-white p-2 rounded-full shadow-lg"><Save className="w-4 h-4" /></button>
+            <button className="bg-orange-600 text-white p-2.5 rounded-full shadow-lg hover:bg-orange-700 transition-colors"><Send className="w-5 h-5" /></button>
+            <button className="bg-blue-600 text-white p-2.5 rounded-full shadow-lg hover:bg-blue-700 transition-colors"><Save className="w-5 h-5" /></button>
           </div>
 
           {/* Right Controls - Ajustados */}
-          <div className="absolute right-3 bottom-4 flex flex-col space-y-2 z-10">
-            <button onClick={() => viewerRef.current?.zoom('in')} className="bg-white p-2 rounded-full shadow-md"><ZoomIn className="w-5 h-5"/></button>
-            <button onClick={() => viewerRef.current?.zoom('out')} className="bg-white p-2 rounded-full shadow-md"><ZoomOut className="w-5 h-5"/></button>
+          <div className="absolute right-3 bottom-6 md:bottom-10 flex flex-col space-y-2 z-10">
+            <button onClick={() => viewerRef.current?.zoom('in')} className="bg-white p-2.5 rounded-full shadow-md text-gray-700"><ZoomIn className="w-6 h-6"/></button>
+            <button onClick={() => viewerRef.current?.zoom('out')} className="bg-white p-2.5 rounded-full shadow-md text-gray-700"><ZoomOut className="w-6 h-6"/></button>
+            <div className="bg-white p-2 rounded-lg shadow-md border flex flex-col space-y-2">
+              <button onClick={() => viewerRef.current?.setView('front')} className="p-1.5 hover:bg-orange-50 rounded"><User className="w-5 h-5 text-gray-600"/></button>
+              <button onClick={() => viewerRef.current?.setView('back')} className="p-1.5 hover:bg-orange-50 rounded"><RotateCcw className="w-5 h-5 text-gray-600"/></button>
+            </div>
           </div>
         </main>
       </div>

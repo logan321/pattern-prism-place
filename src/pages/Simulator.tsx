@@ -130,13 +130,13 @@ export default function Simulator() {
     setSelectedModel,
     selectedPattern,
     setSelectedPattern,
-    name: customName,
-    number: customNumber,
+    name: customName = 'NOME',
+    number: customNumber = '10',
     nameColor,
     numberColor,
     nameFont,
     formation,
-    shieldUrl,
+    shieldUrl = 'https://vjhzocuofmbtmgyfxtqy.supabase.co/storage/v1/object/public/textures/shield_placeholder.png',
     setName,
     setNumber,
     setNameColor,
@@ -310,9 +310,71 @@ export default function Simulator() {
       setUvMapDims({ w: (d as any).uv_width ?? 2048, h: (d as any).uv_height ?? 2048 });
       setUvLayers([]);
       setUvTextDrafts({});
+
+      // Aplicar padrões automáticos solicitados pelo usuário
+      // 1. PEITO DIREITO: NOME
+      // 2. PEITO ESQUERDO: ESCUDO (ÍCONE)
+      // 3. CENTRO COSTAS: NÚMERO 10
+      // 4. NOME COSTA TOPO: NOME
+      
+      const autoLayers: UvLayer[] = [];
+      const autoDrafts: Record<string, string> = {};
+
+      if (zonesMap['PEITO DIREITO']) {
+        autoLayers.push({
+          id: `PEITO_DIREITO_text_${Date.now()}`,
+          zoneKey: 'PEITO DIREITO',
+          type: 'text',
+          content: customName || 'NOME',
+          color: nameColor,
+          fontFamily: nameFont,
+          fontWeight: 900
+        } as UvLayer);
+        autoDrafts['PEITO DIREITO'] = customName || 'NOME';
+      }
+
+      if (zonesMap['PEITO ESQUERDO']) {
+        autoLayers.push({
+          id: `PEITO_ESQUERDO_image_${Date.now()}`,
+          zoneKey: 'PEITO ESQUERDO',
+          type: 'image',
+          url: shieldUrl || 'https://vjhzocuofmbtmgyfxtqy.supabase.co/storage/v1/object/public/textures/shield_placeholder.png',
+          scale: 0.9,
+          opacity: 1
+        } as UvLayer);
+      }
+
+      if (zonesMap['CENTRO COSTAS']) {
+        autoLayers.push({
+          id: `CENTRO_COSTAS_text_${Date.now()}`,
+          zoneKey: 'CENTRO COSTAS',
+          type: 'text',
+          content: customNumber || '10',
+          color: numberColor,
+          fontFamily: nameFont,
+          fontWeight: 900
+        } as UvLayer);
+        autoDrafts['CENTRO COSTAS'] = customNumber || '10';
+      }
+
+      if (zonesMap['NOME COSTA TOPO']) {
+        autoLayers.push({
+          id: `NOME_COSTA_TOPO_text_${Date.now()}`,
+          zoneKey: 'NOME COSTA TOPO',
+          type: 'text',
+          content: customName || 'NOME',
+          color: nameColor,
+          fontFamily: nameFont,
+          fontWeight: 900
+        } as UvLayer);
+        autoDrafts['NOME COSTA TOPO'] = customName || 'NOME';
+      }
+
+      setUvLayers(autoLayers);
+      setUvTextDrafts(autoDrafts);
     })();
     return () => { cancelled = true; };
-  }, [selectedPattern]);
+  }, [selectedPattern, customName, customNumber, shieldUrl, nameColor, numberColor, nameFont]);
 
   // Funções para manipular layers de texto
   const uvTextCommitRef = useRef<number | null>(null);

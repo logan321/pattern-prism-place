@@ -141,6 +141,44 @@ export default function ZoneEditor({ referenceUrl, onClose, onSave, initialZones
     }
   };
 
+  const handleCanvasPointerDown = (e: React.PointerEvent) => {
+    // Middle mouse or Alt + Left
+    if (e.button === 1 || (e.button === 0 && e.altKey)) { 
+      setIsPanning(true);
+      setLastMousePos({ x: e.clientX, y: e.clientY });
+      (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    }
+  };
+
+  const handleCanvasPointerMove = (e: React.PointerEvent) => {
+    if (isPanning) {
+      const dx = e.clientX - lastMousePos.x;
+      const dy = e.clientY - lastMousePos.y;
+      setPan(prev => ({ x: prev.x + dx, y: prev.y + dy }));
+      setLastMousePos({ x: e.clientX, y: e.clientY });
+    }
+  };
+
+  const handleCanvasPointerUp = (e: React.PointerEvent) => {
+    if (isPanning) {
+      setIsPanning(false);
+      (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+    }
+  };
+
+  const handleWheel = (e: React.WheelEvent) => {
+    // Check for Ctrl/Meta key for zooming, otherwise pan
+    if (e.ctrlKey || e.metaKey) {
+      e.preventDefault();
+      const delta = -e.deltaY;
+      const factor = delta > 0 ? 1.1 : 0.9;
+      setZoom(prev => Math.min(Math.max(prev * factor, 0.1), 5));
+    } else {
+      // Natural panning with wheel
+      setPan(prev => ({ x: prev.x - e.deltaX, y: prev.y - e.deltaY }));
+    }
+  };
+
   const handleGeneratePreview = async () => {
     setIsGenerating(true);
     try {
@@ -331,14 +369,12 @@ export default function ZoneEditor({ referenceUrl, onClose, onSave, initialZones
                 <div
                   key={z.id}
                   onPointerDown={(e) => handleDragStart(e, z, 'move')}
-                  onPointerMove={handleDragMove}
-                  onPointerUp={handleDragEnd}
                   style={{
                     position: 'absolute',
-                    left: (xPixels - wPixels/2) * zoom,
-                    top: (yPixels - hPixels/2) * zoom,
-                    width: wPixels * zoom,
-                    height: hPixels * zoom,
+                    left: xPixels - wPixels/2,
+                    top: yPixels - hPixels/2,
+                    width: wPixels,
+                    height: hPixels,
                     transform: `rotate(${z.rotation}deg)`,
                     border: isSelected ? '2px solid #ea580c' : '1px solid #3b82f6',
                     backgroundColor: isSelected ? 'rgba(234, 88, 12, 0.3)' : 'rgba(59, 130, 246, 0.1)',

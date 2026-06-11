@@ -182,7 +182,7 @@ function Model({ url, finalTexture, customization }: { url: string; finalTexture
   );
 
   return (
-    <Center>
+    <Center fit>
       <group>
         <primitive object={clonedScene} />
         {positionedZones.map((zone) => (
@@ -284,8 +284,7 @@ export const ThreeDViewer = forwardRef<ThreeDViewerRef, {
           <OrbitControls 
             ref={orbitRef}
             enablePan={false}
-            minDistance={1.2}
-            maxDistance={5}
+            enableZoom={false}
             makeDefault
           />
         </Suspense>

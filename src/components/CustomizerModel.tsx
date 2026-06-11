@@ -162,7 +162,7 @@ export function CustomizerModel({
   );
 
   return (
-    <Center>
+    <Center fit>
       <group>
         <primitive object={scene} />
         

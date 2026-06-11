@@ -131,7 +131,7 @@ function Model({ url, zones, customization }: { url: string; zones: any[]; custo
   );
 
   return (
-    <Center>
+    <Center fit>
       <group>
         <primitive object={scene} />
         {positionedZones.map((zone) => (
@@ -193,8 +193,7 @@ export function Shirt3DPreview({
             makeDefault 
             autoRotate={autoRotate}
             autoRotateSpeed={2}
-            minDistance={1} 
-            maxDistance={5} 
+            enableZoom={false}
           />
         </Canvas>
       </div>

@@ -157,6 +157,9 @@ export default function Simulator() {
     clearUvState,
   } = useCustomizerStore();
 
+  const [chestLayout, setChestLayout] = useState<'name-top-shield-center' | 'name-center-shield-top'>('name-top-shield-center');
+
+
   const { data: models } = useQuery({
     queryKey: ['models'],
     queryFn: async () => {

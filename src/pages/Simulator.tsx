@@ -138,7 +138,7 @@ export default function Simulator() {
     nameFont,
     formationCostas,
     formationFrente,
-    shieldUrl = 'https://vjhzocuofmbtmgyfxtqy.supabase.co/storage/v1/object/public/textures/shield_placeholder.png',
+    shieldUrl,
     setName,
     setNumber,
     setNameColor,
@@ -336,6 +336,8 @@ export default function Simulator() {
       const autoLayers: UvLayer[] = [];
       const autoDrafts: Record<string, string> = {};
 
+      const DEFAULT_SHIELD = 'https://vjhzocuofmbtmgyfxtqy.supabase.co/storage/v1/object/public/textures/shield_placeholder.png';
+
       // 1. Lógica FRENTE (Formações C e D)
       if (formationFrente === 'C') {
         // Formação C: NOME na zona PEITO ESQUERDO + ESCUDO na zona PEITO DIREITO
@@ -356,7 +358,7 @@ export default function Simulator() {
             id: `PEITO_DIREITO_image_${Date.now()}`,
             zoneKey: 'PEITO DIREITO',
             type: 'image',
-            url: shieldUrl || 'https://vjhzocuofmbtmgyfxtqy.supabase.co/storage/v1/object/public/textures/shield_placeholder.png',
+            url: shieldUrl || DEFAULT_SHIELD,
             scale: 0.9,
             opacity: 1
           } as UvLayer);
@@ -368,7 +370,7 @@ export default function Simulator() {
             id: `PEITO_ESQUERDO_image_${Date.now()}`,
             zoneKey: 'PEITO ESQUERDO',
             type: 'image',
-            url: shieldUrl || 'https://vjhzocuofmbtmgyfxtqy.supabase.co/storage/v1/object/public/textures/shield_placeholder.png',
+            url: shieldUrl || DEFAULT_SHIELD,
             scale: 0.9,
             opacity: 1
           } as UvLayer);
@@ -597,7 +599,8 @@ export default function Simulator() {
         }
       }
       if (layer.type === 'image' && (layer.zoneKey.includes('PEITO ESQUERDO') || layer.zoneKey.includes('PEITO DIREITO'))) {
-        return { ...layer, url: shieldUrl || 'https://vjhzocuofmbtmgyfxtqy.supabase.co/storage/v1/object/public/textures/shield_placeholder.png' };
+        const DEFAULT_SHIELD = 'https://vjhzocuofmbtmgyfxtqy.supabase.co/storage/v1/object/public/textures/shield_placeholder.png';
+        return { ...layer, url: shieldUrl || DEFAULT_SHIELD };
       }
       return layer;
     }));

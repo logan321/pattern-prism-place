@@ -329,6 +329,15 @@ export function Zone3DEditor({
           </Canvas>
         </div>
 
+        {/* Camera Reset Button */}
+        <button 
+          onClick={resetCamera}
+          className="absolute top-6 right-6 p-3 bg-black/60 backdrop-blur-md border border-white/10 rounded-full hover:bg-orange-600 transition-all group"
+          title="Resetar Câmera"
+        >
+          <Compass className="w-5 h-5 text-white group-hover:rotate-180 transition-transform duration-500" />
+        </button>
+
         {/* Info Box */}
         <div className="absolute bottom-6 left-6 p-4 bg-black/60 backdrop-blur-md border border-white/10 rounded-xl text-[10px] space-y-2 pointer-events-none">
           <div className="flex items-center gap-2 text-gray-400">

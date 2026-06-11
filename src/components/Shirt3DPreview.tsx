@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect, useMemo, Suspense, useContext } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls, useGLTF, Html, Decal } from '@react-three/drei';
+import { OrbitControls, useGLTF, Html, Decal, Center } from '@react-three/drei';
 import * as THREE from 'three';
 import { AppContext } from '../context/AppContext';
 import { 
@@ -131,16 +131,18 @@ function Model({ url, zones, customization }: { url: string; zones: any[]; custo
   );
 
   return (
-    <group>
-      <primitive object={scene} />
-      {positionedZones.map((zone) => (
-        <ZoneDecal 
-          key={zone.id} 
-          zone={zone} 
-          customization={customization} 
-        />
-      ))}
-    </group>
+    <Center>
+      <group>
+        <primitive object={scene} />
+        {positionedZones.map((zone) => (
+          <ZoneDecal 
+            key={zone.id} 
+            zone={zone} 
+            customization={customization} 
+          />
+        ))}
+      </group>
+    </Center>
   );
 }
 

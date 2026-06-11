@@ -1,6 +1,6 @@
 import React, { useState, useRef, Suspense, useEffect } from 'react';
 import { Canvas, useThree, useFrame } from '@react-three/fiber';
-import { OrbitControls, useGLTF, Html } from '@react-three/drei';
+import { OrbitControls, useGLTF, Html, Center } from '@react-three/drei';
 import * as THREE from 'three';
 import { useAppContext, Zone3D } from '../context/AppContext';
 import { 
@@ -88,10 +88,12 @@ function Scene({ modelUrl, onPointSelected, zones }: {
       <pointLight position={[-10, -10, -10]} intensity={0.5} />
       
       <Suspense fallback={<Html center>Carregando modelo...</Html>}>
-        <Model url={modelUrl} onPointerDown={handlePointerDown} />
-        {zones.map(z => (
-          <ZonePreview key={z.id} zone={z} />
-        ))}
+        <Center>
+          <Model url={modelUrl} onPointerDown={handlePointerDown} />
+          {zones.map(z => (
+            <ZonePreview key={z.id} zone={z} />
+          ))}
+        </Center>
       </Suspense>
 
       <OrbitControls makeDefault minDistance={1} maxDistance={5} />

@@ -11,7 +11,8 @@ interface CustomizerState {
   // Customização básica (legado)
   name: string;
   number: string;
-  formation: string;
+  formationCostas: 'A' | 'B';
+  formationFrente: 'C' | 'D';
   nameColor: string;
   numberColor: string;
   nameFont: string;
@@ -32,7 +33,8 @@ interface CustomizerState {
 
   setName: (name: string) => void;
   setNumber: (num: string) => void;
-  setFormation: (formation: string) => void;
+  setFormationCostas: (formation: 'A' | 'B') => void;
+  setFormationFrente: (formation: 'C' | 'D') => void;
   setNameColor: (color: string) => void;
   setNumberColor: (color: string) => void;
   setNameFont: (font: string) => void;
@@ -56,7 +58,8 @@ export const useCustomizerStore = create<CustomizerState>((set) => ({
 
   name: 'SEU NOME',
   number: '10',
-  formation: 'escudo-esq-nome-dir',
+  formationCostas: 'A',
+  formationFrente: 'D', // Default: Escudo no Peito Esquerdo + Nome no Peito Direito
   nameColor: '#ffffff',
   numberColor: '#ffffff',
   nameFont: 'Arial',
@@ -77,7 +80,8 @@ export const useCustomizerStore = create<CustomizerState>((set) => ({
 
   setName: (name) => set({ name }),
   setNumber: (number) => set({ number }),
-  setFormation: (formation) => set({ formation }),
+  setFormationCostas: (formationCostas) => set({ formationCostas }),
+  setFormationFrente: (formationFrente) => set({ formationFrente }),
   setNameColor: (nameColor) => set({ nameColor }),
   setNumberColor: (numberColor) => set({ numberColor }),
   setNameFont: (nameFont) => set({ nameFont }),

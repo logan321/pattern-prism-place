@@ -88,7 +88,7 @@ function Scene({ modelUrl, onPointSelected, zones }: {
       <pointLight position={[-10, -10, -10]} intensity={0.5} />
       
       <Suspense fallback={<Html center>Carregando modelo...</Html>}>
-        <Center bounds>
+        <Center>
           <Model url={modelUrl} onPointerDown={handlePointerDown} />
           {zones.map(z => (
             <ZonePreview key={z.id} zone={z} />
@@ -263,7 +263,7 @@ export function Zone3DEditor({
         <div className="w-full h-full">
           <Canvas 
             shadows 
-            camera={{ position: [0, 0, 2], fov: 45 }}
+            camera={{ position: [0, 0, 1.2], fov: 35 }}
             gl={{ antialias: true, alpha: true }}
           >
             <Scene 

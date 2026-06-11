@@ -131,7 +131,7 @@ function Model({ url, zones, customization }: { url: string; zones: any[]; custo
   );
 
   return (
-    <Center bounds>
+    <Center>
       <group>
         <primitive object={scene} />
         {positionedZones.map((zone) => (
@@ -176,7 +176,7 @@ export function Shirt3DPreview({
   return (
     <div className="relative w-full h-full bg-[#0a0a0a] rounded-xl overflow-hidden border border-white/10 group">
       <div className="absolute inset-0 z-0">
-        <Canvas shadows camera={{ position: [0, 0, 2], fov: 45 }}>
+        <Canvas shadows camera={{ position: [0, 0, 1.2], fov: 35 }}>
           <ambientLight intensity={0.5} />
           <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} intensity={1} castShadow />
           <pointLight position={[-10, -10, -10]} intensity={0.5} />

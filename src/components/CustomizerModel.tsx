@@ -162,7 +162,7 @@ export function CustomizerModel({
   );
 
   return (
-    <Center bounds>
+    <Center>
       <group>
         <primitive object={scene} />
         

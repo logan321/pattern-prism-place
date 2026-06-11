@@ -95,12 +95,12 @@ const SidebarItem = ({ icon: Icon, label, active, onClick }: { icon: any, label:
   <button 
     onClick={onClick}
     className={cn(
-      "flex flex-col items-center justify-center py-4 px-2 w-full transition-colors",
-      active ? "text-orange-600 bg-white border-l-4 border-orange-600" : "text-gray-500 hover:bg-gray-50"
+      "flex flex-col items-center justify-center py-2 md:py-4 px-1 md:px-2 flex-1 md:w-full transition-colors",
+      active ? "text-orange-600 bg-white md:border-l-4 border-orange-600" : "text-gray-500 hover:bg-gray-50"
     )}
   >
-    <Icon className="w-6 h-6 mb-1" />
-    <span className="text-[10px] font-medium uppercase tracking-tight text-center leading-none">{label}</span>
+    <Icon className="w-5 h-5 md:w-6 md:h-6 mb-1" />
+    <span className="text-[9px] md:text-[10px] font-medium uppercase tracking-tight text-center leading-none">{label}</span>
   </button>
 );
 

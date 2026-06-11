@@ -407,7 +407,8 @@ export default function Simulator() {
             content: customName || 'NOME',
             color: nameColor,
             fontFamily: nameFont,
-            fontWeight: 900
+            fontWeight: 900,
+            scale: nameSize
           } as UvLayer);
           autoDrafts['PEITO ESQUERDO'] = customName || 'NOME';
         }
@@ -417,7 +418,7 @@ export default function Simulator() {
             zoneKey: 'PEITO DIREITO',
             type: 'image',
             url: shieldUrl || DEFAULT_SHIELD,
-            scale: 0.9,
+            scale: shieldSize,
             opacity: 1
           } as UvLayer);
         }
@@ -429,7 +430,7 @@ export default function Simulator() {
             zoneKey: 'PEITO ESQUERDO',
             type: 'image',
             url: shieldUrl || DEFAULT_SHIELD,
-            scale: 0.9,
+            scale: shieldSize,
             opacity: 1
           } as UvLayer);
         }
@@ -441,7 +442,8 @@ export default function Simulator() {
             content: customName || 'NOME',
             color: nameColor,
             fontFamily: nameFont,
-            fontWeight: 900
+            fontWeight: 900,
+            scale: nameSize
           } as UvLayer);
           autoDrafts['PEITO DIREITO'] = customName || 'NOME';
         }
@@ -457,7 +459,8 @@ export default function Simulator() {
           content: customNumber || '10',
           color: numberColor,
           fontFamily: nameFont,
-          fontWeight: 900
+          fontWeight: 900,
+          scale: numberSize
         } as UvLayer);
         autoDrafts['CENTRO COSTAS'] = customNumber || '10';
       }
@@ -472,7 +475,8 @@ export default function Simulator() {
             content: customName || 'NOME',
             color: nameColor,
             fontFamily: nameFont,
-            fontWeight: 900
+            fontWeight: 900,
+            scale: nameSize
           } as UvLayer);
           autoDrafts['NOME COSTA TOPO'] = customName || 'NOME';
         }
@@ -486,7 +490,8 @@ export default function Simulator() {
             content: customName || 'NOME',
             color: nameColor,
             fontFamily: nameFont,
-            fontWeight: 900
+            fontWeight: 900,
+            scale: nameSize
           } as UvLayer);
           autoDrafts['NOME COSTA FUNDO'] = customName || 'NOME';
         }
@@ -496,7 +501,7 @@ export default function Simulator() {
       setUvTextDrafts(autoDrafts);
     })();
     return () => { cancelled = true; };
-  }, [selectedPattern, customName, customNumber, shieldUrl, nameColor, numberColor, nameFont, formationCostas, formationFrente]);
+  }, [selectedPattern, customName, customNumber, shieldUrl, nameColor, numberColor, nameFont, formationCostas, formationFrente, nameSize, numberSize, shieldSize]);
 
   // Funções para manipular layers de texto
   const uvTextCommitRef = useRef<number | null>(null);
@@ -650,19 +655,19 @@ export default function Simulator() {
     setUvLayers(prev => prev.map(layer => {
       if (layer.type === 'text') {
         if (layer.zoneKey.includes('PEITO DIREITO') || layer.zoneKey.includes('PEITO ESQUERDO') || layer.zoneKey.includes('NOME COSTA TOPO') || layer.zoneKey.includes('NOME COSTA FUNDO')) {
-          return { ...layer, content: customName || 'NOME', color: nameColor, fontFamily: nameFont };
+          return { ...layer, content: customName || 'NOME', color: nameColor, fontFamily: nameFont, scale: nameSize };
         }
         if (layer.zoneKey.includes('CENTRO COSTAS')) {
-          return { ...layer, content: customNumber || '10', color: numberColor, fontFamily: nameFont };
+          return { ...layer, content: customNumber || '10', color: numberColor, fontFamily: nameFont, scale: numberSize };
         }
       }
       if (layer.type === 'image' && (layer.zoneKey.includes('PEITO ESQUERDO') || layer.zoneKey.includes('PEITO DIREITO'))) {
         const DEFAULT_SHIELD = 'https://vjhzocuofmbtmgyfxtqy.supabase.co/storage/v1/object/public/textures/shield_placeholder.png';
-        return { ...layer, url: shieldUrl || DEFAULT_SHIELD };
+        return { ...layer, url: shieldUrl || DEFAULT_SHIELD, scale: shieldSize };
       }
       return layer;
     }));
-  }, [customName, customNumber, shieldUrl, nameColor, numberColor, nameFont, uvZonesActive]);
+  }, [customName, customNumber, shieldUrl, nameColor, numberColor, nameFont, nameSize, numberSize, shieldSize, uvZonesActive]);
 
   return (
     <>

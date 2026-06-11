@@ -264,6 +264,20 @@ export default function Simulator() {
   });
 
   const allModels = React.useMemo(() => [...LOCAL_MODELS, ...(models ?? [])], [models]);
+  
+  // Auto-selecionar primeiro modelo e estampa se nenhum estiver selecionado
+  useEffect(() => {
+    if (!selectedModel && allModels.length > 0) {
+      setSelectedModel(allModels[0].id);
+    }
+  }, [allModels, selectedModel, setSelectedModel]);
+
+  useEffect(() => {
+    if (!selectedPattern && patterns && patterns.length > 0) {
+      setSelectedPattern(patterns[0].id);
+    }
+  }, [patterns, selectedPattern, setSelectedPattern]);
+
   const currentPattern = React.useMemo(() => patterns?.find(p => p.id === selectedPattern), [patterns, selectedPattern]);
 
   const textureUrl = React.useMemo(() => 

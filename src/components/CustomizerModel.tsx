@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect, useMemo, useContext } from 'react';
 import * as THREE from 'three';
-import { Decal, useTexture, useGLTF } from '@react-three/drei';
+import { Decal, useTexture, useGLTF, Center } from '@react-three/drei';
 import { AppContext } from '../context/AppContext';
 
 export interface CustomizationState {
@@ -162,16 +162,18 @@ export function CustomizerModel({
   );
 
   return (
-    <group>
-      <primitive object={scene} />
-      
-      {positionedZones.map((zone) => (
-        <ZoneDecal 
-          key={zone.id} 
-          zone={zone} 
-          customization={customization} 
-        />
-      ))}
-    </group>
+    <Center>
+      <group>
+        <primitive object={scene} />
+        
+        {positionedZones.map((zone) => (
+          <ZoneDecal 
+            key={zone.id} 
+            zone={zone} 
+            customization={customization} 
+          />
+        ))}
+      </group>
+    </Center>
   );
 }

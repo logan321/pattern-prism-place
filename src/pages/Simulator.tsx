@@ -599,7 +599,8 @@ export default function Simulator() {
         }
       }
       if (layer.type === 'image' && (layer.zoneKey.includes('PEITO ESQUERDO') || layer.zoneKey.includes('PEITO DIREITO'))) {
-        return { ...layer, url: shieldUrl || 'https://vjhzocuofmbtmgyfxtqy.supabase.co/storage/v1/object/public/textures/shield_placeholder.png' };
+        const DEFAULT_SHIELD = 'https://vjhzocuofmbtmgyfxtqy.supabase.co/storage/v1/object/public/textures/shield_placeholder.png';
+        return { ...layer, url: shieldUrl || DEFAULT_SHIELD };
       }
       return layer;
     }));

@@ -251,7 +251,7 @@ export default function ZoneEditor({ referenceUrl, onClose, onSave, initialZones
 
       <div className="flex flex-1 overflow-hidden p-4 gap-4 bg-[#0a0a0a]">
         {/* Left Panel - Layer List */}
-        <div className="w-72 bg-[#161616] rounded-xl border border-[#222] p-4 flex flex-col gap-4 shadow-xl">
+        <div className="w-64 bg-[#161616] rounded-xl border border-[#222] p-4 flex flex-col gap-4 shadow-xl shrink-0">
            <div className="flex flex-col gap-2 px-2 border-b border-[#222] pb-4">
               <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Ações Rápidas</span>
               <div className="grid grid-cols-1 gap-1">
@@ -323,7 +323,7 @@ export default function ZoneEditor({ referenceUrl, onClose, onSave, initialZones
           style={{ cursor: isPanning ? 'grabbing' : 'auto' }}
         >
           <div 
-            className="relative bg-[#f8f8f8] shadow-[0_0_100px_rgba(0,0,0,0.5)] transition-transform duration-75 ease-out origin-center"
+            className="relative bg-[#f8f8f8] shadow-[0_0_100px_rgba(0,0,0,0.5)] transition-transform duration-75 ease-out origin-center aspect-square"
             style={{ 
               width: canvasSize, 
               height: canvasSize,
@@ -468,7 +468,7 @@ export default function ZoneEditor({ referenceUrl, onClose, onSave, initialZones
         </div>
 
         {/* Right Panel - Adjustments */}
-        <div className="w-80 bg-[#161616] rounded-xl border border-[#222] p-6 flex flex-col gap-6 overflow-y-auto shadow-xl">
+        <div className="w-64 bg-[#161616] rounded-xl border border-[#222] p-6 flex flex-col gap-6 overflow-y-auto shadow-xl shrink-0">
           {zonaSelecionada ? (
             <div className="space-y-6 animate-in slide-in-from-right duration-300">
               <div className="flex items-center justify-between border-b border-[#222] pb-4">

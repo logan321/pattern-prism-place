@@ -47,6 +47,44 @@ const LOCAL_MODELS = [
   },
 ];
 
+const CMYK_COLORS = [
+  '#FFFFFF', '#000000', '#808080', '#C0C0C0', 
+  '#FF0000', '#00FF00', '#0000FF', '#FFFF00', 
+  '#FF00FF', '#00FFFF', '#FFA500', '#800080',
+  '#008000', '#000080', '#800000', '#808000',
+  '#FFC0CB', '#A52A2A', '#002366', '#008080'
+];
+
+const ColorSwatch = ({ color, active, onClick }: { color: string, active: boolean, onClick: () => void }) => (
+  <button
+    onClick={onClick}
+    className={cn(
+      "w-6 h-6 rounded-md border transition-all",
+      active ? "border-orange-500 ring-2 ring-orange-500 ring-offset-1 scale-110" : "border-gray-200 hover:border-gray-400"
+    )}
+    style={{ backgroundColor: color }}
+    title={color}
+  />
+);
+
+const SizeSlider = ({ value, onChange, label }: { value: number, onChange: (val: number) => void, label: string }) => (
+  <div className="space-y-1">
+    <div className="flex justify-between items-center">
+      <label className="text-[10px] font-bold text-gray-500 uppercase">{label}</label>
+      <span className="text-[10px] text-gray-400">{Math.round(value * 100)}%</span>
+    </div>
+    <input 
+      type="range" 
+      min="0.1" 
+      max="2" 
+      step="0.05"
+      value={value}
+      onChange={(e) => onChange(parseFloat(e.target.value))}
+      className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-orange-600"
+    />
+  </div>
+);
+
 
 
 function cn(...inputs: ClassValue[]) {
@@ -139,6 +177,9 @@ export default function Simulator() {
     formationCostas,
     formationFrente,
     shieldUrl,
+    nameSize,
+    numberSize,
+    shieldSize,
     setName,
     setNumber,
     setNameColor,
@@ -147,6 +188,9 @@ export default function Simulator() {
     setFormationCostas,
     setFormationFrente,
     setShieldUrl,
+    setNameSize,
+    setNumberSize,
+    setShieldSize,
     uvMapZones, 
     uvMapDims, 
     uvLayers, 
@@ -363,7 +407,8 @@ export default function Simulator() {
             content: customName || 'NOME',
             color: nameColor,
             fontFamily: nameFont,
-            fontWeight: 900
+            fontWeight: 900,
+            scale: nameSize
           } as UvLayer);
           autoDrafts['PEITO ESQUERDO'] = customName || 'NOME';
         }
@@ -373,7 +418,7 @@ export default function Simulator() {
             zoneKey: 'PEITO DIREITO',
             type: 'image',
             url: shieldUrl || DEFAULT_SHIELD,
-            scale: 0.9,
+            scale: shieldSize,
             opacity: 1
           } as UvLayer);
         }
@@ -385,7 +430,7 @@ export default function Simulator() {
             zoneKey: 'PEITO ESQUERDO',
             type: 'image',
             url: shieldUrl || DEFAULT_SHIELD,
-            scale: 0.9,
+            scale: shieldSize,
             opacity: 1
           } as UvLayer);
         }
@@ -397,7 +442,8 @@ export default function Simulator() {
             content: customName || 'NOME',
             color: nameColor,
             fontFamily: nameFont,
-            fontWeight: 900
+            fontWeight: 900,
+            scale: nameSize
           } as UvLayer);
           autoDrafts['PEITO DIREITO'] = customName || 'NOME';
         }
@@ -413,7 +459,8 @@ export default function Simulator() {
           content: customNumber || '10',
           color: numberColor,
           fontFamily: nameFont,
-          fontWeight: 900
+          fontWeight: 900,
+          scale: numberSize
         } as UvLayer);
         autoDrafts['CENTRO COSTAS'] = customNumber || '10';
       }
@@ -428,7 +475,8 @@ export default function Simulator() {
             content: customName || 'NOME',
             color: nameColor,
             fontFamily: nameFont,
-            fontWeight: 900
+            fontWeight: 900,
+            scale: nameSize
           } as UvLayer);
           autoDrafts['NOME COSTA TOPO'] = customName || 'NOME';
         }
@@ -442,7 +490,8 @@ export default function Simulator() {
             content: customName || 'NOME',
             color: nameColor,
             fontFamily: nameFont,
-            fontWeight: 900
+            fontWeight: 900,
+            scale: nameSize
           } as UvLayer);
           autoDrafts['NOME COSTA FUNDO'] = customName || 'NOME';
         }
@@ -452,7 +501,7 @@ export default function Simulator() {
       setUvTextDrafts(autoDrafts);
     })();
     return () => { cancelled = true; };
-  }, [selectedPattern, customName, customNumber, shieldUrl, nameColor, numberColor, nameFont, formationCostas, formationFrente]);
+  }, [selectedPattern, customName, customNumber, shieldUrl, nameColor, numberColor, nameFont, formationCostas, formationFrente, nameSize, numberSize, shieldSize]);
 
   // Funções para manipular layers de texto
   const uvTextCommitRef = useRef<number | null>(null);
@@ -606,19 +655,19 @@ export default function Simulator() {
     setUvLayers(prev => prev.map(layer => {
       if (layer.type === 'text') {
         if (layer.zoneKey.includes('PEITO DIREITO') || layer.zoneKey.includes('PEITO ESQUERDO') || layer.zoneKey.includes('NOME COSTA TOPO') || layer.zoneKey.includes('NOME COSTA FUNDO')) {
-          return { ...layer, content: customName || 'NOME', color: nameColor, fontFamily: nameFont };
+          return { ...layer, content: customName || 'NOME', color: nameColor, fontFamily: nameFont, scale: nameSize };
         }
         if (layer.zoneKey.includes('CENTRO COSTAS')) {
-          return { ...layer, content: customNumber || '10', color: numberColor, fontFamily: nameFont };
+          return { ...layer, content: customNumber || '10', color: numberColor, fontFamily: nameFont, scale: numberSize };
         }
       }
       if (layer.type === 'image' && (layer.zoneKey.includes('PEITO ESQUERDO') || layer.zoneKey.includes('PEITO DIREITO'))) {
         const DEFAULT_SHIELD = 'https://vjhzocuofmbtmgyfxtqy.supabase.co/storage/v1/object/public/textures/shield_placeholder.png';
-        return { ...layer, url: shieldUrl || DEFAULT_SHIELD };
+        return { ...layer, url: shieldUrl || DEFAULT_SHIELD, scale: shieldSize };
       }
       return layer;
     }));
-  }, [customName, customNumber, shieldUrl, nameColor, numberColor, nameFont, uvZonesActive]);
+  }, [customName, customNumber, shieldUrl, nameColor, numberColor, nameFont, nameSize, numberSize, shieldSize, uvZonesActive]);
 
   return (
     <>
@@ -738,42 +787,70 @@ export default function Simulator() {
 
                 <div className="h-px bg-gray-100 my-4" />
 
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase">Nome</label>
-                  <div className="flex gap-2">
+                <div className="space-y-3">
+                  <div className="flex flex-col gap-2">
+                    <label className="text-[10px] font-bold text-gray-500 uppercase">Nome</label>
                     <input 
                       type="text" 
                       value={customName}
                       onChange={(e) => setName(e.target.value)}
-                      className="flex-1 border rounded p-2 text-sm"
+                      className="w-full border rounded p-2 text-sm"
                       placeholder="DIGITE O NOME"
                     />
-                    <input 
-                      type="color" 
-                      value={nameColor}
-                      onChange={(e) => setNameColor(e.target.value)}
-                      className="w-10 h-9 p-1 rounded border cursor-pointer"
-                    />
                   </div>
+                  
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-gray-500 uppercase">Cor do Nome</label>
+                    <div className="flex flex-wrap gap-1.5 p-2 border rounded-lg bg-gray-50">
+                      {CMYK_COLORS.map(color => (
+                        <ColorSwatch 
+                          key={`name-${color}`} 
+                          color={color} 
+                          active={nameColor === color} 
+                          onClick={() => setNameColor(color)} 
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  <SizeSlider 
+                    label="Tamanho do Nome" 
+                    value={nameSize} 
+                    onChange={setNameSize} 
+                  />
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase">Número</label>
-                  <div className="flex gap-2">
+                <div className="space-y-3">
+                  <div className="flex flex-col gap-2">
+                    <label className="text-[10px] font-bold text-gray-500 uppercase">Número</label>
                     <input 
                       type="text" 
                       value={customNumber}
                       onChange={(e) => setNumber(e.target.value)}
-                      className="flex-1 border rounded p-2 text-sm"
+                      className="w-full border rounded p-2 text-sm"
                       placeholder="00"
                     />
-                    <input 
-                      type="color" 
-                      value={numberColor}
-                      onChange={(e) => setNumberColor(e.target.value)}
-                      className="w-10 h-9 p-1 rounded border cursor-pointer"
-                    />
                   </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-gray-500 uppercase">Cor do Número</label>
+                    <div className="flex flex-wrap gap-1.5 p-2 border rounded-lg bg-gray-50">
+                      {CMYK_COLORS.map(color => (
+                        <ColorSwatch 
+                          key={`num-${color}`} 
+                          color={color} 
+                          active={numberColor === color} 
+                          onClick={() => setNumberColor(color)} 
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  <SizeSlider 
+                    label="Tamanho do Número" 
+                    value={numberSize} 
+                    onChange={setNumberSize} 
+                  />
                 </div>
 
                 <div className="space-y-2">
@@ -828,7 +905,12 @@ export default function Simulator() {
                   />
                   {!shieldUrl && <button className="mt-2 bg-orange-600 text-white text-[10px] px-3 py-1 rounded">Selecionar Arquivo</button>}
                 </div>
-                <p className="text-[10px] text-gray-400 italic">
+                <SizeSlider 
+                  label="Tamanho do Escudo" 
+                  value={shieldSize} 
+                  onChange={setShieldSize} 
+                />
+                <p className="text-[10px] text-gray-400 italic pt-2 border-t">
                   * Enquanto não houver upload, uma marcação circular aparecerá no modelo.
                 </p>
               </div>

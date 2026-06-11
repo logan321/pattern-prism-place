@@ -17,6 +17,9 @@ interface CustomizerState {
   numberColor: string;
   nameFont: string;
   shieldUrl: string | null;
+  nameSize: number;
+  numberSize: number;
+  shieldSize: number;
 
   // ─── Sistema UV Zones (novo) ───────────────────────────────────────────
   uvMapZones: Record<string, UvZoneRect>;   // zonas vindas do banco (pixels absolutos)
@@ -39,6 +42,9 @@ interface CustomizerState {
   setNumberColor: (color: string) => void;
   setNameFont: (font: string) => void;
   setShieldUrl: (url: string | null) => void;
+  setNameSize: (size: number) => void;
+  setNumberSize: (size: number) => void;
+  setShieldSize: (size: number) => void;
 
   // UV Zones setters
   setUvMapZones: (zones: Record<string, UvZoneRect>) => void;
@@ -64,6 +70,9 @@ export const useCustomizerStore = create<CustomizerState>((set) => ({
   numberColor: '#ffffff',
   nameFont: 'Arial',
   shieldUrl: null,
+  nameSize: 0.9,
+  numberSize: 0.9,
+  shieldSize: 0.9,
 
   // UV zones (inicialmente vazio)
   uvMapZones: {},
@@ -86,6 +95,9 @@ export const useCustomizerStore = create<CustomizerState>((set) => ({
   setNumberColor: (numberColor) => set({ numberColor }),
   setNameFont: (nameFont) => set({ nameFont }),
   setShieldUrl: (shieldUrl) => set({ shieldUrl }),
+  setNameSize: (nameSize) => set({ nameSize }),
+  setNumberSize: (numberSize) => set({ numberSize }),
+  setShieldSize: (shieldSize) => set({ shieldSize }),
 
   setUvMapZones: (uvMapZones) => set({ uvMapZones }),
   setUvMapDims: (uvMapDims) => set({ uvMapDims }),

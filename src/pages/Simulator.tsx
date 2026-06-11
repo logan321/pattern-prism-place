@@ -301,10 +301,27 @@ export default function Simulator() {
       const zonesMap: Record<string, any> = {};
       if (Array.isArray(d.uv_zones)) {
         d.uv_zones.forEach((z: any) => {
-          zonesMap[z.name || z.id] = z;
+          // Converter coordenadas de porcentagem para pixels (canvas do compositor usa pixels)
+          const rect = {
+            x: (z.xPercent / 100) * 2048,
+            y: (z.yPercent / 100) * 2048,
+            width: (z.widthPercent / 100) * 2048,
+            height: (z.heightPercent / 100) * 2048,
+            rotation: (z.rotation || 0) * (Math.PI / 180)
+          };
+          zonesMap[z.name || z.id] = rect;
         });
       } else if (d.uv_zones && typeof d.uv_zones === 'object') {
-        Object.assign(zonesMap, d.uv_zones);
+        Object.keys(d.uv_zones).forEach(key => {
+          const z = d.uv_zones[key];
+          zonesMap[key] = {
+            x: (z.xPercent / 100) * 2048,
+            y: (z.yPercent / 100) * 2048,
+            width: (z.widthPercent / 100) * 2048,
+            height: (z.heightPercent / 100) * 2048,
+            rotation: (z.rotation || 0) * (Math.PI / 180)
+          };
+        });
       }
       setUvMapZones(zonesMap);
       setUvMapDims({ w: (d as any).uv_width ?? 2048, h: (d as any).uv_height ?? 2048 });
@@ -526,6 +543,26 @@ export default function Simulator() {
   ]);
 
   // Logs removidos para evitar poluição no console e possíveis erros de hook indiretos
+
+  // Efeito para sincronizar layers quando os dados de customização mudam
+  useEffect(() => {
+    if (!uvZonesActive) return;
+
+    setUvLayers(prev => prev.map(layer => {
+      if (layer.type === 'text') {
+        if (layer.zoneKey.includes('PEITO DIREITO') || layer.zoneKey.includes('NOME COSTA TOPO')) {
+          return { ...layer, content: customName || 'NOME', color: nameColor, fontFamily: nameFont };
+        }
+        if (layer.zoneKey.includes('CENTRO COSTAS')) {
+          return { ...layer, content: customNumber || '10', color: numberColor, fontFamily: nameFont };
+        }
+      }
+      if (layer.type === 'image' && layer.zoneKey.includes('PEITO ESQUERDO')) {
+        return { ...layer, url: shieldUrl || 'https://vjhzocuofmbtmgyfxtqy.supabase.co/storage/v1/object/public/textures/shield_placeholder.png' };
+      }
+      return layer;
+    }));
+  }, [customName, customNumber, shieldUrl, nameColor, numberColor, nameFont, uvZonesActive]);
 
   return (
     <>

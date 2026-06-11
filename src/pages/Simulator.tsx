@@ -47,6 +47,44 @@ const LOCAL_MODELS = [
   },
 ];
 
+const CMYK_COLORS = [
+  '#FFFFFF', '#000000', '#808080', '#C0C0C0', 
+  '#FF0000', '#00FF00', '#0000FF', '#FFFF00', 
+  '#FF00FF', '#00FFFF', '#FFA500', '#800080',
+  '#008000', '#000080', '#800000', '#808000',
+  '#FFC0CB', '#A52A2A', '#002366', '#008080'
+];
+
+const ColorSwatch = ({ color, active, onClick }: { color: string, active: boolean, onClick: () => void }) => (
+  <button
+    onClick={onClick}
+    className={cn(
+      "w-6 h-6 rounded-md border transition-all",
+      active ? "border-orange-500 ring-2 ring-orange-500 ring-offset-1 scale-110" : "border-gray-200 hover:border-gray-400"
+    )}
+    style={{ backgroundColor: color }}
+    title={color}
+  />
+);
+
+const SizeSlider = ({ value, onChange, label }: { value: number, onChange: (val: number) => void, label: string }) => (
+  <div className="space-y-1">
+    <div className="flex justify-between items-center">
+      <label className="text-[10px] font-bold text-gray-500 uppercase">{label}</label>
+      <span className="text-[10px] text-gray-400">{Math.round(value * 100)}%</span>
+    </div>
+    <input 
+      type="range" 
+      min="0.1" 
+      max="2" 
+      step="0.05"
+      value={value}
+      onChange={(e) => onChange(parseFloat(e.target.value))}
+      className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-orange-600"
+    />
+  </div>
+);
+
 
 
 function cn(...inputs: ClassValue[]) {
@@ -139,6 +177,9 @@ export default function Simulator() {
     formationCostas,
     formationFrente,
     shieldUrl,
+    nameSize,
+    numberSize,
+    shieldSize,
     setName,
     setNumber,
     setNameColor,
@@ -147,6 +188,9 @@ export default function Simulator() {
     setFormationCostas,
     setFormationFrente,
     setShieldUrl,
+    setNameSize,
+    setNumberSize,
+    setShieldSize,
     uvMapZones, 
     uvMapDims, 
     uvLayers, 

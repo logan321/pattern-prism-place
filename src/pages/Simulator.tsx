@@ -157,6 +157,9 @@ export default function Simulator() {
     clearUvState,
   } = useCustomizerStore();
 
+  const [chestLayout, setChestLayout] = useState<'name-top-shield-center' | 'name-center-shield-top'>('name-top-shield-center');
+
+
   const { data: models } = useQuery({
     queryKey: ['models'],
     queryFn: async () => {
@@ -329,31 +332,32 @@ export default function Simulator() {
       setUvTextDrafts({});
 
       // Aplicar padrões automáticos solicitados pelo usuário
-      // 1. PEITO DIREITO: NOME
-      // 2. PEITO ESQUERDO: ESCUDO (ÍCONE)
-      // 3. CENTRO COSTAS: NÚMERO 10
-      // 4. NOME COSTA TOPO: NOME
-      
       const autoLayers: UvLayer[] = [];
       const autoDrafts: Record<string, string> = {};
 
-      if (zonesMap['PEITO DIREITO']) {
+      // Mapeamento de zonas padrão (tenta novas chaves primeiro, depois fallbacks)
+      const nameZone = zonesMap['chest_top_name'] ? 'chest_top_name' : (zonesMap['PEITO DIREITO'] ? 'PEITO DIREITO' : null);
+      const shieldZone = zonesMap['chest_center_shield'] ? 'chest_center_shield' : (zonesMap['PEITO ESQUERDO'] ? 'PEITO ESQUERDO' : null);
+      const backNumberZone = zonesMap['back_center_number'] ? 'back_center_number' : (zonesMap['CENTRO COSTAS'] ? 'CENTRO COSTAS' : null);
+      const backNameZone = zonesMap['back_top_name'] ? 'back_top_name' : (zonesMap['NOME COSTA TOPO'] ? 'NOME COSTA TOPO' : null);
+
+      if (nameZone) {
         autoLayers.push({
-          id: `PEITO_DIREITO_text_${Date.now()}`,
-          zoneKey: 'PEITO DIREITO',
+          id: `${nameZone}_text_${Date.now()}`,
+          zoneKey: nameZone,
           type: 'text',
           content: customName || 'NOME',
           color: nameColor,
           fontFamily: nameFont,
           fontWeight: 900
         } as UvLayer);
-        autoDrafts['PEITO DIREITO'] = customName || 'NOME';
+        autoDrafts[nameZone] = customName || 'NOME';
       }
 
-      if (zonesMap['PEITO ESQUERDO']) {
+      if (shieldZone) {
         autoLayers.push({
-          id: `PEITO_ESQUERDO_image_${Date.now()}`,
-          zoneKey: 'PEITO ESQUERDO',
+          id: `${shieldZone}_image_${Date.now()}`,
+          zoneKey: shieldZone,
           type: 'image',
           url: shieldUrl || 'https://vjhzocuofmbtmgyfxtqy.supabase.co/storage/v1/object/public/textures/shield_placeholder.png',
           scale: 0.9,
@@ -361,34 +365,35 @@ export default function Simulator() {
         } as UvLayer);
       }
 
-      if (zonesMap['CENTRO COSTAS']) {
+      if (backNumberZone) {
         autoLayers.push({
-          id: `CENTRO_COSTAS_text_${Date.now()}`,
-          zoneKey: 'CENTRO COSTAS',
+          id: `${backNumberZone}_text_${Date.now()}`,
+          zoneKey: backNumberZone,
           type: 'text',
           content: customNumber || '10',
           color: numberColor,
           fontFamily: nameFont,
           fontWeight: 900
         } as UvLayer);
-        autoDrafts['CENTRO COSTAS'] = customNumber || '10';
+        autoDrafts[backNumberZone] = customNumber || '10';
       }
 
-      if (zonesMap['NOME COSTA TOPO']) {
+      if (backNameZone) {
         autoLayers.push({
-          id: `NOME_COSTA_TOPO_text_${Date.now()}`,
-          zoneKey: 'NOME COSTA TOPO',
+          id: `${backNameZone}_text_${Date.now()}`,
+          zoneKey: backNameZone,
           type: 'text',
           content: customName || 'NOME',
           color: nameColor,
           fontFamily: nameFont,
           fontWeight: 900
         } as UvLayer);
-        autoDrafts['NOME COSTA TOPO'] = customName || 'NOME';
+        autoDrafts[backNameZone] = customName || 'NOME';
       }
 
       setUvLayers(autoLayers);
       setUvTextDrafts(autoDrafts);
+
     })();
     return () => { cancelled = true; };
   }, [selectedPattern, customName, customNumber, shieldUrl, nameColor, numberColor, nameFont]);
@@ -435,6 +440,33 @@ export default function Simulator() {
     setUvLayers(prev => prev.filter(l => l.zoneKey !== zoneKey));
     setUvTextDrafts(prev => ({ ...prev, [zoneKey]: '' }));
   };
+
+  const handleChestLayoutChange = (newLayout: 'name-top-shield-center' | 'name-center-shield-top') => {
+    if (newLayout === chestLayout) return;
+    setChestLayout(newLayout);
+
+    setUvLayers(prev => {
+      const nameTarget = newLayout === 'name-top-shield-center' ? 'chest_top_name' : 'chest_center_name';
+      const shieldTarget = newLayout === 'name-top-shield-center' ? 'chest_center_shield' : 'chest_top_shield';
+      
+      const oldNameTarget = chestLayout === 'name-top-shield-center' ? 'chest_top_name' : 'chest_center_name';
+      const oldShieldTarget = chestLayout === 'name-top-shield-center' ? 'chest_center_shield' : 'chest_top_shield';
+
+      // Identificamos os layers que estão nas zonas de peito (novas ou antigas/legado)
+      return prev.map(l => {
+        // Se for o layer de texto do peito
+        if (l.zoneKey === oldNameTarget || l.zoneKey === 'PEITO DIREITO' || l.zoneKey === 'chest_center_name' || l.zoneKey === 'chest_top_name') {
+          if (l.type === 'text') return { ...l, zoneKey: nameTarget };
+        }
+        // Se for o layer de imagem do escudo
+        if (l.zoneKey === oldShieldTarget || l.zoneKey === 'PEITO ESQUERDO' || l.zoneKey === 'chest_center_shield' || l.zoneKey === 'chest_top_shield') {
+          if (l.type === 'image') return { ...l, zoneKey: shieldTarget };
+        }
+        return l;
+      });
+    });
+  };
+
 
 
   const { data: uvMatrices } = useQuery({
@@ -550,19 +582,23 @@ export default function Simulator() {
 
     setUvLayers(prev => prev.map(layer => {
       if (layer.type === 'text') {
-        if (layer.zoneKey.includes('PEITO DIREITO') || layer.zoneKey.includes('NOME COSTA TOPO')) {
+        // Sincroniza zonas de NOME
+        if (layer.zoneKey.includes('name') || layer.zoneKey.includes('NOME') || layer.zoneKey === 'PEITO DIREITO') {
           return { ...layer, content: customName || 'NOME', color: nameColor, fontFamily: nameFont };
         }
-        if (layer.zoneKey.includes('CENTRO COSTAS')) {
+        // Sincroniza zonas de NÚMERO
+        if (layer.zoneKey.includes('number') || layer.zoneKey.includes('NÚMERO') || layer.zoneKey === 'CENTRO COSTAS') {
           return { ...layer, content: customNumber || '10', color: numberColor, fontFamily: nameFont };
         }
       }
-      if (layer.type === 'image' && layer.zoneKey.includes('PEITO ESQUERDO')) {
+      // Sincroniza escudo
+      if (layer.type === 'image' && (layer.zoneKey.includes('shield') || layer.zoneKey.includes('ESCUDO') || layer.zoneKey === 'PEITO ESQUERDO')) {
         return { ...layer, url: shieldUrl || 'https://vjhzocuofmbtmgyfxtqy.supabase.co/storage/v1/object/public/textures/shield_placeholder.png' };
       }
       return layer;
     }));
   }, [customName, customNumber, shieldUrl, nameColor, numberColor, nameFont, uvZonesActive]);
+
 
   return (
     <>
@@ -613,7 +649,9 @@ export default function Simulator() {
           <SidebarItem icon={Scissors} label="Acabamentos" active={activeTab === 'Acabamentos'} onClick={() => setActiveTab('Acabamentos')} />
           <SidebarItem icon={Type} label="Nome/Número" active={activeTab === 'Nome/Número'} onClick={() => setActiveTab('Nome/Número')} />
           <SidebarItem icon={Shield} label="Escudo" active={activeTab === 'Escudo'} onClick={() => setActiveTab('Escudo')} />
+          <SidebarItem icon={RotateCcw} label="Costas" active={activeTab === 'Costas'} onClick={() => setActiveTab('Costas')} />
           <SidebarItem icon={Upload} label="Upload" active={activeTab === 'Upload'} onClick={() => setActiveTab('Upload')} />
+
         </aside>
 
         {/* Panel Content */}
@@ -678,7 +716,29 @@ export default function Simulator() {
               ))
             ) : activeTab === 'Nome/Número' ? (
               <div className="col-span-2 space-y-4">
-                {/* Menu simplificado removendo a edição direta das zonas UV */}
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-gray-500 uppercase">Posição do Nome</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button 
+                      onClick={() => handleChestLayoutChange('name-top-shield-center')}
+                      className={cn(
+                        "text-[10px] py-2 px-1 rounded border transition-all",
+                        chestLayout === 'name-top-shield-center' ? "bg-orange-600 text-white border-orange-600" : "bg-white text-gray-600 border-gray-200"
+                      )}
+                    >
+                      Nome no Topo
+                    </button>
+                    <button 
+                      onClick={() => handleChestLayoutChange('name-center-shield-top')}
+                      className={cn(
+                        "text-[10px] py-2 px-1 rounded border transition-all",
+                        chestLayout === 'name-center-shield-top' ? "bg-orange-600 text-white border-orange-600" : "bg-white text-gray-600 border-gray-200"
+                      )}
+                    >
+                      Nome no Centro
+                    </button>
+                  </div>
+                </div>
 
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold text-gray-500 uppercase">Nome</label>
@@ -733,11 +793,33 @@ export default function Simulator() {
                   </select>
                 </div>
               </div>
+
             ) : activeTab === 'Escudo' ? (
               <div className="col-span-2 space-y-4">
-                <div className="p-2 rounded text-[10px] font-medium border bg-blue-50 border-blue-200 text-blue-700">
-                  ℹ️ O escudo será aplicado automaticamente na posição correta da matriz UV.
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-gray-500 uppercase">Posição do Escudo</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button 
+                      onClick={() => handleChestLayoutChange('name-top-shield-center')}
+                      className={cn(
+                        "text-[10px] py-2 px-1 rounded border transition-all",
+                        chestLayout === 'name-top-shield-center' ? "bg-orange-600 text-white border-orange-600" : "bg-white text-gray-600 border-gray-200"
+                      )}
+                    >
+                      Escudo no Centro
+                    </button>
+                    <button 
+                      onClick={() => handleChestLayoutChange('name-center-shield-top')}
+                      className={cn(
+                        "text-[10px] py-2 px-1 rounded border transition-all",
+                        chestLayout === 'name-center-shield-top' ? "bg-orange-600 text-white border-orange-600" : "bg-white text-gray-600 border-gray-200"
+                      )}
+                    >
+                      Escudo no Topo
+                    </button>
+                  </div>
                 </div>
+
                 <div className="p-4 border-2 border-dashed border-gray-200 rounded-lg text-center relative">
                   {shieldUrl ? (
                     <div className="relative group">
@@ -773,6 +855,60 @@ export default function Simulator() {
                 <p className="text-[10px] text-gray-400 italic">
                   * Enquanto não houver upload, uma marcação circular aparecerá no modelo.
                 </p>
+              </div>
+            ) : activeTab === 'Costas' ? (
+              <div className="col-span-2 space-y-6">
+                <div className="grid grid-cols-1 gap-4">
+                  {[
+                    { key: 'back_top_name', label: 'Nome no Topo', icon: Type },
+                    { key: 'back_center_number', label: 'Número no Centro', icon: Type },
+                    { key: 'back_bottom_name', label: 'Nome no Fundo', icon: Type },
+                    { key: 'back_bottom_number', label: 'Número Inferior', icon: Type },
+                  ].map((zone) => {
+                    const isActive = uvLayers.some(l => l.zoneKey === zone.key);
+                    const isName = zone.key.includes('name');
+                    const contentValue = isName ? customName : customNumber;
+                    
+                    return (
+                      <button
+                        key={zone.key}
+                        onClick={() => {
+                          if (isActive) {
+                            removeUvLayer(zone.key);
+                          } else {
+                            if (isName) {
+                              setUvLayerText(zone.key, customName || 'NOME');
+                            } else {
+                              setUvLayerText(zone.key, customNumber || '10');
+                            }
+                          }
+                        }}
+                        className={cn(
+                          "flex items-center p-3 rounded-lg border-2 transition-all text-left",
+                          isActive 
+                            ? "border-green-500 bg-green-50" 
+                            : "border-gray-200 bg-white hover:border-gray-300"
+                        )}
+                      >
+                        <div className={cn(
+                          "w-10 h-10 rounded flex items-center justify-center mr-3",
+                          isActive ? "bg-green-100 text-green-600" : "bg-gray-100 text-gray-400"
+                        )}>
+                          <zone.icon className="w-6 h-6" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-[11px] font-bold text-gray-700 uppercase leading-none mb-1">{zone.label}</p>
+                          <p className="text-[10px] text-gray-400 truncate">{isActive ? contentValue : 'Desativado'}</p>
+                        </div>
+                        {isActive && (
+                          <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center text-white">
+                            <Send className="w-3 h-3" />
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             ) : (
               <div className="col-span-2 text-center py-8 text-gray-400 text-xs">

@@ -4,7 +4,6 @@ import {
   Palette, 
   Scissors, 
   Type, 
-  Shield, 
   Upload, 
   ZoomIn, 
   ZoomOut, 

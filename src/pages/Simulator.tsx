@@ -32,6 +32,7 @@ import { supabase } from '../integrations/supabase/client';
 import { generateFinalTexture, UVZone, UvLayer } from '../lib/textureGenerator';
 import * as THREE from 'three';
 import { useUvCompositor } from '../hooks/useUvCompositor';
+import { FormationSelector } from '../components/FormationSelector';
 import golaPadreAsset from '../assets/GOLA_PADRE_otimizado.glb.asset.json';
 
 const LOCAL_MODELS = [
@@ -135,14 +136,16 @@ export default function Simulator() {
     nameColor,
     numberColor,
     nameFont,
-    formation,
+    formationCostas,
+    formationFrente,
     shieldUrl = 'https://vjhzocuofmbtmgyfxtqy.supabase.co/storage/v1/object/public/textures/shield_placeholder.png',
     setName,
     setNumber,
     setNameColor,
     setNumberColor,
     setNameFont,
-    setFormation,
+    setFormationCostas,
+    setFormationFrente,
     setShieldUrl,
     uvMapZones, 
     uvMapDims, 
@@ -328,39 +331,64 @@ export default function Simulator() {
       setUvLayers([]);
       setUvTextDrafts({});
 
-      // Aplicar padrões automáticos solicitados pelo usuário
-      // 1. PEITO DIREITO: NOME
-      // 2. PEITO ESQUERDO: ESCUDO (ÍCONE)
-      // 3. CENTRO COSTAS: NÚMERO 10
-      // 4. NOME COSTA TOPO: NOME
+      // Aplicar padrões automáticos solicitados pelo usuário baseados na formação ativa
       
       const autoLayers: UvLayer[] = [];
       const autoDrafts: Record<string, string> = {};
 
-      if (zonesMap['PEITO DIREITO']) {
-        autoLayers.push({
-          id: `PEITO_DIREITO_text_${Date.now()}`,
-          zoneKey: 'PEITO DIREITO',
-          type: 'text',
-          content: customName || 'NOME',
-          color: nameColor,
-          fontFamily: nameFont,
-          fontWeight: 900
-        } as UvLayer);
-        autoDrafts['PEITO DIREITO'] = customName || 'NOME';
+      // 1. Lógica FRENTE (Formações C e D)
+      if (formationFrente === 'C') {
+        // Formação C: NOME na zona PEITO ESQUERDO + ESCUDO na zona PEITO DIREITO
+        if (zonesMap['PEITO ESQUERDO']) {
+          autoLayers.push({
+            id: `PEITO_ESQUERDO_text_${Date.now()}`,
+            zoneKey: 'PEITO ESQUERDO',
+            type: 'text',
+            content: customName || 'NOME',
+            color: nameColor,
+            fontFamily: nameFont,
+            fontWeight: 900
+          } as UvLayer);
+          autoDrafts['PEITO ESQUERDO'] = customName || 'NOME';
+        }
+        if (zonesMap['PEITO DIREITO']) {
+          autoLayers.push({
+            id: `PEITO_DIREITO_image_${Date.now()}`,
+            zoneKey: 'PEITO DIREITO',
+            type: 'image',
+            url: shieldUrl || 'https://vjhzocuofmbtmgyfxtqy.supabase.co/storage/v1/object/public/textures/shield_placeholder.png',
+            scale: 0.9,
+            opacity: 1
+          } as UvLayer);
+        }
+      } else {
+        // Formação D: ESCUDO na zona PEITO ESQUERDO + NOME na zona PEITO DIREITO
+        if (zonesMap['PEITO ESQUERDO']) {
+          autoLayers.push({
+            id: `PEITO_ESQUERDO_image_${Date.now()}`,
+            zoneKey: 'PEITO ESQUERDO',
+            type: 'image',
+            url: shieldUrl || 'https://vjhzocuofmbtmgyfxtqy.supabase.co/storage/v1/object/public/textures/shield_placeholder.png',
+            scale: 0.9,
+            opacity: 1
+          } as UvLayer);
+        }
+        if (zonesMap['PEITO DIREITO']) {
+          autoLayers.push({
+            id: `PEITO_DIREITO_text_${Date.now()}`,
+            zoneKey: 'PEITO DIREITO',
+            type: 'text',
+            content: customName || 'NOME',
+            color: nameColor,
+            fontFamily: nameFont,
+            fontWeight: 900
+          } as UvLayer);
+          autoDrafts['PEITO DIREITO'] = customName || 'NOME';
+        }
       }
 
-      if (zonesMap['PEITO ESQUERDO']) {
-        autoLayers.push({
-          id: `PEITO_ESQUERDO_image_${Date.now()}`,
-          zoneKey: 'PEITO ESQUERDO',
-          type: 'image',
-          url: shieldUrl || 'https://vjhzocuofmbtmgyfxtqy.supabase.co/storage/v1/object/public/textures/shield_placeholder.png',
-          scale: 0.9,
-          opacity: 1
-        } as UvLayer);
-      }
-
+      // 2. Lógica COSTAS (Formações A e B)
+      // NÚMERO é fixo em CENTRO COSTAS em ambas
       if (zonesMap['CENTRO COSTAS']) {
         autoLayers.push({
           id: `CENTRO_COSTAS_text_${Date.now()}`,
@@ -374,24 +402,41 @@ export default function Simulator() {
         autoDrafts['CENTRO COSTAS'] = customNumber || '10';
       }
 
-      if (zonesMap['NOME COSTA TOPO']) {
-        autoLayers.push({
-          id: `NOME_COSTA_TOPO_text_${Date.now()}`,
-          zoneKey: 'NOME COSTA TOPO',
-          type: 'text',
-          content: customName || 'NOME',
-          color: nameColor,
-          fontFamily: nameFont,
-          fontWeight: 900
-        } as UvLayer);
-        autoDrafts['NOME COSTA TOPO'] = customName || 'NOME';
+      if (formationCostas === 'A') {
+        // Formação A: NOME na zona NOME COSTA TOPO
+        if (zonesMap['NOME COSTA TOPO']) {
+          autoLayers.push({
+            id: `NOME_COSTA_TOPO_text_${Date.now()}`,
+            zoneKey: 'NOME COSTA TOPO',
+            type: 'text',
+            content: customName || 'NOME',
+            color: nameColor,
+            fontFamily: nameFont,
+            fontWeight: 900
+          } as UvLayer);
+          autoDrafts['NOME COSTA TOPO'] = customName || 'NOME';
+        }
+      } else {
+        // Formação B: NOME na zona NOME COSTA FUNDO
+        if (zonesMap['NOME COSTA FUNDO']) {
+          autoLayers.push({
+            id: `NOME_COSTA_FUNDO_text_${Date.now()}`,
+            zoneKey: 'NOME COSTA FUNDO',
+            type: 'text',
+            content: customName || 'NOME',
+            color: nameColor,
+            fontFamily: nameFont,
+            fontWeight: 900
+          } as UvLayer);
+          autoDrafts['NOME COSTA FUNDO'] = customName || 'NOME';
+        }
       }
 
       setUvLayers(autoLayers);
       setUvTextDrafts(autoDrafts);
     })();
     return () => { cancelled = true; };
-  }, [selectedPattern, customName, customNumber, shieldUrl, nameColor, numberColor, nameFont]);
+  }, [selectedPattern, customName, customNumber, shieldUrl, nameColor, numberColor, nameFont, formationCostas, formationFrente]);
 
   // Funções para manipular layers de texto
   const uvTextCommitRef = useRef<number | null>(null);
@@ -550,14 +595,14 @@ export default function Simulator() {
 
     setUvLayers(prev => prev.map(layer => {
       if (layer.type === 'text') {
-        if (layer.zoneKey.includes('PEITO DIREITO') || layer.zoneKey.includes('NOME COSTA TOPO')) {
+        if (layer.zoneKey.includes('PEITO DIREITO') || layer.zoneKey.includes('PEITO ESQUERDO') || layer.zoneKey.includes('NOME COSTA TOPO') || layer.zoneKey.includes('NOME COSTA FUNDO')) {
           return { ...layer, content: customName || 'NOME', color: nameColor, fontFamily: nameFont };
         }
         if (layer.zoneKey.includes('CENTRO COSTAS')) {
           return { ...layer, content: customNumber || '10', color: numberColor, fontFamily: nameFont };
         }
       }
-      if (layer.type === 'image' && layer.zoneKey.includes('PEITO ESQUERDO')) {
+      if (layer.type === 'image' && (layer.zoneKey.includes('PEITO ESQUERDO') || layer.zoneKey.includes('PEITO DIREITO'))) {
         return { ...layer, url: shieldUrl || 'https://vjhzocuofmbtmgyfxtqy.supabase.co/storage/v1/object/public/textures/shield_placeholder.png' };
       }
       return layer;
@@ -678,7 +723,9 @@ export default function Simulator() {
               ))
             ) : activeTab === 'Nome/Número' ? (
               <div className="col-span-2 space-y-4">
-                {/* Menu simplificado removendo a edição direta das zonas UV */}
+                <FormationSelector />
+
+                <div className="h-px bg-gray-100 my-4" />
 
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold text-gray-500 uppercase">Nome</label>

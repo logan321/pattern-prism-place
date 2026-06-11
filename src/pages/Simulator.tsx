@@ -270,7 +270,7 @@ export default function Simulator() {
   const uvZonesActive = Object.keys(uvMapZones).length > 0;
 
   const uvComposite = useUvCompositor({
-    baseUrl: uvZonesActive ? (textureUrl || uvBaseUrl) : null,
+    baseUrl: (textureUrl || uvBaseUrl) || null,
     zones: uvMapZones,
     layers: uvLayers,
     uvWidth: uvMapDims.w,

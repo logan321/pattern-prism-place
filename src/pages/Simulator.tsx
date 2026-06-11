@@ -755,15 +755,6 @@ export default function Simulator() {
         </main>
       </div>
     </div>
-
-      {/* Footer */}
-      <footer className="bg-[#333] text-white h-10 flex items-center justify-center text-[10px] shrink-0 border-t border-gray-700">
-        <span className="mr-4">2025 Jumptec. Todos os direitos reservados.</span>
-        <div className="font-black italic text-lg tracking-tighter flex items-center">
-          JUMP<span className="text-orange-500">TEC</span>
-        </div>
-      </footer>
-    </div>
     </>
   );
 }

@@ -208,7 +208,7 @@ export const ThreeDViewer = forwardRef<ThreeDViewerRef, {
     setView: (view) => {
       if (!orbitRef.current) return;
       const controls = orbitRef.current;
-      const defaultDistance = 2.0;
+      const defaultDistance = 1.2;
       let targetTheta = 0;
       let targetPhi = Math.PI / 2;
       switch (view) {
@@ -274,7 +274,7 @@ export const ThreeDViewer = forwardRef<ThreeDViewerRef, {
 
   return (
     <div className="w-full h-full relative group">
-      <Canvas shadows camera={{ position: [0, 0, 2], fov: 45 }} gl={{ antialias: true, preserveDrawingBuffer: true, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.2 }}>
+      <Canvas shadows camera={{ position: [0, 0, 1.2], fov: 35 }} gl={{ antialias: true, preserveDrawingBuffer: true, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.2 }}>
         <Suspense fallback={null}>
           <ambientLight intensity={1.5} />
           <directionalLight position={[5, 5, 5]} intensity={1.2} castShadow />
@@ -284,8 +284,7 @@ export const ThreeDViewer = forwardRef<ThreeDViewerRef, {
           <OrbitControls 
             ref={orbitRef}
             enablePan={false}
-            minDistance={1.2}
-            maxDistance={5}
+            enableZoom={false}
             makeDefault
           />
         </Suspense>

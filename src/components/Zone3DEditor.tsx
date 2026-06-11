@@ -96,7 +96,7 @@ function Scene({ modelUrl, onPointSelected, zones }: {
         </Center>
       </Suspense>
 
-      <OrbitControls makeDefault minDistance={1} maxDistance={5} />
+      <OrbitControls makeDefault enableZoom={false} />
     </>
   );
 }
@@ -263,7 +263,7 @@ export function Zone3DEditor({
         <div className="w-full h-full">
           <Canvas 
             shadows 
-            camera={{ position: [0, 0, 2], fov: 45 }}
+            camera={{ position: [0, 0, 1.2], fov: 35 }}
             gl={{ antialias: true, alpha: true }}
           >
             <Scene 

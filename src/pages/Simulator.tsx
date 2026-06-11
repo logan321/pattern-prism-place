@@ -710,148 +710,157 @@ export default function Simulator() {
           <SidebarItem icon={Shield} label="Escudo" active={activeTab === 'Escudo'} onClick={() => setActiveTab('Escudo')} />
         </aside>
 
-        {/* Panel Content - Ajustado para mobile */}
-        <aside className={cn(
-          "w-full md:w-80 bg-white md:border-r p-4 overflow-y-auto z-20 transition-all duration-300",
-          "h-[35vh] md:h-auto border-b md:border-b-0"
-        )}>
-          <div className="flex items-center mb-4 md:mb-6">
-            <h2 className="font-bold text-gray-800 text-sm md:text-base">{activeTab}</h2>
-          </div>
-
-          <div className="flex items-center justify-between mb-4">
-            <span className="text-[10px] md:text-[11px] text-gray-600">Sincronizar Camisa e Calção</span>
-            <button 
-              aria-label={syncShirtShorts ? "Desativar sincronização" : "Ativar sincronização"}
-              onClick={() => setSyncShirtShorts(!syncShirtShorts)}
-              className={cn(
-                "w-8 h-4 md:w-10 md:h-5 rounded-full transition-colors relative",
-                syncShirtShorts ? "bg-black" : "bg-gray-300"
-              )}
-            >
-              <div className={cn(
-                "absolute top-0.5 w-3 h-3 bg-white rounded-full transition-all",
-                syncShirtShorts ? "left-4.5 md:left-6" : "left-0.5 md:left-1"
-              )} />
-            </button>
-          </div>
-
-          <div className="flex border-b mb-4 overflow-x-auto no-scrollbar">
-            {['Camisa', 'Calção', 'Meião'].map(tab => (
+        {/* Panel Content - Ajustado para mobile com controle de visibilidade */}
+        {activeTab && (
+          <aside className={cn(
+            "w-full md:w-80 bg-white md:border-r p-4 overflow-y-auto z-40 transition-all duration-300",
+            "absolute bottom-20 left-0 right-0 md:relative md:bottom-0 rounded-t-2xl md:rounded-none shadow-2xl md:shadow-none",
+            "h-[60vh] md:h-auto max-h-[70vh] md:max-h-none"
+          )}>
+            <div className="flex items-center justify-between mb-4 md:mb-6">
+              <h2 className="font-bold text-gray-800 text-sm md:text-base">{activeTab}</h2>
               <button 
-                key={tab}
-                onClick={() => setSubTab(tab)}
+                onClick={() => setActiveTab(null as any)}
+                className="md:hidden p-2 text-gray-400 hover:text-gray-600"
+              >
+                <ChevronDown className="w-6 h-6" />
+              </button>
+            </div>
+
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-[10px] md:text-[11px] text-gray-600">Sincronizar Camisa e Calção</span>
+              <button 
+                aria-label={syncShirtShorts ? "Desativar sincronização" : "Ativar sincronização"}
+                onClick={() => setSyncShirtShorts(!syncShirtShorts)}
                 className={cn(
-                  "px-3 py-1 text-xs md:text-sm font-medium transition-all relative whitespace-nowrap",
-                  subTab === tab ? "text-orange-600" : "text-gray-400"
+                  "w-8 h-4 md:w-10 md:h-5 rounded-full transition-colors relative",
+                  syncShirtShorts ? "bg-black" : "bg-gray-300"
                 )}
               >
-                {tab}
-                {subTab === tab && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-orange-600" />}
+                <div className={cn(
+                  "absolute top-0.5 w-3 h-3 bg-white rounded-full transition-all",
+                  syncShirtShorts ? "left-4.5 md:left-6" : "left-0.5 md:left-1"
+                )} />
               </button>
-            ))}
-          </div>
+            </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-2 gap-2 md:gap-3">
-            {activeTab === 'Modelo' ? (
-              allModels.map(model => (
-                <ModelCard 
-                  key={model.id} 
-                  name={model.nome} 
-                  thumbnail={model.thumbnail_url}
-                  active={selectedModel === model.id} 
-                  onClick={() => setSelectedModel(model.id)} 
-                />
-              ))
-            ) : activeTab === 'Cores' ? (
-              patterns?.filter(p => p.image_url).map(pattern => (
-                <PatternCard 
-                  key={pattern.id}
-                  name={pattern.name}
-                  imageUrl={pattern.image_url}
-                  active={selectedPattern === pattern.id}
-                  onClick={() => setSelectedPattern(pattern.id)}
-                />
-              ))
-            ) : activeTab === 'Nome/Número' ? (
-              <div className="col-span-full space-y-4">
-                <FormationSelector />
-                <div className="space-y-3">
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[9px] font-bold text-gray-500 uppercase">Nome</label>
-                    <input 
-                      type="text" 
-                      value={customName}
-                      onChange={(e) => setName(e.target.value)}
-                      className="w-full border rounded p-1.5 text-xs"
-                      placeholder="DIGITE O NOME"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-[9px] font-bold text-gray-500 uppercase">Cor Nome</label>
-                    <div className="flex flex-wrap gap-1 p-1.5 border rounded-lg bg-gray-50">
-                      {CMYK_COLORS.map(color => (
-                        <ColorSwatch key={`n-${color}`} color={color} active={nameColor === color} onClick={() => setNameColor(color)} />
-                      ))}
-                    </div>
-                  </div>
-                  <SizeSlider label="Tamanho Nome" value={nameSize} onChange={setNameSize} />
-                  
-                  <div className="h-px bg-gray-100 my-2" />
-                  
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[9px] font-bold text-gray-500 uppercase">Número</label>
-                    <input 
-                      type="text" 
-                      value={customNumber}
-                      onChange={(e) => setNumber(e.target.value)}
-                      className="w-full border rounded p-1.5 text-xs"
-                      placeholder="00"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-[9px] font-bold text-gray-500 uppercase">Cor Número</label>
-                    <div className="flex flex-wrap gap-1 p-1.5 border rounded-lg bg-gray-50">
-                      {CMYK_COLORS.map(color => (
-                        <ColorSwatch key={`nu-${color}`} color={color} active={numberColor === color} onClick={() => setNumberColor(color)} />
-                      ))}
-                    </div>
-                  </div>
-                  <SizeSlider label="Tamanho Número" value={numberSize} onChange={setNumberSize} />
-                </div>
-              </div>
-            ) : activeTab === 'Escudo' ? (
-              <div className="col-span-full space-y-3">
-                <div className="p-3 border-2 border-dashed border-gray-200 rounded-lg text-center relative bg-gray-50">
-                  {shieldUrl ? (
-                    <div className="relative inline-block">
-                      <img src={shieldUrl} alt="Escudo" className="w-12 h-12 md:w-16 md:h-16 object-contain" />
-                      <button onClick={() => setShieldUrl(null)} className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-0.5"><RotateCcw className="w-2 h-2"/></button>
-                    </div>
-                  ) : (
-                    <div className="py-2">
-                      <Upload className="w-6 h-6 text-gray-300 mx-auto mb-1" />
-                      <p className="text-[9px] text-gray-500">Upload Escudo</p>
-                    </div>
+            <div className="flex border-b mb-4 overflow-x-auto no-scrollbar">
+              {['Camisa', 'Calção', 'Meião'].map(tab => (
+                <button 
+                  key={tab}
+                  onClick={() => setSubTab(tab)}
+                  className={cn(
+                    "px-3 py-1 text-xs md:text-sm font-medium transition-all relative whitespace-nowrap",
+                    subTab === tab ? "text-orange-600" : "text-gray-400"
                   )}
-                  <input type="file" accept="image/*" onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      const reader = new FileReader();
-                      reader.onload = (ev) => setShieldUrl(ev.target?.result as string);
-                      reader.readAsDataURL(file);
-                    }
-                  }} className="absolute inset-0 opacity-0 cursor-pointer" />
+                >
+                  {tab}
+                  {subTab === tab && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-orange-600" />}
+                </button>
+              ))}
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-2 gap-2 md:gap-3 pb-8 md:pb-0">
+              {activeTab === 'Modelo' ? (
+                allModels.map(model => (
+                  <ModelCard 
+                    key={model.id} 
+                    name={model.nome} 
+                    thumbnail={model.thumbnail_url}
+                    active={selectedModel === model.id} 
+                    onClick={() => setSelectedModel(model.id)} 
+                  />
+                ))
+              ) : activeTab === 'Cores' ? (
+                patterns?.filter(p => p.image_url).map(pattern => (
+                  <PatternCard 
+                    key={pattern.id}
+                    name={pattern.name}
+                    imageUrl={pattern.image_url}
+                    active={selectedPattern === pattern.id}
+                    onClick={() => setSelectedPattern(pattern.id)}
+                  />
+                ))
+              ) : activeTab === 'Nome/Número' ? (
+                <div className="col-span-full space-y-4">
+                  <FormationSelector />
+                  <div className="space-y-3">
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[9px] font-bold text-gray-500 uppercase">Nome</label>
+                      <input 
+                        type="text" 
+                        value={customName}
+                        onChange={(e) => setName(e.target.value)}
+                        className="w-full border rounded p-2 text-sm"
+                        placeholder="DIGITE O NOME"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[9px] font-bold text-gray-500 uppercase">Cor Nome</label>
+                      <div className="flex flex-wrap gap-1.5 p-2 border rounded-lg bg-gray-50">
+                        {CMYK_COLORS.map(color => (
+                          <ColorSwatch key={`n-${color}`} color={color} active={nameColor === color} onClick={() => setNameColor(color)} />
+                        ))}
+                      </div>
+                    </div>
+                    <SizeSlider label="Tamanho Nome" value={nameSize} onChange={setNameSize} />
+                    
+                    <div className="h-px bg-gray-100 my-2" />
+                    
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[9px] font-bold text-gray-500 uppercase">Número</label>
+                      <input 
+                        type="text" 
+                        value={customNumber}
+                        onChange={(e) => setNumber(e.target.value)}
+                        className="w-full border rounded p-2 text-sm"
+                        placeholder="00"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[9px] font-bold text-gray-500 uppercase">Cor Número</label>
+                      <div className="flex flex-wrap gap-1.5 p-2 border rounded-lg bg-gray-50">
+                        {CMYK_COLORS.map(color => (
+                          <ColorSwatch key={`nu-${color}`} color={color} active={numberColor === color} onClick={() => setNumberColor(color)} />
+                        ))}
+                      </div>
+                    </div>
+                    <SizeSlider label="Tamanho Número" value={numberSize} onChange={setNumberSize} />
+                  </div>
                 </div>
-                <SizeSlider label="Tamanho Escudo" value={shieldSize} onChange={setShieldSize} />
-              </div>
-            ) : (
-              <div className="col-span-full text-center py-4 text-gray-400 text-[10px]">
-                Opção em desenvolvimento
-              </div>
-            )}
-          </div>
-        </aside>
+              ) : activeTab === 'Escudo' ? (
+                <div className="col-span-full space-y-3">
+                  <div className="p-3 border-2 border-dashed border-gray-200 rounded-lg text-center relative bg-gray-50">
+                    {shieldUrl ? (
+                      <div className="relative inline-block">
+                        <img src={shieldUrl} alt="Escudo" className="w-16 h-16 object-contain" />
+                        <button onClick={() => setShieldUrl(null)} className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-1 shadow-lg"><RotateCcw className="w-3 h-3"/></button>
+                      </div>
+                    ) : (
+                      <div className="py-4">
+                        <Upload className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                        <p className="text-xs text-gray-500">Toque para Upload do Escudo</p>
+                      </div>
+                    )}
+                    <input type="file" accept="image/*" onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (ev) => setShieldUrl(ev.target?.result as string);
+                        reader.readAsDataURL(file);
+                      }
+                    }} className="absolute inset-0 opacity-0 cursor-pointer" />
+                  </div>
+                  <SizeSlider label="Tamanho Escudo" value={shieldSize} onChange={setShieldSize} />
+                </div>
+              ) : (
+                <div className="col-span-full text-center py-8 text-gray-400 text-xs">
+                  Opção em breve
+                </div>
+              )}
+            </div>
+          </aside>
+        )}
 
         {/* Preview Area */}
         <main className="flex-1 relative bg-gray-200">

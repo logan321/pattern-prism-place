@@ -616,7 +616,9 @@ export default function Simulator() {
           <SidebarItem icon={Scissors} label="Acabamentos" active={activeTab === 'Acabamentos'} onClick={() => setActiveTab('Acabamentos')} />
           <SidebarItem icon={Type} label="Nome/Número" active={activeTab === 'Nome/Número'} onClick={() => setActiveTab('Nome/Número')} />
           <SidebarItem icon={Shield} label="Escudo" active={activeTab === 'Escudo'} onClick={() => setActiveTab('Escudo')} />
+          <SidebarItem icon={RotateCcw} label="Costas" active={activeTab === 'Costas'} onClick={() => setActiveTab('Costas')} />
           <SidebarItem icon={Upload} label="Upload" active={activeTab === 'Upload'} onClick={() => setActiveTab('Upload')} />
+
         </aside>
 
         {/* Panel Content */}

@@ -439,6 +439,33 @@ export default function Simulator() {
     setUvTextDrafts(prev => ({ ...prev, [zoneKey]: '' }));
   };
 
+  const handleChestLayoutChange = (newLayout: 'name-top-shield-center' | 'name-center-shield-top') => {
+    if (newLayout === chestLayout) return;
+    setChestLayout(newLayout);
+
+    setUvLayers(prev => {
+      const nameTarget = newLayout === 'name-top-shield-center' ? 'chest_top_name' : 'chest_center_name';
+      const shieldTarget = newLayout === 'name-top-shield-center' ? 'chest_center_shield' : 'chest_top_shield';
+      
+      const oldNameTarget = chestLayout === 'name-top-shield-center' ? 'chest_top_name' : 'chest_center_name';
+      const oldShieldTarget = chestLayout === 'name-top-shield-center' ? 'chest_center_shield' : 'chest_top_shield';
+
+      // Identificamos os layers que estão nas zonas de peito (novas ou antigas/legado)
+      return prev.map(l => {
+        // Se for o layer de texto do peito
+        if (l.zoneKey === oldNameTarget || l.zoneKey === 'PEITO DIREITO' || l.zoneKey === 'chest_center_name' || l.zoneKey === 'chest_top_name') {
+          if (l.type === 'text') return { ...l, zoneKey: nameTarget };
+        }
+        // Se for o layer de imagem do escudo
+        if (l.zoneKey === oldShieldTarget || l.zoneKey === 'PEITO ESQUERDO' || l.zoneKey === 'chest_center_shield' || l.zoneKey === 'chest_top_shield') {
+          if (l.type === 'image') return { ...l, zoneKey: shieldTarget };
+        }
+        return l;
+      });
+    });
+  };
+
+
 
   const { data: uvMatrices } = useQuery({
     queryKey: ['uv_matrices'],

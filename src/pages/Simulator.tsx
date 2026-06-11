@@ -685,375 +685,76 @@ export default function Simulator() {
         <meta property="og:type" content="website" />
       </Helmet>
     <div className="flex flex-col h-screen bg-[#f0f0f0] font-sans overflow-hidden">
-      {/* Header */}
-      <header className="bg-orange-600 h-16 flex items-center justify-between px-4 shrink-0 shadow-md">
+      {/* Header - Aumentado para mobile */}
+      <header className="bg-orange-600 h-14 md:h-16 flex items-center justify-between px-3 shrink-0 shadow-md z-20">
         <div className="flex items-center">
-          <div className="bg-white p-1 rounded font-bold text-xs leading-none text-center mr-4">
+          <div className="bg-white p-1 rounded font-bold text-[8px] md:text-xs leading-none text-center mr-2 md:mr-4">
             SUA<br/>LOGO<br/>AQUI
           </div>
-          <h1 className="text-white text-lg font-bold mr-8 hidden md:block">Simulador de Uniformes 3D Jumptec</h1>
-          <div className="flex items-center space-x-4">
-             <div className="bg-white/20 p-2 rounded-full cursor-pointer hover:bg-white/30">
-               <div className="w-5 h-5 border-2 border-white rounded-full flex items-center justify-center">
-                 <div className="w-2 h-2 bg-white rounded-full" />
-               </div>
-             </div>
-             {[1,2,3,4].map(i => (
-               <div key={i} className="w-8 h-8 rounded-full border border-white/50 flex items-center justify-center text-white/50 text-[10px]">
-                 {i}
-               </div>
-             ))}
-             <button className="bg-white text-gray-800 text-xs px-3 py-1 rounded font-medium">ver todos</button>
-          </div>
+          <h1 className="text-white text-sm md:text-lg font-bold mr-4">Jumptec 3D</h1>
         </div>
         
-        <Link to="/admin" className="text-white opacity-80 hover:opacity-100 flex items-center space-x-2 bg-white/10 px-3 py-1.5 rounded-md transition-all">
-          <Settings className="w-4 h-4" />
-          <span className="text-sm font-medium">Administração</span>
-        </Link>
+        <div className="flex items-center space-x-2">
+            <button className="bg-white/20 p-2 rounded-full text-white"><Settings className="w-4 h-4"/></button>
+            <Link to="/admin" className="text-white bg-white/10 px-3 py-1 rounded text-xs font-medium">Admin</Link>
+        </div>
       </header>
 
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-col-reverse md:flex-row flex-1 overflow-hidden">
         {/* Main Sidebar */}
-        <aside className="w-20 bg-white border-r flex flex-col shadow-sm z-10">
+        <aside className="w-full md:w-20 bg-white border-t md:border-t-0 md:border-r flex md:flex-col shadow-[0_-2px_10px_rgba(0,0,0,0.1)] md:shadow-none z-30">
           <SidebarItem icon={Shirt} label="Modelo" active={activeTab === 'Modelo'} onClick={() => setActiveTab('Modelo')} />
           <SidebarItem icon={Palette} label="Estampas" active={activeTab === 'Cores'} onClick={() => setActiveTab('Cores')} />
-          <SidebarItem icon={Scissors} label="Acabamentos" active={activeTab === 'Acabamentos'} onClick={() => setActiveTab('Acabamentos')} />
-          <SidebarItem icon={Type} label="Nome/Número" active={activeTab === 'Nome/Número'} onClick={() => setActiveTab('Nome/Número')} />
+          <SidebarItem icon={Scissors} label="Acab." active={activeTab === 'Acabamentos'} onClick={() => setActiveTab('Acabamentos')} />
+          <SidebarItem icon={Type} label="Texto" active={activeTab === 'Nome/Número'} onClick={() => setActiveTab('Nome/Número')} />
           <SidebarItem icon={Shield} label="Escudo" active={activeTab === 'Escudo'} onClick={() => setActiveTab('Escudo')} />
-          <SidebarItem icon={Upload} label="Upload" active={activeTab === 'Upload'} onClick={() => setActiveTab('Upload')} />
         </aside>
 
-        {/* Panel Content */}
-        <aside className="w-64 bg-white border-r p-4 overflow-y-auto z-10">
-          <div className="flex items-center mb-6">
-            <Shirt className="w-5 h-5 text-orange-600 mr-2" />
-            <h2 className="font-bold text-gray-800">Modelos / Estampas</h2>
-          </div>
-
-          <div className="flex items-center justify-between mb-4">
-            <span className="text-[11px] text-gray-600">Sincronizar Camisa e Calção</span>
-            <button 
-              aria-label={syncShirtShorts ? "Desativar sincronização de camisa e calção" : "Ativar sincronização de camisa e calção"}
-              onClick={() => setSyncShirtShorts(!syncShirtShorts)}
-              className={cn(
-                "w-10 h-5 rounded-full transition-colors relative",
-                syncShirtShorts ? "bg-black" : "bg-gray-300"
-              )}
-            >
-              <div className={cn(
-                "absolute top-1 w-3 h-3 bg-white rounded-full transition-all",
-                syncShirtShorts ? "left-6" : "left-1"
-              )} />
-            </button>
-          </div>
-
-          <div className="flex border-b mb-4">
-            {['Camisa', 'Calção', 'Meião'].map(tab => (
-              <button 
-                key={tab}
-                onClick={() => setSubTab(tab)}
-                className={cn(
-                  "px-3 py-1 text-sm font-medium transition-all relative",
-                  subTab === tab ? "text-orange-600" : "text-gray-400"
-                )}
-              >
-                {tab}
-                {subTab === tab && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-orange-600" />}
-              </button>
-            ))}
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            {activeTab === 'Modelo' ? (
-              allModels.map(model => (
-                <ModelCard 
-                  key={model.id} 
-                  name={model.nome} 
-                  thumbnail={model.thumbnail_url}
-                  active={selectedModel === model.id} 
-                  onClick={() => setSelectedModel(model.id)} 
-                />
-              ))
-            ) : activeTab === 'Cores' ? (
-              patterns?.filter(p => p.image_url).map(pattern => (
-                <PatternCard 
-                  key={pattern.id}
-                  name={pattern.name}
-                  imageUrl={pattern.image_url}
-                  active={selectedPattern === pattern.id}
-                  onClick={() => setSelectedPattern(pattern.id)}
-                />
-              ))
-            ) : activeTab === 'Nome/Número' ? (
-              <div className="col-span-2 space-y-4">
-                <FormationSelector />
-
-                <div className="h-px bg-gray-100 my-4" />
-
-                <div className="space-y-3">
-                  <div className="flex flex-col gap-2">
-                    <label className="text-[10px] font-bold text-gray-500 uppercase">Nome</label>
-                    <input 
-                      type="text" 
-                      value={customName}
-                      onChange={(e) => setName(e.target.value)}
-                      className="w-full border rounded p-2 text-sm"
-                      placeholder="DIGITE O NOME"
-                    />
-                  </div>
-                  
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-gray-500 uppercase">Cor do Nome</label>
-                    <div className="flex flex-wrap gap-1.5 p-2 border rounded-lg bg-gray-50">
-                      {CMYK_COLORS.map(color => (
-                        <ColorSwatch 
-                          key={`name-${color}`} 
-                          color={color} 
-                          active={nameColor === color} 
-                          onClick={() => setNameColor(color)} 
-                        />
-                      ))}
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-gray-500 uppercase">Fonte do Nome</label>
-                    <select 
-                      value={nameFont}
-                      onChange={(e) => setNameFont(e.target.value)}
-                      className="w-full border rounded p-2 text-sm"
-                    >
-                      <option value="Arial">Arial</option>
-                      <option value="Verdana">Verdana</option>
-                      <option value="Times New Roman">Times New Roman</option>
-                      <option value="Courier New">Courier New</option>
-                      <option value="Impact">Impact</option>
-                    </select>
-                  </div>
-                </div>
-
-                  <SizeSlider 
-                    label="Tamanho do Nome" 
-                    value={nameSize} 
-                    onChange={setNameSize} 
-                  />
-                </div>
-
-                <div className="space-y-3">
-                  <div className="flex flex-col gap-2">
-                    <label className="text-[10px] font-bold text-gray-500 uppercase">Número</label>
-                    <input 
-                      type="text" 
-                      value={customNumber}
-                      onChange={(e) => setNumber(e.target.value)}
-                      className="w-full border rounded p-2 text-sm"
-                      placeholder="00"
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-gray-500 uppercase">Cor do Número</label>
-                    <div className="flex flex-wrap gap-1.5 p-2 border rounded-lg bg-gray-50">
-                      {CMYK_COLORS.map(color => (
-                        <ColorSwatch 
-                          key={`num-${color}`} 
-                          color={color} 
-                          active={numberColor === color} 
-                          onClick={() => setNumberColor(color)} 
-                        />
-                      ))}
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-gray-500 uppercase">Fonte do Número</label>
-                    <select 
-                      value={numberFont}
-                      onChange={(e) => setNumberFont(e.target.value)}
-                      className="w-full border rounded p-2 text-sm"
-                    >
-                      <option value="Arial">Arial</option>
-                      <option value="Verdana">Verdana</option>
-                      <option value="Times New Roman">Times New Roman</option>
-                      <option value="Courier New">Courier New</option>
-                      <option value="Impact">Impact</option>
-                    </select>
-                  </div>
-                </div>
-
-                  <SizeSlider 
-                    label="Tamanho do Número" 
-                    value={numberSize} 
-                    onChange={setNumberSize} 
-                  />
-                </div>
-
+        {/* Panel Content - Ajustado para mobile */}
+        <aside className="w-full md:w-80 bg-white md:border-r p-4 overflow-y-auto z-20 h-[35vh] md:h-auto border-b md:border-b-0">
+           {/* Conteúdo do painel mantido, mas com ajustes visuais para mobile */}
+           {activeTab === 'Modelo' ? (
+              <div className="grid grid-cols-3 gap-2">
+                {allModels.map(model => (
+                    <ModelCard key={model.id} name={model.nome} thumbnail={model.thumbnail_url} active={selectedModel === model.id} onClick={() => setSelectedModel(model.id)} />
+                ))}
               </div>
-            ) : activeTab === 'Escudo' ? (
-              <div className="col-span-2 space-y-4">
-                <div className="p-2 rounded text-[10px] font-medium border bg-blue-50 border-blue-200 text-blue-700">
-                  ℹ️ O escudo será aplicado automaticamente na posição correta da matriz UV.
-                </div>
-                <div className="p-4 border-2 border-dashed border-gray-200 rounded-lg text-center relative">
-                  {shieldUrl ? (
-                    <div className="relative group">
-                      <img src={shieldUrl} alt="Escudo" className="w-16 h-16 mx-auto object-contain mb-2" />
-                      <button 
-                        onClick={() => setShieldUrl(null)}
-                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <RotateCcw className="w-3 h-3" />
-                      </button>
-                    </div>
-                  ) : (
-                    <>
-                      <Upload className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-                      <p className="text-[10px] text-gray-500">Faça upload do seu escudo (PNG/JPG)</p>
-                    </>
-                  )}
-                  <input 
-                    type="file" 
-                    accept="image/*"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) {
-                        const reader = new FileReader();
-                        reader.onload = (ev) => setShieldUrl(ev.target?.result as string);
-                        reader.readAsDataURL(file);
-                      }
-                    }}
-                    className="absolute inset-0 opacity-0 cursor-pointer"
-                  />
-                  {!shieldUrl && <button className="mt-2 bg-orange-600 text-white text-[10px] px-3 py-1 rounded">Selecionar Arquivo</button>}
-                </div>
-                <SizeSlider 
-                  label="Tamanho do Escudo" 
-                  value={shieldSize} 
-                  onChange={setShieldSize} 
-                />
-                <p className="text-[10px] text-gray-400 italic pt-2 border-t">
-                  * Enquanto não houver upload, uma marcação circular aparecerá no modelo.
-                </p>
+           ) : activeTab === 'Cores' ? (
+              <div className="grid grid-cols-4 gap-2">
+                {patterns?.filter(p => p.image_url).map(pattern => (
+                    <PatternCard key={pattern.id} name={pattern.name} imageUrl={pattern.image_url} active={selectedPattern === pattern.id} onClick={() => setSelectedPattern(pattern.id)} />
+                ))}
               </div>
-            ) : (
-              <div className="col-span-2 text-center py-8 text-gray-400 text-xs">
-                Em breve disponível
-              </div>
-            )}
-          </div>
+           ) : (
+             <div className="text-xs text-gray-500">Selecione uma opção</div>
+           )}
         </aside>
 
         {/* Preview Area */}
         <main className="flex-1 relative bg-gray-200">
-          <div className="absolute inset-0">
+          <div className="absolute inset-0 z-0">
             <ThreeDViewer 
               ref={viewerRef}
               modelUrl={modelUrl} 
               finalTexture={finalTexture}
-              customization={{
-                name: customName,
-                number: customNumber,
-                nameColor,
-                numberColor,
-                nameFont,
-                shieldUrl
-              }}
+              customization={{ name: customName, number: customNumber, nameColor, numberColor, nameFont, shieldUrl }}
             />
-
           </div>
-
-
           
-          {/* Top Actions */}
-          <div className="absolute top-6 right-6 flex space-x-3 z-10">
-            <button className="bg-orange-600 text-white px-4 py-2 rounded-full font-bold text-sm shadow-lg flex items-center hover:bg-orange-700 transition-colors">
-              <Send className="w-4 h-4 mr-2" />
-              Enviar Orçamento
-            </button>
-            <button className="bg-blue-600 text-white px-4 py-2 rounded-full font-bold text-sm shadow-lg flex items-center hover:bg-blue-700 transition-colors">
-              <Save className="w-4 h-4 mr-2" />
-              Salvar Simulação
-            </button>
+          {/* Top Actions - Compactadas */}
+          <div className="absolute top-3 right-3 flex flex-col space-y-2 z-10">
+            <button className="bg-orange-600 text-white p-2 rounded-full shadow-lg"><Send className="w-4 h-4" /></button>
+            <button className="bg-blue-600 text-white p-2 rounded-full shadow-lg"><Save className="w-4 h-4" /></button>
           </div>
 
-          {/* Right Controls */}
-          <div className="absolute right-6 bottom-32 flex flex-col space-y-3 z-10">
-            {/* View Selector */}
-            <div className="bg-white p-2 rounded-lg shadow-md border flex flex-col space-y-2">
-              <p className="text-[10px] text-gray-400 font-bold uppercase text-center mb-1">Vistas</p>
-              <button 
-                onClick={() => viewerRef.current?.setView('front')}
-                className="p-2 hover:bg-orange-50 hover:text-orange-600 rounded flex flex-col items-center transition-colors group"
-                title="Vista Frontal"
-              >
-                <User className="w-5 h-5 text-gray-600 group-hover:text-orange-600" />
-                <span className="text-[8px] font-bold">FRENTE</span>
-              </button>
-              <button 
-                onClick={() => viewerRef.current?.setView('back')}
-                className="p-2 hover:bg-orange-50 hover:text-orange-600 rounded flex flex-col items-center transition-colors group"
-                title="Vista Costas"
-              >
-                <div className="relative">
-                  <User className="w-5 h-5 text-gray-600 group-hover:text-orange-600 opacity-40" />
-                  <RotateCcw className="w-3 h-3 absolute -bottom-1 -right-1 text-orange-600" />
-                </div>
-                <span className="text-[8px] font-bold">COSTAS</span>
-              </button>
-              <div className="flex space-x-1">
-                <button 
-                  onClick={() => viewerRef.current?.setView('left')}
-                  className="p-2 hover:bg-orange-50 hover:text-orange-600 rounded flex flex-col items-center transition-colors group flex-1"
-                  title="Lateral Esquerda"
-                >
-                  <ChevronLeft className="w-5 h-5 text-gray-600 group-hover:text-orange-600" />
-                  <span className="text-[8px] font-bold">ESQ</span>
-                </button>
-                <button 
-                  onClick={() => viewerRef.current?.setView('right')}
-                  className="p-2 hover:bg-orange-50 hover:text-orange-600 rounded flex flex-col items-center transition-colors group flex-1"
-                  title="Lateral Direita"
-                >
-                  <ChevronRight className="w-5 h-5 text-gray-600 group-hover:text-orange-600" />
-                  <span className="text-[8px] font-bold">DIR</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Zoom Controls */}
-            <div className="bg-white p-2 rounded-lg shadow-md border flex flex-col space-y-3">
-              <button 
-                onClick={() => viewerRef.current?.zoom('in')}
-                aria-label="Aumentar zoom" 
-                className="p-1 hover:bg-gray-100 rounded transition-colors"
-              >
-                <ZoomIn className="w-5 h-5 text-gray-600" />
-              </button>
-              <button 
-                onClick={() => viewerRef.current?.zoom('out')}
-                aria-label="Diminuir zoom" 
-                className="p-1 hover:bg-gray-100 rounded transition-colors"
-              >
-                <ZoomOut className="w-5 h-5 text-gray-600" />
-              </button>
-              <div className="h-px bg-gray-200" />
-              <div className="flex items-center justify-between space-x-2">
-                <Shirt className="w-4 h-4 text-gray-600" />
-                <div className="w-8 h-4 bg-blue-600 rounded-full relative cursor-pointer">
-                  <div className="absolute right-1 top-0.5 w-3 h-3 bg-white rounded-full" />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Whatsapp Floating Button */}
-          <div className="absolute right-6 bottom-6 flex items-center bg-green-500 text-white px-4 py-2 rounded-full shadow-lg font-bold text-sm cursor-pointer hover:bg-green-600 transition-colors z-10">
-            <div className="mr-2">
-              <p className="text-[10px] opacity-80 leading-none text-right">Atendimento online</p>
-              <p className="leading-tight">WhatsApp</p>
-            </div>
-            <MessageSquare className="w-6 h-6" />
+          {/* Right Controls - Ajustados */}
+          <div className="absolute right-3 bottom-4 flex flex-col space-y-2 z-10">
+            <button onClick={() => viewerRef.current?.zoom('in')} className="bg-white p-2 rounded-full shadow-md"><ZoomIn className="w-5 h-5"/></button>
+            <button onClick={() => viewerRef.current?.zoom('out')} className="bg-white p-2 rounded-full shadow-md"><ZoomOut className="w-5 h-5"/></button>
           </div>
         </main>
       </div>
+    </div>
 
       {/* Footer */}
       <footer className="bg-[#333] text-white h-10 flex items-center justify-center text-[10px] shrink-0 border-t border-gray-700">

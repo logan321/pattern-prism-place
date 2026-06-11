@@ -1,8 +1,17 @@
-import React, { useState, useRef, useEffect, useContext } from 'react';
-import { Trash2, Save, X, Move, Maximize, RotateCcw, Eye, Layers, Square, Crosshair, Target, ExternalLink, PenTool, Share2 } from 'lucide-react';
+import React, { useState, useRef, useEffect, useContext, useCallback } from 'react';
+import { Trash2, Save, X, Move, Maximize, RotateCcw, Eye, Layers, Square, Crosshair, Target, ExternalLink, PenTool, Share2, Plus, GripVertical } from 'lucide-react';
 import { generateFinalTexture } from '../lib/textureGenerator';
 import { AppContext, Zone3D } from '../context/AppContext';
 import PolygonDrawer from './PolygonDrawer';
+
+const PRESET_ZONES = [
+  { name: 'PEITO DIREITO', side: 'front' as const },
+  { name: 'PEITO ESQUERDO', side: 'front' as const },
+  { name: 'CENTRO FRENTE', side: 'front' as const },
+  { name: 'CENTRO COSTAS', side: 'back' as const },
+  { name: 'NOME COSTA TOPO', side: 'back' as const },
+  { name: 'NOME COSTA FUNDO', side: 'back' as const },
+];
 
 const TIPOS_ZONA = [
   { id: 'logo', label: 'Logo / Escudo' },
@@ -31,6 +40,29 @@ export default function ZoneEditor({ referenceUrl, onClose, onSave, initialZones
 
   const canvasSize = 2048;
   const zonaSelecionada = zones.find((z: Zone3D) => z.id === selectedZoneId);
+  const containerRef = useRef<HTMLDivElement>(null);
+  
+  const [dragState, setDragState] = useState<{
+    type: 'move' | 'resize' | null;
+    zoneId: string | null;
+    handle: string | null;
+    startX: number;
+    startY: number;
+    initialX: number;
+    initialY: number;
+    initialW: number;
+    initialH: number;
+  }>({
+    type: null,
+    zoneId: null,
+    handle: null,
+    startX: 0,
+    startY: 0,
+    initialX: 0,
+    initialY: 0,
+    initialW: 0,
+    initialH: 0
+  });
 
   const handleCanvasClick = (e: React.MouseEvent) => {
     if (e.target !== e.currentTarget) return;
@@ -44,8 +76,66 @@ export default function ZoneEditor({ referenceUrl, onClose, onSave, initialZones
         updateZone(zonaSelecionada.id, { pathData: [...currentPath, { x: xPercent, y: yPercent }] });
         return;
     }
+  };
+
+  const handleDragStart = (e: React.PointerEvent, zone: Zone3D, type: 'move' | 'resize', handle: string | null = null) => {
+    e.stopPropagation();
+    setSelectedZoneId(zone.id);
     
-    addZone(`ZONA ${zones.length + 1}`, 'front');
+    setDragState({
+      type,
+      zoneId: zone.id,
+      handle,
+      startX: e.clientX,
+      startY: e.clientY,
+      initialX: zone.xPercent,
+      initialY: zone.yPercent,
+      initialW: zone.widthPercent,
+      initialH: zone.heightPercent
+    });
+
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+  };
+
+  const handleDragMove = (e: React.PointerEvent) => {
+    if (!dragState.type || !dragState.zoneId) return;
+
+    const dxPixels = (e.clientX - dragState.startX) / zoom;
+    const dyPixels = (e.clientY - dragState.startY) / zoom;
+    
+    const dxPercent = (dxPixels / canvasSize) * 100;
+    const dyPercent = (dyPixels / canvasSize) * 100;
+
+    if (dragState.type === 'move') {
+      updateZone(dragState.zoneId, {
+        xPercent: dragState.initialX + dxPercent,
+        yPercent: dragState.initialY + dyPercent
+      });
+    } else if (dragState.type === 'resize' && dragState.handle) {
+      let newW = dragState.initialW;
+      let newH = dragState.initialH;
+      let newX = dragState.initialX;
+      let newY = dragState.initialY;
+
+      if (dragState.handle.includes('e')) newW = Math.max(1, dragState.initialW + dxPercent * 2);
+      if (dragState.handle.includes('s')) newH = Math.max(1, dragState.initialH + dyPercent * 2);
+      if (dragState.handle.includes('w')) newW = Math.max(1, dragState.initialW - dxPercent * 2);
+      if (dragState.handle.includes('n')) newH = Math.max(1, dragState.initialH - dyPercent * 2);
+
+      updateZone(dragState.zoneId, {
+        widthPercent: newW,
+        heightPercent: newH,
+        xPercent: newX,
+        yPercent: newY
+      });
+    }
+  };
+
+  const handleDragEnd = (e: React.PointerEvent) => {
+    if (dragState.type) {
+      (e.target as HTMLElement).releasePointerCapture(e.pointerId);
+      setDragState({ ...dragState, type: null, zoneId: null, handle: null });
+    }
   };
 
   const handleGeneratePreview = async () => {
@@ -121,8 +211,24 @@ export default function ZoneEditor({ referenceUrl, onClose, onSave, initialZones
       <div className="flex flex-1 overflow-hidden p-4 gap-4 bg-[#0a0a0a]">
         {/* Left Panel - Layer List */}
         <div className="w-72 bg-[#161616] rounded-xl border border-[#222] p-4 flex flex-col gap-4 shadow-xl">
-           <div className="flex items-center justify-between px-2">
-              <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Camadas / Zonas</span>
+           <div className="flex flex-col gap-2 px-2 border-b border-[#222] pb-4">
+              <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Ações Rápidas</span>
+              <div className="grid grid-cols-1 gap-1">
+                {PRESET_ZONES.map(preset => (
+                  <button
+                    key={preset.name}
+                    onClick={() => addZone(preset.name, preset.side)}
+                    className="flex items-center gap-2 px-3 py-2 bg-orange-600/10 hover:bg-orange-600/20 text-orange-500 rounded-lg text-[10px] font-bold transition-all border border-orange-600/20"
+                  >
+                    <Plus className="w-3 h-3" />
+                    {preset.name}
+                  </button>
+                ))}
+              </div>
+           </div>
+
+           <div className="flex items-center justify-between px-2 pt-2">
+              <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Zonas Ativas</span>
               <span className="text-[10px] bg-orange-600/20 text-orange-600 px-2 py-0.5 rounded-full font-bold">{zones.length}</span>
            </div>
            
@@ -213,7 +319,9 @@ export default function ZoneEditor({ referenceUrl, onClose, onSave, initialZones
               return (
                 <div
                   key={z.id}
-                  onPointerDown={(e) => { e.stopPropagation(); setSelectedZoneId(z.id); }}
+                  onPointerDown={(e) => handleDragStart(e, z, 'move')}
+                  onPointerMove={handleDragMove}
+                  onPointerUp={handleDragEnd}
                   style={{
                     position: 'absolute',
                     left: (xPixels - wPixels/2) * zoom,
@@ -228,9 +336,33 @@ export default function ZoneEditor({ referenceUrl, onClose, onSave, initialZones
                     justifyContent: 'center',
                     cursor: 'move',
                     zIndex: isSelected ? 10 : 1,
-                    boxShadow: isSelected ? '0 0 15px rgba(234, 88, 12, 0.5)' : 'none'
+                    boxShadow: isSelected ? '0 0 15px rgba(234, 88, 12, 0.5)' : 'none',
+                    touchAction: 'none'
                   }}
                 >
+                  {isSelected && (
+                    <>
+                      {/* Resize handles */}
+                      {['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw'].map(handle => (
+                        <div
+                          key={handle}
+                          onPointerDown={(e) => handleDragStart(e, z, 'resize', handle)}
+                          className="absolute bg-white border-2 border-orange-600"
+                          style={{
+                            width: 10,
+                            height: 10,
+                            top: handle.includes('n') ? -5 : handle.includes('s') ? 'auto' : '50%',
+                            bottom: handle.includes('s') ? -5 : 'auto',
+                            left: handle.includes('w') ? -5 : handle.includes('e') ? 'auto' : '50%',
+                            right: handle.includes('e') ? -5 : 'auto',
+                            transform: 'translate(-50%, -50%)',
+                            cursor: `${handle}-resize`,
+                            zIndex: 20
+                          }}
+                        />
+                      ))}
+                    </>
+                  )}
                   <div className="flex flex-col items-center gap-1 pointer-events-none">
                     <span className="text-[10px] font-bold text-white bg-black/80 px-2 py-0.5 rounded-full shadow-lg">
                       {z.name}

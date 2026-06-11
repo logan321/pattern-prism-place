@@ -1,7 +1,8 @@
 import React, { useState, useRef, Suspense, useEffect } from 'react';
 import { Canvas, useThree, useFrame } from '@react-three/fiber';
-import { OrbitControls, useGLTF, Html, Center } from '@react-three/drei';
+import { OrbitControls, useGLTF, Html, Center, Environment, ContactShadows } from '@react-three/drei';
 import * as THREE from 'three';
+import { gsap } from 'gsap';
 import { useAppContext, Zone3D } from '../context/AppContext';
 import { 
   ChevronLeft, 
@@ -12,7 +13,9 @@ import {
   Maximize, 
   RotateCw,
   Trash2,
-  Box
+  Box,
+  Compass,
+  Undo2
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import golaModelAsset from '@/assets/GOLA_PADRE_otimizado.glb.asset.json';
@@ -65,10 +68,11 @@ function ZonePreview({ zone }: { zone: Zone3D }) {
   );
 }
 
-function Scene({ modelUrl, onPointSelected, zones }: { 
+function Scene({ modelUrl, onPointSelected, zones, orbitRef }: { 
   modelUrl: string; 
   onPointSelected: (point: THREE.Vector3, normal: THREE.Vector3) => void;
   zones: Zone3D[];
+  orbitRef: React.RefObject<any>;
 }) {
   const handlePointerDown = (e: any) => {
     e.stopPropagation();
@@ -83,20 +87,34 @@ function Scene({ modelUrl, onPointSelected, zones }: {
 
   return (
     <>
-      <ambientLight intensity={0.7} />
+      <Environment preset="city" />
+      <ambientLight intensity={0.5} />
       <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} intensity={1} castShadow />
       <pointLight position={[-10, -10, -10]} intensity={0.5} />
       
-      <Suspense fallback={<Html center>Carregando modelo...</Html>}>
+      <Suspense fallback={<Html center>
+        <div className="flex flex-col items-center gap-2">
+          <div className="w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full animate-spin" />
+          <span className="text-white text-xs font-bold uppercase tracking-widest">Carregando Modelo...</span>
+        </div>
+      </Html>}>
         <Center>
           <Model url={modelUrl} onPointerDown={handlePointerDown} />
           {zones.map(z => (
             <ZonePreview key={z.id} zone={z} />
           ))}
         </Center>
+        <ContactShadows position={[0, -0.8, 0]} opacity={0.4} scale={10} blur={2.5} far={0.8} />
       </Suspense>
 
-      <OrbitControls makeDefault enableZoom={false} />
+      <OrbitControls 
+        ref={orbitRef}
+        makeDefault 
+        minDistance={1} 
+        maxDistance={4} 
+        enableDamping={true}
+        dampingFactor={0.05}
+      />
     </>
   );
 }
@@ -111,6 +129,7 @@ export function Zone3DEditor({
   hideBackButton?: boolean;
 }) {
   const { zones, selectedZoneId, updateZone, setSelectedZoneId } = useAppContext();
+  const orbitRef = useRef<any>(null);
   const [modelUrl] = useState(propModelUrl || golaModelAsset.url);
   
   const selectedZone = zones.find(z => z.id === selectedZoneId);
@@ -139,6 +158,32 @@ export function Zone3DEditor({
       size3d: undefined,
       rotation3d: undefined
     });
+  };
+
+  const resetCamera = () => {
+    if (orbitRef.current) {
+      const controls = orbitRef.current;
+      const proxy = { 
+        x: controls.object.position.x,
+        y: controls.object.position.y,
+        z: controls.object.position.z,
+        tx: controls.target.x,
+        ty: controls.target.y,
+        tz: controls.target.z
+      };
+
+      gsap.to(proxy, {
+        x: 0, y: 0, z: 2,
+        tx: 0, ty: 0, tz: 0,
+        duration: 1,
+        ease: "power2.inOut",
+        onUpdate: () => {
+          controls.object.position.set(proxy.x, proxy.y, proxy.z);
+          controls.target.set(proxy.tx, proxy.ty, proxy.tz);
+          controls.update();
+        }
+      });
+    }
   };
 
   return (
@@ -229,13 +274,22 @@ export function Zone3DEditor({
               </div>
             </div>
 
-            <button 
-              onClick={clearPosition}
-              className="w-full py-2 px-3 border border-red-500/30 text-red-500 text-xs rounded hover:bg-red-500/10 transition-colors flex items-center justify-center gap-2"
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-              Limpar Posição 3D
-            </button>
+            <div className="flex gap-2">
+              <button 
+                onClick={clearPosition}
+                className="flex-1 py-2 px-3 border border-orange-500/30 text-orange-500 text-[10px] font-bold uppercase rounded hover:bg-orange-500/10 transition-colors flex items-center justify-center gap-2"
+              >
+                <Undo2 className="w-3.5 h-3.5" />
+                Resetar Pos. 3D
+              </button>
+              <button 
+                onClick={clearPosition}
+                className="flex-1 py-2 px-3 border border-red-500/30 text-red-500 text-[10px] font-bold uppercase rounded hover:bg-red-500/10 transition-colors flex items-center justify-center gap-2"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                Deletar do 3D
+              </button>
+            </div>
           </div>
         )}
       </div>
@@ -270,9 +324,19 @@ export function Zone3DEditor({
               modelUrl={modelUrl} 
               onPointSelected={handlePointSelected}
               zones={zones}
+              orbitRef={orbitRef}
             />
           </Canvas>
         </div>
+
+        {/* Camera Reset Button */}
+        <button 
+          onClick={resetCamera}
+          className="absolute top-6 right-6 p-3 bg-black/60 backdrop-blur-md border border-white/10 rounded-full hover:bg-orange-600 transition-all group"
+          title="Resetar Câmera"
+        >
+          <Compass className="w-5 h-5 text-white group-hover:rotate-180 transition-transform duration-500" />
+        </button>
 
         {/* Info Box */}
         <div className="absolute bottom-6 left-6 p-4 bg-black/60 backdrop-blur-md border border-white/10 rounded-xl text-[10px] space-y-2 pointer-events-none">

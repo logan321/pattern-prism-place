@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { Palette, Check, Loader2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Check, Loader2 } from 'lucide-react';
 import { applySvgColorMapping, extractEditableSvgColors, sanitizeSvgMarkup, svgMarkupToDataUrl } from '../lib/svgUtils';
 
 interface ColorMapping {
@@ -60,9 +60,7 @@ export const SimulatorSVGColorControls: React.FC<SimulatorSVGColorControlsProps>
     const recoloredSvg = applySvgColorMapping(sanitizedSvg, mapping);
     const dataUrl = svgMarkupToDataUrl(recoloredSvg);
 
-    if (dataUrl) {
-      onMappingChange({ ...mapping, __previewUrl: dataUrl });
-    }
+    if (dataUrl) onMappingChange({ ...mapping, __previewUrl: dataUrl });
   }, [mapping, onMappingChange, sanitizedSvg]);
 
   const handleColorChange = (original: string, newColor: string) => {

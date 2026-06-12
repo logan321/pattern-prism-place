@@ -82,10 +82,11 @@ async function loadCachedImage(
 
   if (imgCache.has(cacheKey)) return imgCache.get(cacheKey)!;
 
-  const p = new Promise<HTMLImageElement>(async (resolve, reject) => {
-    try {
-      const img = new Image();
-      img.crossOrigin = "anonymous";
+  const p = new Promise<HTMLImageElement>((resolve, reject) => {
+    void (async () => {
+      try {
+        const img = new Image();
+        img.crossOrigin = "anonymous";
 
       if (
         url.toLowerCase().endsWith(".svg") ||
@@ -112,10 +113,11 @@ async function loadCachedImage(
         img.onload = () => resolve(img);
       }
 
-      img.onerror = (e) => reject(new Error("Image load failed"));
-    } catch (err) {
-      reject(err);
-    }
+        img.onerror = () => reject(new Error("Image load failed"));
+      } catch (err) {
+        reject(err);
+      }
+    })();
   });
 
   imgCache.set(cacheKey, p);
@@ -272,7 +274,9 @@ export async function generateFinalTexture(
       try {
         const img = await loadImage(shieldUrl);
         ctx.drawImage(img, -zone.width / 2, -zone.height / 2, zone.width, zone.height);
-      } catch (e) {}
+      } catch {
+        // Ignore missing logo images and continue rendering.
+      }
     } else if (zone.type === "text" && name) {
       const textToDraw = name.toUpperCase();
       const fontSize = Math.floor(zone.height);

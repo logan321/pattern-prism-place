@@ -902,7 +902,7 @@ export default function Simulator() {
             </div>
           </div>
         </main>
+      </div>
     </div>
-    </>
   );
 }

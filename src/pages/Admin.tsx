@@ -1060,6 +1060,19 @@ export default function Admin() {
                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center space-x-2">
                           <button 
                             onClick={() => {
+                              setSelectedPatternForColors(pattern);
+                            }}
+                            disabled={!pattern.svg_url}
+                            className={cn(
+                              "bg-white p-2 rounded-lg text-blue-600 hover:bg-gray-100",
+                              !pattern.svg_url && "opacity-30 cursor-not-allowed"
+                            )}
+                            title={pattern.svg_url ? "Editar Cores SVG" : "Cores editáveis apenas em SVG"}
+                          >
+                            <Palette className="w-4 h-4" />
+                          </button>
+                          <button 
+                            onClick={() => {
                               setEditingPattern(pattern);
                               setPatternData({
                                 name: pattern.name,
@@ -1213,6 +1226,20 @@ export default function Admin() {
             </form>
           </div>
         </div>
+      )}
+
+      {/* SVG Color Editor Modal */}
+      {selectedPatternForColors && (
+        <SVGColorEditor
+          svgUrl={selectedPatternForColors.svg_url}
+          patternId={selectedPatternForColors.id}
+          initialMapping={selectedPatternForColors.color_mapping || {}}
+          initialBaseColor={selectedPatternForColors.base_color_hex || null}
+          onClose={() => setSelectedPatternForColors(null)}
+          onSave={() => {
+            queryClient.invalidateQueries({ queryKey: ['patterns'] });
+          }}
+        />
       )}
     </>
   );

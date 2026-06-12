@@ -575,7 +575,9 @@ export default function Admin() {
   const [showPatternModal, setShowPatternModal] = useState(false);
   const [showUVMatrizModal, setShowUVMatrizModal] = useState(false);
   const [editingPattern, setEditingPattern] = useState<any | null>(null);
-  const [patternData, setPatternData] = useState({ name: '', png: null as File | null, svg: null as File | null, uvMatrizId: '' });
+  const [patternData, setPatternData] = useState({ name: '', png: null as File | null, svg: null as File | null, uvMatrizId: '', category: '' });
+  const [patternSearch, setPatternSearch] = useState('');
+  const [patternCategoryFilter, setPatternCategoryFilter] = useState('All');
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -717,7 +719,7 @@ export default function Admin() {
       queryClient.invalidateQueries({ queryKey: ['patterns'] });
       setShowPatternModal(false);
       setEditingPattern(null);
-      setPatternData({ name: '', png: null, svg: null, uvMatrizId: '' });
+      setPatternData({ name: '', png: null, svg: null, uvMatrizId: '', category: '' });
     } catch (error: any) {
       alert('Erro no processamento: ' + error.message);
     } finally {
@@ -918,7 +920,7 @@ export default function Admin() {
                     document.getElementById('file-upload-input')?.click();
                   } else {
                     setEditingPattern(null);
-                    setPatternData({ name: '', png: null, svg: null, uvMatrizId: '' });
+                    setPatternData({ name: '', png: null, svg: null, uvMatrizId: '', category: '' });
                     setShowPatternModal(true);
                   }
                 }}
@@ -1042,16 +1044,40 @@ export default function Admin() {
               )}
             </div>
           ) : activeView === 'patterns' ? (
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-               {patternsLoading ? (
-                 <div className="col-span-full py-12 text-center text-gray-400">Carregando estampas...</div>
-               ) : patterns?.length === 0 ? (
-                 <div className="col-span-full py-24 border-2 border-dashed border-gray-200 rounded-2xl flex flex-col items-center justify-center text-gray-400 bg-white">
-                   <ImageIcon className="w-12 h-12 mb-4 opacity-20" />
-                   <p className="font-medium">Nenhuma estampa cadastrada</p>
-                 </div>
-               ) : (
-                patterns?.map((pattern: any) => (
+            <div className="space-y-6">
+              <div className="flex flex-col md:flex-row gap-4 bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                <div className="flex-1">
+                  <input 
+                    type="text" 
+                    placeholder="Buscar estampas..." 
+                    value={patternSearch}
+                    onChange={(e) => setPatternSearch(e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-orange-500 text-sm"
+                  />
+                </div>
+                <div className="w-full md:w-48">
+                  <select 
+                    value={patternCategoryFilter}
+                    onChange={(e) => setPatternCategoryFilter(e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-orange-500 text-sm bg-white"
+                  >
+                    {categories.map(cat => (
+                      <option key={cat} value={cat}>{cat === 'All' ? 'Todas as Categorias' : cat}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                {patternsLoading ? (
+                  <div className="col-span-full py-12 text-center text-gray-400">Carregando estampas...</div>
+                ) : filteredPatterns?.length === 0 ? (
+                  <div className="col-span-full py-24 border-2 border-dashed border-gray-200 rounded-2xl flex flex-col items-center justify-center text-gray-400 bg-white">
+                    <ImageIcon className="w-12 h-12 mb-4 opacity-20" />
+                    <p className="font-medium">Nenhuma estampa encontrada</p>
+                  </div>
+                ) : (
+                  filteredPatterns?.map((pattern: any) => (
                     <div key={pattern.id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden group">
                       <div className="aspect-square bg-gray-50 flex items-center justify-center relative">
                         {pattern.image_url && (
@@ -1078,7 +1104,8 @@ export default function Admin() {
                                 name: pattern.name,
                                 png: null,
                                 svg: null,
-                                uvMatrizId: pattern.uv_matriz_id || ''
+                                uvMatrizId: pattern.uv_matriz_id || '',
+                                category: pattern.category || ''
                               });
                               setShowPatternModal(true);
                             }}
@@ -1103,9 +1130,9 @@ export default function Admin() {
                         </p>
                       </div>
                     </div>
-                 ))
-
-               )}
+                  ))
+                )}
+              </div>
             </div>
           ) : activeView === 'config' ? (
             <UVConfigView 
@@ -1153,6 +1180,17 @@ export default function Admin() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none text-sm"
                   placeholder="Ex: Camuflado Azul"
                   required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Categoria (Opcional)</label>
+                <input 
+                  type="text" 
+                  value={patternData.category} 
+                  onChange={e => setPatternData(prev => ({ ...prev, category: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none text-sm"
+                  placeholder="Ex: Futebol, Basquete, Camuflados"
                 />
               </div>
 

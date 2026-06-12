@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { applySvgColorMapping, sanitizeSvgMarkup } from './svgUtils';
 
 export interface UVZone {
   id: string;
@@ -88,14 +89,10 @@ async function loadCachedImage(url: string, colorMapping?: Record<string, string
       if (url.toLowerCase().endsWith('.svg') || url.startsWith('data:image/svg+xml') || (colorMapping && Object.keys(colorMapping).length > 0)) {
         // Process SVG with color mapping
         const response = await fetch(url);
-        let svgText = await response.text();
+        let svgText = sanitizeSvgMarkup(await response.text());
         
         if (colorMapping && Object.keys(colorMapping).length > 0) {
-          Object.entries(colorMapping).forEach(([original, current]) => {
-            // Search for hex color in fill, stroke, and style attributes, case-insensitive
-            const regex = new RegExp(original, 'gi');
-            svgText = svgText.replace(regex, current);
-          });
+          svgText = applySvgColorMapping(svgText, colorMapping);
         }
         
         const blob = new Blob([svgText], { type: 'image/svg+xml' });

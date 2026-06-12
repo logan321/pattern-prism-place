@@ -12,6 +12,9 @@ const COLOR_ATTRS = [
   "solid-color",
 ];
 
+// Attributes considered when extracting EDITABLE colors (excludes stroke/outline).
+const EDITABLE_COLOR_ATTRS = COLOR_ATTRS.filter((a) => a !== "stroke");
+
 const NON_COLOR_VALUES = new Set([
   "none",
   "transparent",
@@ -173,14 +176,14 @@ export function extractEditableSvgColors(markup: string) {
 
   elements.forEach((element) => {
     // Direct color attributes (fill, stroke, stop-color, …)
-    for (const attr of COLOR_ATTRS) {
+    for (const attr of EDITABLE_COLOR_ATTRS) {
       consider(element.getAttribute(attr));
     }
 
     // Inline style: pull each color-bearing property
     const style = element.getAttribute("style");
     if (style) {
-      const propRe = new RegExp(`(${COLOR_ATTRS.join("|")})\\s*:\\s*([^;]+)`, "gi");
+      const propRe = new RegExp(`(${EDITABLE_COLOR_ATTRS.join("|")})\\s*:\\s*([^;]+)`, "gi");
       for (const m of style.matchAll(propRe)) {
         consider(m[2]);
       }
@@ -188,7 +191,7 @@ export function extractEditableSvgColors(markup: string) {
 
     // <style> blocks inside the SVG
     if (element.tagName.toLowerCase() === "style" && element.textContent) {
-      const propRe = new RegExp(`(${COLOR_ATTRS.join("|")})\\s*:\\s*([^;}\\n]+)`, "gi");
+      const propRe = new RegExp(`(${EDITABLE_COLOR_ATTRS.join("|")})\\s*:\\s*([^;}\\n]+)`, "gi");
       for (const m of element.textContent.matchAll(propRe)) {
         consider(m[2]);
       }

@@ -2,38 +2,120 @@ const BLOCKED_SVG_SELECTORS = ["script", "foreignObject", "iframe", "object", "e
 const UNSAFE_STYLE_PATTERN = /url\s*\(|@import|expression\s*\(/i;
 const UNSAFE_URL_PATTERN = /^\s*(?:javascript:|vbscript:|data:(?!image\/))/i;
 
+const COLOR_ATTRS = [
+  "fill",
+  "stroke",
+  "stop-color",
+  "flood-color",
+  "lighting-color",
+  "color",
+  "solid-color",
+];
+
+const NON_COLOR_VALUES = new Set([
+  "none",
+  "transparent",
+  "currentcolor",
+  "inherit",
+  "initial",
+  "unset",
+  "context-fill",
+  "context-stroke",
+]);
+
 function parseSvgDocument(markup: string) {
   const parser = new DOMParser();
   return parser.parseFromString(markup, "image/svg+xml");
 }
 
-function isPureBlack(hex: string) {
-  if (!hex || typeof hex !== "string") return false;
-
-  const cleanHex = hex.trim();
-  if (!cleanHex.startsWith("#")) return false;
-
-  let r = 0;
-  let g = 0;
-  let b = 0;
-
-  if (cleanHex.length === 4) {
-    r = parseInt(cleanHex[1] + cleanHex[1], 16);
-    g = parseInt(cleanHex[2] + cleanHex[2], 16);
-    b = parseInt(cleanHex[3] + cleanHex[3], 16);
-  } else if (cleanHex.length === 7) {
-    r = parseInt(cleanHex.substring(1, 3), 16);
-    g = parseInt(cleanHex.substring(3, 5), 16);
-    b = parseInt(cleanHex.substring(5, 7), 16);
-  } else {
-    return false;
-  }
-
-  return r < 30 && g < 30 && b < 30;
-}
-
 function escapeRegExp(value: string) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/**
+ * Normalize ANY CSS color value (#abc, #aabbcc, rgb(), rgba(), hsl(), named)
+ * into uppercase #RRGGBB hex. Returns null for non-color values (none, url(...), etc.)
+ * Uses the browser's canvas color parser for full CSS coverage.
+ */
+function toHex(value: string | null | undefined): string | null {
+  if (!value) return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  const lower = trimmed.toLowerCase();
+  if (NON_COLOR_VALUES.has(lower)) return null;
+  if (lower.startsWith("url(")) return null;
+
+  try {
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return null;
+    // Set a known sentinel first so invalid values are detected (fillStyle won't change).
+    ctx.fillStyle = "#000000";
+    const before = ctx.fillStyle;
+    ctx.fillStyle = trimmed;
+    const computed = ctx.fillStyle;
+    if (computed === before && trimmed.toLowerCase() !== "#000000" && trimmed.toLowerCase() !== "black") {
+      // Invalid color string the canvas refused to parse.
+      return null;
+    }
+    if (typeof computed === "string" && computed.startsWith("#")) {
+      return computed.toUpperCase();
+    }
+    if (typeof computed === "string") {
+      const m = computed.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i);
+      if (m) {
+        const hex =
+          "#" +
+          [m[1], m[2], m[3]]
+            .map((n) => Number(n).toString(16).padStart(2, "0"))
+            .join("");
+        return hex.toUpperCase();
+      }
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
+function normalizeStyleAttribute(style: string) {
+  return style.replace(/([a-zA-Z-]+)\s*:\s*([^;]+)/g, (match, prop: string, val: string) => {
+    if (COLOR_ATTRS.includes(prop.toLowerCase())) {
+      const hex = toHex(val);
+      if (hex) return `${prop}:${hex}`;
+    }
+    return match;
+  });
+}
+
+function normalizeStyleBlock(css: string) {
+  const propsPattern = COLOR_ATTRS.join("|");
+  const re = new RegExp(`(${propsPattern})\\s*:\\s*([^;}\\n]+)`, "gi");
+  return css.replace(re, (match, prop: string, val: string) => {
+    const hex = toHex(val);
+    return hex ? `${prop}:${hex}` : match;
+  });
+}
+
+function normalizeColorsInDocument(doc: Document) {
+  const all = Array.from(doc.getElementsByTagName("*"));
+  for (const element of all) {
+    for (const attr of COLOR_ATTRS) {
+      const v = element.getAttribute(attr);
+      if (!v) continue;
+      const hex = toHex(v);
+      if (hex) element.setAttribute(attr, hex);
+    }
+
+    const style = element.getAttribute("style");
+    if (style) {
+      element.setAttribute("style", normalizeStyleAttribute(style));
+    }
+
+    if (element.tagName.toLowerCase() === "style" && element.textContent) {
+      element.textContent = normalizeStyleBlock(element.textContent);
+    }
+  }
 }
 
 export function sanitizeSvgMarkup(markup: string) {
@@ -69,6 +151,11 @@ export function sanitizeSvgMarkup(markup: string) {
     });
   });
 
+  // Normalize every color reference to uppercase #RRGGBB so that detection and
+  // remapping work uniformly across hex shorthand, rgb()/rgba(), hsl(), and
+  // named colors.
+  normalizeColorsInDocument(doc);
+
   return new XMLSerializer().serializeToString(root);
 }
 
@@ -79,30 +166,43 @@ export function extractEditableSvgColors(markup: string) {
   const elements = Array.from(doc.getElementsByTagName("*"));
   const detectedColors = new Set<string>();
 
+  const consider = (raw: string | null | undefined) => {
+    const hex = toHex(raw ?? null);
+    if (hex) detectedColors.add(hex);
+  };
+
   elements.forEach((element) => {
-    const fill = element.getAttribute("fill");
-    if (fill && fill.startsWith("#") && !isPureBlack(fill)) {
-      detectedColors.add(fill.toUpperCase());
+    // Direct color attributes (fill, stroke, stop-color, …)
+    for (const attr of COLOR_ATTRS) {
+      consider(element.getAttribute(attr));
     }
 
+    // Inline style: pull each color-bearing property
     const style = element.getAttribute("style");
-    if (!style) return;
+    if (style) {
+      const propRe = new RegExp(`(${COLOR_ATTRS.join("|")})\\s*:\\s*([^;]+)`, "gi");
+      for (const m of style.matchAll(propRe)) {
+        consider(m[2]);
+      }
+    }
 
-    const fillMatches = style.matchAll(/fill:\s*(#[0-9a-fA-F]{3,6})/gi);
-    for (const match of fillMatches) {
-      if (match[1] && !isPureBlack(match[1])) {
-        detectedColors.add(match[1].toUpperCase());
+    // <style> blocks inside the SVG
+    if (element.tagName.toLowerCase() === "style" && element.textContent) {
+      const propRe = new RegExp(`(${COLOR_ATTRS.join("|")})\\s*:\\s*([^;}\\n]+)`, "gi");
+      for (const m of element.textContent.matchAll(propRe)) {
+        consider(m[2]);
       }
     }
   });
 
-  return Array.from(detectedColors);
+  return Array.from(detectedColors).sort();
 }
 
 export function applySvgColorMapping(markup: string, mapping: Record<string, string>) {
   let updatedMarkup = markup;
 
   Object.entries(mapping).forEach(([original, current]) => {
+    if (!original || !original.startsWith("#") || !current) return;
     const regex = new RegExp(escapeRegExp(original), "gi");
     updatedMarkup = updatedMarkup.replace(regex, current);
   });

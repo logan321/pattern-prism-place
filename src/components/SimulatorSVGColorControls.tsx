@@ -31,19 +31,25 @@ export const SimulatorSVGColorControls: React.FC<SimulatorSVGColorControlsProps>
         
         const parser = new DOMParser();
         const svgDoc = parser.parseFromString(text, 'image/svg+xml');
-        const elements = svgDoc.querySelectorAll('*');
+        const elements = Array.from(svgDoc.getElementsByTagName('*'));
         const detectedColors = new Set<string>();
 
         const isPureBlack = (hex: string) => {
+          if (!hex || typeof hex !== 'string') return false;
+          let cleanHex = hex.trim();
+          if (!cleanHex.startsWith('#')) return false;
+
           let r = 0, g = 0, b = 0;
-          if (hex.length === 4) {
-            r = parseInt(hex[1] + hex[1], 16);
-            g = parseInt(hex[2] + hex[2], 16);
-            b = parseInt(hex[3] + hex[3], 16);
-          } else if (hex.length === 7) {
-            r = parseInt(hex.substring(1, 3), 16);
-            g = parseInt(hex.substring(3, 5), 16);
-            b = parseInt(hex.substring(5, 7), 16);
+          if (cleanHex.length === 4) {
+            r = parseInt(cleanHex[1] + cleanHex[1], 16);
+            g = parseInt(cleanHex[2] + cleanHex[2], 16);
+            b = parseInt(cleanHex[3] + cleanHex[3], 16);
+          } else if (cleanHex.length === 7) {
+            r = parseInt(cleanHex.substring(1, 3), 16);
+            g = parseInt(cleanHex.substring(3, 5), 16);
+            b = parseInt(cleanHex.substring(5, 7), 16);
+          } else {
+            return false;
           }
           return r < 30 && g < 30 && b < 30;
         };
@@ -56,9 +62,11 @@ export const SimulatorSVGColorControls: React.FC<SimulatorSVGColorControlsProps>
           
           const style = el.getAttribute('style');
           if (style) {
-            const fillMatch = style.match(/fill:\s*(#[0-9a-fA-F]{3,6})/i);
-            if (fillMatch && !isPureBlack(fillMatch[1])) {
-              detectedColors.add(fillMatch[1].toUpperCase());
+            const fillMatches = style.matchAll(/fill:\s*(#[0-9a-fA-F]{3,6})/gi);
+            for (const match of fillMatches) {
+              if (match[1] && !isPureBlack(match[1])) {
+                detectedColors.add(match[1].toUpperCase());
+              }
             }
           }
         });

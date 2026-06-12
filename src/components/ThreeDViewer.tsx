@@ -169,6 +169,9 @@ function Model({ url, finalTexture, customization }: { url: string; finalTexture
               } else {
                 mat.color.set(0xcccccc);
               }
+              mat.roughness = 0.7;
+              mat.metalness = 0.0;
+              mat.needsUpdate = true;
             }
           });
         }
@@ -276,10 +279,12 @@ export const ThreeDViewer = forwardRef<ThreeDViewerRef, {
     <div className="w-full h-full relative group">
       <Canvas shadows camera={{ position: [0, 0, 1.2], fov: 35 }} gl={{ antialias: true, preserveDrawingBuffer: true, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.2 }}>
         <Suspense fallback={null}>
-          <ambientLight intensity={1.5} />
-          <directionalLight position={[5, 5, 5]} intensity={1.2} castShadow />
-          <directionalLight position={[-5, 5, -5]} intensity={0.8} />
-          <pointLight position={[0, -5, 0]} intensity={0.5} />
+          <ambientLight intensity={0.7} />
+          <hemisphereLight args={[0xffffff, 0x444444, 0.6]} />
+          <directionalLight position={[5, 8, 5]} intensity={1.0} castShadow />
+          <directionalLight position={[-5, 5, -5]} intensity={0.5} />
+          <directionalLight position={[0, 3, 6]} intensity={0.4} />
+          <pointLight position={[0, -5, 0]} intensity={0.3} />
           <Model url={modelUrl} finalTexture={finalTexture} customization={customization} />
           <OrbitControls 
             ref={orbitRef}

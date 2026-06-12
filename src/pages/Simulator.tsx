@@ -347,6 +347,7 @@ export default function Simulator() {
     layers: uvLayers,
     uvWidth: uvMapDims.w,
     uvHeight: uvMapDims.h,
+    colorMapping: (currentPattern as any)?.color_mapping,
   });
 
   // Quando o padrão (pattern) selecionado mudar, busca o UV map vinculado
@@ -628,6 +629,7 @@ export default function Simulator() {
           // Sistema legado: textureGenerator
           canvas = await generateFinalTexture({
             baseTextureUrl: textureUrl,
+            colorMapping: (currentPattern as any)?.color_mapping,
             zones: (activeUVMatriz?.zones as unknown as UVZone[]) || [],
             customizations: {
               name: customName,

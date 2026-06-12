@@ -810,11 +810,21 @@ export default function Admin() {
           };
 
           const pngPath = getPath(p.image_url, 'textures');
+          const svgPath = getPath(p.svg_url, 'textures');
+          
+          let updatedPattern = { ...p };
+
           if (pngPath) {
             const { data: pngData } = await supabase.storage.from('textures').createSignedUrl(pngPath, 3600);
-            if (pngData) return { ...p, image_url: pngData.signedUrl };
+            if (pngData) updatedPattern.image_url = pngData.signedUrl;
           }
-          return p;
+          
+          if (svgPath) {
+            const { data: svgData } = await supabase.storage.from('textures').createSignedUrl(svgPath, 3600);
+            if (svgData) updatedPattern.svg_url = svgData.signedUrl;
+          }
+
+          return updatedPattern;
         } catch (err) {
           return p;
         }

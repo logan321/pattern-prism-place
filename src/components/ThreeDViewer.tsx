@@ -289,6 +289,37 @@ export const ThreeDViewer = forwardRef<ThreeDViewerRef, {
           />
         </Suspense>
       </Canvas>
+
+      {/* View Controls - Front, Back, Left, Right */}
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1 md:gap-2 px-3 py-1.5 md:px-4 md:py-2 bg-black/60 backdrop-blur-md border border-white/10 rounded-full z-10 transition-all opacity-90 hover:opacity-100">
+        <button 
+          onClick={() => (ref as any)?.current?.setView('front')}
+          className="px-2 md:px-3 py-1 text-[9px] md:text-[10px] font-bold text-gray-400 hover:text-white transition-colors"
+        >
+          FRENTE
+        </button>
+        <div className="w-px h-3 bg-white/10" />
+        <button 
+          onClick={() => (ref as any)?.current?.setView('right')}
+          className="px-2 md:px-3 py-1 text-[9px] md:text-[10px] font-bold text-gray-400 hover:text-white transition-colors"
+        >
+          DIR.
+        </button>
+        <div className="w-px h-3 bg-white/10" />
+        <button 
+          onClick={() => (ref as any)?.current?.setView('left')}
+          className="px-2 md:px-3 py-1 text-[9px] md:text-[10px] font-bold text-gray-400 hover:text-white transition-colors"
+        >
+          ESQ.
+        </button>
+        <div className="w-px h-3 bg-white/10" />
+        <button 
+          onClick={() => (ref as any)?.current?.setView('back')}
+          className="px-2 md:px-3 py-1 text-[9px] md:text-[10px] font-bold text-gray-400 hover:text-white transition-colors"
+        >
+          COSTAS
+        </button>
+      </div>
     </div>
   );
 });

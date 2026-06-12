@@ -30,6 +30,7 @@ import { CustomizerModel } from '../components/CustomizerModel';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../integrations/supabase/client';
 import { generateFinalTexture, UVZone, UvLayer } from '../lib/textureGenerator';
+import { SVGColorEditor } from '../components/SVGColorEditor';
 import * as THREE from 'three';
 import { useUvCompositor } from '../hooks/useUvCompositor';
 import { FormationSelector } from '../components/FormationSelector';
@@ -206,6 +207,8 @@ export default function Simulator() {
     clearUvState,
   } = useCustomizerStore();
 
+  const [isColorEditorOpen, setIsColorEditorOpen] = useState(false);
+
   const { data: models } = useQuery({
     queryKey: ['models'],
     queryFn: async () => {
@@ -326,9 +329,15 @@ export default function Simulator() {
 
   const currentPattern = React.useMemo(() => patterns?.find(p => p.id === selectedPattern), [patterns, selectedPattern]);
 
-  const textureUrl = React.useMemo(() => 
-    currentPattern?.svg_url || currentPattern?.image_url || undefined
-  , [currentPattern]);
+  const textureUrl = React.useMemo(() => {
+    if (!currentPattern) return undefined;
+    
+    // Se for SVG e tiver mapeamento de cores, poderíamos processar aqui
+    // mas o requisito diz que o compositor já lida com o baseUrl.
+    // Para simplificar, vamos manter a lógica de URL, mas no futuro 
+    // poderíamos injetar o SVG processado como Data URI se necessário.
+    return currentPattern.svg_url || currentPattern.image_url || undefined;
+  }, [currentPattern]);
 
   const uvZonesActive = Object.keys(uvMapZones).length > 0;
 
@@ -338,6 +347,7 @@ export default function Simulator() {
     layers: uvLayers,
     uvWidth: uvMapDims.w,
     uvHeight: uvMapDims.h,
+    colorMapping: (currentPattern as any)?.color_mapping,
   });
 
   // Quando o padrão (pattern) selecionado mudar, busca o UV map vinculado
@@ -619,6 +629,7 @@ export default function Simulator() {
           // Sistema legado: textureGenerator
           canvas = await generateFinalTexture({
             baseTextureUrl: textureUrl,
+            colorMapping: (currentPattern as any)?.color_mapping,
             zones: (activeUVMatriz?.zones as unknown as UVZone[]) || [],
             customizations: {
               name: customName,
@@ -773,13 +784,34 @@ export default function Simulator() {
                 ))
               ) : activeTab === 'Cores' ? (
                 patterns?.filter(p => p.image_url).map(pattern => (
-                  <PatternCard 
-                    key={pattern.id}
-                    name={pattern.name}
-                    imageUrl={pattern.image_url}
-                    active={selectedPattern === pattern.id}
-                    onClick={() => setSelectedPattern(pattern.id)}
-                  />
+                  <div key={pattern.id} className="relative group">
+                    <PatternCard 
+                      name={pattern.name}
+                      imageUrl={pattern.image_url}
+                      active={selectedPattern === pattern.id}
+                      onClick={() => setSelectedPattern(pattern.id)}
+                    />
+                    {selectedPattern === pattern.id && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (pattern.svg_url) {
+                            setIsColorEditorOpen(true);
+                          }
+                        }}
+                        disabled={!pattern.svg_url}
+                        className={cn(
+                          "absolute top-0 right-0 p-1.5 rounded-full shadow-lg z-10 transition-all",
+                          pattern.svg_url 
+                            ? "bg-orange-500 text-white hover:bg-orange-600 scale-100" 
+                            : "bg-gray-200 text-gray-400 cursor-not-allowed scale-75 opacity-50"
+                        )}
+                        title={pattern.svg_url ? "Editar Cores" : "Cores editáveis apenas em SVG"}
+                      >
+                        <Palette className="w-3 h-3" />
+                      </button>
+                    )}
+                  </div>
                 ))
               ) : activeTab === 'Nome/Número' ? (
                 <div className="col-span-full space-y-4">
@@ -890,6 +922,19 @@ export default function Simulator() {
           </div>
         </main>
       </div>
+      {/* Color Editor Modal */}
+      {isColorEditorOpen && currentPattern && currentPattern.svg_url && (
+        <SVGColorEditor
+          svgUrl={currentPattern.svg_url}
+          patternId={currentPattern.id}
+          initialMapping={(currentPattern as any).color_mapping || {}}
+          initialBaseColor={(currentPattern as any).base_color_hex || null}
+          onClose={() => setIsColorEditorOpen(false)}
+          onSave={() => {
+            // A query do TanStack vai invalidar e recarregar
+          }}
+        />
+      )}
     </div>
     </>
   );

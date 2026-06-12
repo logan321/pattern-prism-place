@@ -254,7 +254,9 @@ export type Database = {
       }
       patterns: {
         Row: {
+          base_color_hex: string | null
           category: string | null
+          color_mapping: Json | null
           created_at: string
           id: string
           image_url: string | null
@@ -263,7 +265,9 @@ export type Database = {
           uv_matriz_id: string | null
         }
         Insert: {
+          base_color_hex?: string | null
           category?: string | null
+          color_mapping?: Json | null
           created_at?: string
           id?: string
           image_url?: string | null
@@ -272,7 +276,9 @@ export type Database = {
           uv_matriz_id?: string | null
         }
         Update: {
+          base_color_hex?: string | null
           category?: string | null
+          color_mapping?: Json | null
           created_at?: string
           id?: string
           image_url?: string | null

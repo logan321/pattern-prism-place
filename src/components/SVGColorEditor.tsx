@@ -59,7 +59,7 @@ export const SVGColorEditor: React.FC<SVGColorEditorProps> = ({
     };
 
     fetchSvg();
-  }, [svgUrl]);
+  }, [initialMapping, svgUrl]);
 
   const previewSvg = useMemo(() => {
     return applySvgColorMapping(svgContent, mapping);

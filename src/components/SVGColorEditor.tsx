@@ -43,7 +43,7 @@ export const SVGColorEditor: React.FC<SVGColorEditorProps> = ({
         const elements = svgDoc.querySelectorAll('*');
         const detectedColors = new Set<string>();
 
-        const isVeryDark = (hex: string) => {
+        const isPureBlack = (hex: string) => {
           let r = 0, g = 0, b = 0;
           if (hex.length === 4) {
             r = parseInt(hex[1] + hex[1], 16);
@@ -54,19 +54,19 @@ export const SVGColorEditor: React.FC<SVGColorEditorProps> = ({
             g = parseInt(hex.substring(3, 5), 16);
             b = parseInt(hex.substring(5, 7), 16);
           }
-          return r < 60 && g < 60 && b < 60;
+          return r < 30 && g < 30 && b < 30;
         };
 
         elements.forEach(el => {
           const fill = el.getAttribute('fill');
-          if (fill && fill.startsWith('#') && !isVeryDark(fill)) {
+          if (fill && fill.startsWith('#') && !isPureBlack(fill)) {
             detectedColors.add(fill.toUpperCase());
           }
           
           const style = el.getAttribute('style');
           if (style) {
             const fillMatch = style.match(/fill:\s*(#[0-9a-fA-F]{3,6})/i);
-            if (fillMatch && !isVeryDark(fillMatch[1])) {
+            if (fillMatch && !isPureBlack(fillMatch[1])) {
               detectedColors.add(fillMatch[1].toUpperCase());
             }
           }

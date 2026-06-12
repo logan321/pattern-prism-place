@@ -30,6 +30,7 @@ import { CustomizerModel } from '../components/CustomizerModel';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../integrations/supabase/client';
 import { generateFinalTexture, UVZone, UvLayer } from '../lib/textureGenerator';
+import { SimulatorSVGColorControls } from '../components/SimulatorSVGColorControls';
 import * as THREE from 'three';
 import { useUvCompositor } from '../hooks/useUvCompositor';
 import { FormationSelector } from '../components/FormationSelector';
@@ -203,6 +204,8 @@ export default function Simulator() {
     setUvLayers, 
     setUvTextDrafts,
     setUvBaseUrl, 
+    patternColorMapping,
+    setPatternColorMapping,
     clearUvState,
   } = useCustomizerStore();
 
@@ -344,7 +347,7 @@ export default function Simulator() {
     layers: uvLayers,
     uvWidth: uvMapDims.w,
     uvHeight: uvMapDims.h,
-    colorMapping: (currentPattern as any)?.color_mapping,
+    colorMapping: Object.keys(patternColorMapping).length > 0 ? patternColorMapping : (currentPattern as any)?.color_mapping,
   });
 
   // Quando o padrão (pattern) selecionado mudar, busca o UV map vinculado
@@ -626,7 +629,7 @@ export default function Simulator() {
           // Sistema legado: textureGenerator
           canvas = await generateFinalTexture({
             baseTextureUrl: textureUrl,
-            colorMapping: (currentPattern as any)?.color_mapping,
+            colorMapping: Object.keys(patternColorMapping).length > 0 ? patternColorMapping : (currentPattern as any)?.color_mapping,
             zones: (activeUVMatriz?.zones as unknown as UVZone[]) || [],
             customizations: {
               name: customName,
@@ -781,18 +784,66 @@ export default function Simulator() {
                 ))
               ) : activeTab === 'Cores' ? (
                 <div className="col-span-full space-y-4">
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-2 gap-2 md:gap-3">
-                    {patterns?.filter(p => p.image_url).map(pattern => (
-                      <div key={pattern.id} className="relative group">
-                        <PatternCard 
-                          name={pattern.name}
-                          imageUrl={pattern.image_url}
-                          active={selectedPattern === pattern.id}
-                          onClick={() => setSelectedPattern(pattern.id)}
-                        />
-                      </div>
+                  <div className="flex border-b overflow-x-auto no-scrollbar mb-2">
+                    {['Seleção', 'Cores da Estampa'].map(tab => (
+                      <button 
+                        key={tab}
+                        onClick={() => {
+                          if (tab === 'Seleção') setSubTab('Camisa');
+                          else setSubTab('CoresEstampa');
+                        }}
+                        className={cn(
+                          "px-3 py-1 text-[10px] font-bold uppercase transition-all relative whitespace-nowrap",
+                          (subTab === 'CoresEstampa' && tab === 'Cores da Estampa') || (subTab !== 'CoresEstampa' && tab === 'Seleção') ? "text-orange-600" : "text-gray-400"
+                        )}
+                      >
+                        {tab}
+                        {((subTab === 'CoresEstampa' && tab === 'Cores da Estampa') || (subTab !== 'CoresEstampa' && tab === 'Seleção')) && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-orange-600" />}
+                      </button>
                     ))}
                   </div>
+
+                  {subTab === 'CoresEstampa' ? (
+                    <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+                      <div className="flex items-center gap-2 mb-4">
+                        <div className="w-8 h-8 rounded-lg bg-orange-100 flex items-center justify-center">
+                          <Palette className="w-4 h-4 text-orange-600" />
+                        </div>
+                        <div>
+                          <h3 className="text-xs font-black text-gray-800 uppercase tracking-tight leading-none mb-0.5">Editar Cores</h3>
+                          <p className="text-[9px] text-gray-400 font-bold uppercase leading-none">{currentPattern?.name || 'Estampa Selecionada'}</p>
+                        </div>
+                      </div>
+                      
+                      {currentPattern?.svg_url ? (
+                        <SimulatorSVGColorControls 
+                          svgUrl={currentPattern.svg_url}
+                          initialMapping={Object.keys(patternColorMapping).length > 0 ? patternColorMapping : (currentPattern as any)?.color_mapping || {}}
+                          baseColorHex={(currentPattern as any)?.base_color_hex}
+                          onMappingChange={setPatternColorMapping}
+                        />
+                      ) : (
+                        <div className="bg-gray-50 border border-dashed border-gray-200 rounded-2xl p-6 text-center">
+                          <p className="text-[10px] text-gray-400 font-bold uppercase leading-relaxed">
+                            Personalização de cores disponível apenas para estampas em formato SVG.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-2 gap-2 md:gap-3">
+                      {patterns?.filter(p => p.image_url).map(pattern => (
+                        <div key={pattern.id} className="relative group">
+                          <PatternCard 
+                            name={pattern.name}
+                            imageUrl={pattern.image_url}
+                            active={selectedPattern === pattern.id}
+                            onClick={() => setSelectedPattern(pattern.id)}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               ) : activeTab === 'Nome/Número' ? (
                 <div className="col-span-full space-y-4">

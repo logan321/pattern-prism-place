@@ -71,17 +71,49 @@ export type UvLayer =
 
 const imgCache = new Map<string, Promise<HTMLImageElement>>();
 
-function loadCachedImage(url: string): Promise<HTMLImageElement> {
+async function loadCachedImage(url: string, colorMapping?: Record<string, string>): Promise<HTMLImageElement> {
   if (!url) return Promise.reject(new Error('empty url'));
-  if (imgCache.has(url)) return imgCache.get(url)!;
-  const p = new Promise<HTMLImageElement>((resolve, reject) => {
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.onload = () => resolve(img);
-    img.onerror = reject;
-    img.src = url;
+  
+  const cacheKey = colorMapping 
+    ? `${url}?mapping=${JSON.stringify(colorMapping)}`
+    : url;
+
+  if (imgCache.has(cacheKey)) return imgCache.get(cacheKey)!;
+  
+  const p = new Promise<HTMLImageElement>(async (resolve, reject) => {
+    try {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      
+      if (url.toLowerCase().endsWith('.svg') && colorMapping && Object.keys(colorMapping).length > 0) {
+        // Process SVG with color mapping
+        const response = await fetch(url);
+        let svgText = await response.text();
+        
+        Object.entries(colorMapping).forEach(([original, current]) => {
+          const regex = new RegExp(original, 'gi');
+          svgText = svgText.replace(regex, current);
+        });
+        
+        const blob = new Blob([svgText], { type: 'image/svg+xml' });
+        const blobUrl = URL.createObjectURL(blob);
+        img.src = blobUrl;
+        img.onload = () => {
+          resolve(img);
+          URL.revokeObjectURL(blobUrl);
+        };
+      } else {
+        img.src = url;
+        img.onload = () => resolve(img);
+      }
+      
+      img.onerror = (e) => reject(new Error('Image load failed'));
+    } catch (err) {
+      reject(err);
+    }
   });
-  imgCache.set(url, p);
+  
+  imgCache.set(cacheKey, p);
   return p;
 }
 
@@ -94,8 +126,10 @@ export async function composeUvTexture(opts: {
   zones: Record<string, UvZoneRect>;
   layers: UvLayer[];
   canvas?: HTMLCanvasElement;
+  colorMapping?: Record<string, string>;
+  colorMapping?: Record<string, string>;
 }): Promise<HTMLCanvasElement> {
-  const base = await loadCachedImage(opts.baseUrl);
+  const base = await loadCachedImage(opts.baseUrl, opts.colorMapping);
   const w = opts.uvWidth || base.naturalWidth;
   const h = opts.uvHeight || base.naturalHeight;
   const canvas = opts.canvas ?? document.createElement('canvas');
@@ -189,8 +223,8 @@ export async function composeUvTexture(opts: {
 
 // ─── Sistema legado (mantido para compatibilidade) ──────────────────────────
 
-async function loadImage(url: string): Promise<HTMLImageElement> {
-  return loadCachedImage(url);
+async function loadImage(url: string, colorMapping?: Record<string, string>): Promise<HTMLImageElement> {
+  return loadCachedImage(url, colorMapping);
 }
 
 export async function generateFinalTexture({
@@ -207,7 +241,7 @@ export async function generateFinalTexture({
 
   if (baseTextureUrl) {
     try {
-      const baseImg = await loadImage(baseTextureUrl);
+      const baseImg = await loadImage(baseTextureUrl, opts.colorMapping);
       ctx.drawImage(baseImg, 0, 0, canvas.width, canvas.height);
     } catch (e) {
       ctx.fillStyle = '#ffffff';

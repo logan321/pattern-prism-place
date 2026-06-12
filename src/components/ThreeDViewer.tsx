@@ -300,14 +300,14 @@ export const ThreeDViewer = forwardRef<ThreeDViewerRef, {
         </button>
         <div className="w-px h-3 bg-white/10" />
         <button 
-          onClick={() => (ref as any)?.current?.setView('right')}
+          onClick={() => (ref as any)?.current?.setView('left')}
           className="px-2 md:px-3 py-1 text-[9px] md:text-[10px] font-bold text-gray-400 hover:text-white transition-colors"
         >
           DIR.
         </button>
         <div className="w-px h-3 bg-white/10" />
         <button 
-          onClick={() => (ref as any)?.current?.setView('left')}
+          onClick={() => (ref as any)?.current?.setView('right')}
           className="px-2 md:px-3 py-1 text-[9px] md:text-[10px] font-bold text-gray-400 hover:text-white transition-colors"
         >
           ESQ.

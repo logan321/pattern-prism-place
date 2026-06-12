@@ -88,30 +88,30 @@ async function loadCachedImage(
         const img = new Image();
         img.crossOrigin = "anonymous";
 
-      if (
-        url.toLowerCase().endsWith(".svg") ||
-        url.startsWith("data:image/svg+xml") ||
-        (colorMapping && Object.keys(colorMapping).length > 0)
-      ) {
-        // Process SVG with color mapping
-        const response = await fetch(url);
-        let svgText = sanitizeSvgMarkup(await response.text());
+        if (
+          url.toLowerCase().endsWith(".svg") ||
+          url.startsWith("data:image/svg+xml") ||
+          (colorMapping && Object.keys(colorMapping).length > 0)
+        ) {
+          // Process SVG with color mapping
+          const response = await fetch(url);
+          let svgText = sanitizeSvgMarkup(await response.text());
 
-        if (colorMapping && Object.keys(colorMapping).length > 0) {
-          svgText = applySvgColorMapping(svgText, colorMapping);
+          if (colorMapping && Object.keys(colorMapping).length > 0) {
+            svgText = applySvgColorMapping(svgText, colorMapping);
+          }
+
+          const blob = new Blob([svgText], { type: "image/svg+xml" });
+          const blobUrl = URL.createObjectURL(blob);
+          img.src = blobUrl;
+          img.onload = () => {
+            resolve(img);
+            URL.revokeObjectURL(blobUrl);
+          };
+        } else {
+          img.src = url;
+          img.onload = () => resolve(img);
         }
-
-        const blob = new Blob([svgText], { type: "image/svg+xml" });
-        const blobUrl = URL.createObjectURL(blob);
-        img.src = blobUrl;
-        img.onload = () => {
-          resolve(img);
-          URL.revokeObjectURL(blobUrl);
-        };
-      } else {
-        img.src = url;
-        img.onload = () => resolve(img);
-      }
 
         img.onerror = () => reject(new Error("Image load failed"));
       } catch (err) {

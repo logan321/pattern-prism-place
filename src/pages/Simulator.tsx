@@ -782,13 +782,34 @@ export default function Simulator() {
                 ))
               ) : activeTab === 'Cores' ? (
                 patterns?.filter(p => p.image_url).map(pattern => (
-                  <PatternCard 
-                    key={pattern.id}
-                    name={pattern.name}
-                    imageUrl={pattern.image_url}
-                    active={selectedPattern === pattern.id}
-                    onClick={() => setSelectedPattern(pattern.id)}
-                  />
+                  <div key={pattern.id} className="relative group">
+                    <PatternCard 
+                      name={pattern.name}
+                      imageUrl={pattern.image_url}
+                      active={selectedPattern === pattern.id}
+                      onClick={() => setSelectedPattern(pattern.id)}
+                    />
+                    {selectedPattern === pattern.id && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (pattern.svg_url) {
+                            setIsColorEditorOpen(true);
+                          }
+                        }}
+                        disabled={!pattern.svg_url}
+                        className={cn(
+                          "absolute top-0 right-0 p-1.5 rounded-full shadow-lg z-10 transition-all",
+                          pattern.svg_url 
+                            ? "bg-orange-500 text-white hover:bg-orange-600 scale-100" 
+                            : "bg-gray-200 text-gray-400 cursor-not-allowed scale-75 opacity-50"
+                        )}
+                        title={pattern.svg_url ? "Editar Cores" : "Cores editáveis apenas em SVG"}
+                      >
+                        <Palette className="w-3 h-3" />
+                      </button>
+                    )}
+                  </div>
                 ))
               ) : activeTab === 'Nome/Número' ? (
                 <div className="col-span-full space-y-4">

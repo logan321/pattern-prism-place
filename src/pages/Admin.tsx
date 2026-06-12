@@ -469,10 +469,142 @@ export default function Admin() {
   const queryClient = useQueryClient();
   const [selectedPatternForColors, setSelectedPatternForColors] = useState<any | null>(null);
 
-  // Acesso aberto: autenticação desativada na área administrativa por solicitação do usuário.
-  void loading; void checkingRole; void session; void isAdmin;
-  void email; void password; void authError; void handleLogin; void handleLogout;
-  void setEmail; void setPassword;
+  // Após autenticar, tenta promover allowlist a admin
+  useEffect(() => {
+    const tryClaim = async () => {
+      if (!session?.user?.id || isAdmin) return;
+      try {
+        await supabase.rpc('claim_admin_role' as any);
+        // Re-check role
+        const { data } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', session.user.id)
+          .eq('role', 'admin')
+          .maybeSingle();
+        if (data) setIsAdmin(true);
+      } catch (err) {
+        console.error('claim_admin_role error:', err);
+      }
+    };
+    void tryClaim();
+  }, [session?.user?.id, isAdmin]);
+
+  const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
+
+  const handleSignup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError(null);
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { emailRedirectTo: `${window.location.origin}/admin` },
+    });
+    if (error) setAuthError(error.message);
+  };
+
+  if (loading || checkingRole) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white rounded-3xl shadow-xl overflow-hidden p-8 text-center">
+          <p className="text-sm font-medium text-gray-500">Verificando acesso administrativo...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!session) {
+    const isSignup = authMode === 'signup';
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white rounded-3xl shadow-xl overflow-hidden">
+          <div className="p-8 bg-gray-900 text-white flex flex-col items-center">
+            <div className="w-16 h-16 bg-orange-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg">
+              <Lock className="w-8 h-8" />
+            </div>
+            <h2 className="text-2xl font-bold">{isSignup ? 'Criar conta admin' : 'Acesso Restrito'}</h2>
+            <p className="text-gray-400 text-sm text-center mt-2">
+              {isSignup ? 'Cadastre a conta administrativa autorizada.' : 'Área administrativa protegida. Faça login para continuar.'}
+            </p>
+          </div>
+          <form onSubmit={isSignup ? handleSignup : handleLogin} className="p-8 space-y-4">
+            {authError && (
+              <div className="bg-red-50 border border-red-100 text-red-600 px-4 py-3 rounded-xl text-sm font-medium">
+                {authError}
+              </div>
+            )}
+            <div>
+              <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">E-mail</label>
+              <input
+                type="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-orange-500 text-sm"
+                placeholder="admin@exemplo.com"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Senha</label>
+              <input
+                type="password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-orange-500 text-sm"
+                placeholder="••••••••"
+                required
+              />
+            </div>
+            <button
+              type="submit"
+              className="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-4 rounded-xl transition-all shadow-lg active:scale-95"
+            >
+              {isSignup ? 'Cadastrar' : 'Entrar no Painel'}
+            </button>
+            <button
+              type="button"
+              onClick={() => { setAuthMode(isSignup ? 'login' : 'signup'); setAuthError(null); }}
+              className="w-full text-xs text-gray-500 hover:text-orange-600 transition-colors"
+            >
+              {isSignup ? 'Já tenho conta — fazer login' : 'Primeiro acesso? Criar conta admin'}
+            </button>
+            <div className="pt-2 text-center">
+              <Link to="/" className="text-xs text-gray-400 hover:text-orange-600 transition-colors">
+                Voltar para o Simulador
+              </Link>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white rounded-3xl shadow-xl overflow-hidden">
+          <div className="p-8 bg-gray-900 text-white flex flex-col items-center">
+            <div className="w-16 h-16 bg-orange-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg">
+              <Lock className="w-8 h-8" />
+            </div>
+            <h2 className="text-2xl font-bold">Acesso negado</h2>
+            <p className="text-gray-400 text-sm text-center mt-2">Somente administradores podem abrir este painel.</p>
+          </div>
+          <div className="p-8 space-y-4">
+            <div className="bg-red-50 border border-red-100 text-red-600 px-4 py-3 rounded-xl text-sm font-medium">
+              Você está autenticado, mas não possui a função necessária para esta área.
+            </div>
+            <button
+              onClick={handleLogout}
+              className="w-full bg-gray-900 hover:bg-black text-white font-bold py-3 rounded-xl transition-all"
+            >
+              Sair
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const { data: models, isLoading: modelsLoading } = useQuery({
     queryKey: ['models'],

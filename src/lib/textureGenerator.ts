@@ -127,7 +127,6 @@ export async function composeUvTexture(opts: {
   layers: UvLayer[];
   canvas?: HTMLCanvasElement;
   colorMapping?: Record<string, string>;
-  colorMapping?: Record<string, string>;
 }): Promise<HTMLCanvasElement> {
   const base = await loadCachedImage(opts.baseUrl, opts.colorMapping);
   const w = opts.uvWidth || base.naturalWidth;
@@ -227,11 +226,10 @@ async function loadImage(url: string, colorMapping?: Record<string, string>): Pr
   return loadCachedImage(url, colorMapping);
 }
 
-export async function generateFinalTexture({
-  baseTextureUrl,
-  zones,
-  customizations
-}: TextureGenerationParams): Promise<HTMLCanvasElement> {
+export async function generateFinalTexture(opts: TextureGenerationParams & {
+  colorMapping?: Record<string, string>;
+}): Promise<HTMLCanvasElement> {
+  const { baseTextureUrl, zones, customizations, colorMapping } = opts;
   const canvas = document.createElement('canvas');
   canvas.width = 2048;
   canvas.height = 2048;
@@ -241,7 +239,7 @@ export async function generateFinalTexture({
 
   if (baseTextureUrl) {
     try {
-      const baseImg = await loadImage(baseTextureUrl, opts.colorMapping);
+      const baseImg = await loadImage(baseTextureUrl, colorMapping);
       ctx.drawImage(baseImg, 0, 0, canvas.width, canvas.height);
     } catch (e) {
       ctx.fillStyle = '#ffffff';

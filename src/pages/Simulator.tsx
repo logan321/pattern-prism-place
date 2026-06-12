@@ -657,7 +657,8 @@ export default function Simulator() {
   }, [
     textureUrl, activeUVMatriz, customName, customNumber,
     shieldUrl, nameColor, numberColor, nameFont, numberFont,
-    uvZonesActive, uvComposite.canvas, uvComposite.version, uvComposite.ready
+    uvZonesActive, uvComposite.canvas, uvComposite.version, uvComposite.ready,
+    patternColorMapping
   ]);
 
   // Logs removidos para evitar poluição no console e possíveis erros de hook indiretos

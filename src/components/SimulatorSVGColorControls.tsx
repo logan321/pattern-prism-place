@@ -28,6 +28,11 @@ export const SimulatorSVGColorControls: React.FC<SimulatorSVGColorControlsProps>
   const [mapping, setMapping] = useState<ColorMapping>(initialMapping);
   const [loading, setLoading] = useState(true);
   const [sanitizedSvg, setSanitizedSvg] = useState("");
+  const initialMappingRef = React.useRef(initialMapping);
+  const onMappingChangeRef = React.useRef(onMappingChange);
+  React.useEffect(() => {
+    onMappingChangeRef.current = onMappingChange;
+  }, [onMappingChange]);
 
   useEffect(() => {
     const fetchSvg = async () => {
@@ -42,7 +47,7 @@ export const SimulatorSVGColorControls: React.FC<SimulatorSVGColorControlsProps>
         setColors(foundColors);
 
         // Use initial mapping or create default
-        const newMapping = { ...initialMapping };
+        const newMapping = { ...initialMappingRef.current };
         foundColors.forEach((c) => {
           if (!newMapping[c]) {
             newMapping[c] = c;
@@ -57,7 +62,7 @@ export const SimulatorSVGColorControls: React.FC<SimulatorSVGColorControlsProps>
     };
 
     fetchSvg();
-  }, [svgUrl, initialMapping]);
+  }, [svgUrl]);
 
   useEffect(() => {
     if (!sanitizedSvg) return;
@@ -65,8 +70,8 @@ export const SimulatorSVGColorControls: React.FC<SimulatorSVGColorControlsProps>
     const recoloredSvg = applySvgColorMapping(sanitizedSvg, mapping);
     const dataUrl = svgMarkupToDataUrl(recoloredSvg);
 
-    if (dataUrl) onMappingChange({ ...mapping, __previewUrl: dataUrl });
-  }, [mapping, onMappingChange, sanitizedSvg]);
+    if (dataUrl) onMappingChangeRef.current({ ...mapping, __previewUrl: dataUrl });
+  }, [mapping, sanitizedSvg]);
 
   const handleColorChange = (original: string, newColor: string) => {
     const updatedMapping = {

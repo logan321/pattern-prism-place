@@ -1,6 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { Check, Loader2 } from 'lucide-react';
-import { applySvgColorMapping, extractEditableSvgColors, sanitizeSvgMarkup, svgMarkupToDataUrl } from '../lib/svgUtils';
+import React, { useState, useEffect } from "react";
+import { Check, Loader2 } from "lucide-react";
+import {
+  applySvgColorMapping,
+  extractEditableSvgColors,
+  sanitizeSvgMarkup,
+  svgMarkupToDataUrl,
+} from "../lib/svgUtils";
 
 interface ColorMapping {
   [originalHex: string]: string;
@@ -17,12 +22,12 @@ export const SimulatorSVGColorControls: React.FC<SimulatorSVGColorControlsProps>
   svgUrl,
   initialMapping = {},
   baseColorHex = null,
-  onMappingChange
+  onMappingChange,
 }) => {
   const [colors, setColors] = useState<string[]>([]);
   const [mapping, setMapping] = useState<ColorMapping>(initialMapping);
   const [loading, setLoading] = useState(true);
-  const [sanitizedSvg, setSanitizedSvg] = useState('');
+  const [sanitizedSvg, setSanitizedSvg] = useState("");
 
   useEffect(() => {
     const fetchSvg = async () => {
@@ -35,17 +40,17 @@ export const SimulatorSVGColorControls: React.FC<SimulatorSVGColorControlsProps>
 
         const foundColors = extractEditableSvgColors(safeSvg);
         setColors(foundColors);
-        
+
         // Use initial mapping or create default
         const newMapping = { ...initialMapping };
-        foundColors.forEach(c => {
+        foundColors.forEach((c) => {
           if (!newMapping[c]) {
             newMapping[c] = c;
           }
         });
         setMapping(newMapping);
       } catch (error) {
-        console.error('Error detecting SVG colors:', error);
+        console.error("Error detecting SVG colors:", error);
       } finally {
         setLoading(false);
       }
@@ -66,7 +71,7 @@ export const SimulatorSVGColorControls: React.FC<SimulatorSVGColorControlsProps>
   const handleColorChange = (original: string, newColor: string) => {
     const updatedMapping = {
       ...mapping,
-      [original]: newColor
+      [original]: newColor,
     };
     setMapping(updatedMapping);
   };
@@ -75,7 +80,9 @@ export const SimulatorSVGColorControls: React.FC<SimulatorSVGColorControlsProps>
     return (
       <div className="flex flex-col items-center justify-center py-8">
         <Loader2 className="w-6 h-6 text-orange-500 animate-spin mb-2" />
-        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Detectando Cores...</p>
+        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">
+          Detectando Cores...
+        </p>
       </div>
     );
   }
@@ -83,7 +90,9 @@ export const SimulatorSVGColorControls: React.FC<SimulatorSVGColorControlsProps>
   if (colors.length === 0) {
     return (
       <div className="text-center py-6">
-        <p className="text-[10px] text-gray-400 font-bold uppercase">Nenhuma cor editável detectada.</p>
+        <p className="text-[10px] text-gray-400 font-bold uppercase">
+          Nenhuma cor editável detectada.
+        </p>
       </div>
     );
   }
@@ -91,7 +100,10 @@ export const SimulatorSVGColorControls: React.FC<SimulatorSVGColorControlsProps>
   return (
     <div className="grid grid-cols-2 gap-3 pb-4">
       {colors.map((color, index) => (
-        <div key={color} className="flex flex-col gap-1.5 p-2 bg-gray-50 rounded-xl border border-gray-100 hover:border-orange-100 transition-colors">
+        <div
+          key={color}
+          className="flex flex-col gap-1.5 p-2 bg-gray-50 rounded-xl border border-gray-100 hover:border-orange-100 transition-colors"
+        >
           <div className="flex items-center justify-between gap-1">
             <span className="text-[9px] font-black text-gray-400 uppercase tracking-tighter truncate flex-1">
               Cor {index + 1}
@@ -103,14 +115,14 @@ export const SimulatorSVGColorControls: React.FC<SimulatorSVGColorControlsProps>
               </span>
             )}
           </div>
-          
+
           <div className="flex items-center gap-2">
             <div className="relative w-8 h-8 shrink-0">
-              <div 
+              <div
                 className="w-full h-full rounded-lg border-2 border-white shadow-sm"
                 style={{ backgroundColor: mapping[color] || color }}
               />
-              <input 
+              <input
                 type="color"
                 value={mapping[color] || color}
                 onChange={(e) => handleColorChange(color, e.target.value)}
@@ -118,8 +130,12 @@ export const SimulatorSVGColorControls: React.FC<SimulatorSVGColorControlsProps>
               />
             </div>
             <div className="flex flex-col min-w-0">
-              <span className="text-[8px] text-gray-400 font-mono leading-none mb-0.5 truncate">{color}</span>
-              <span className="text-[10px] font-black text-gray-700 font-mono leading-none truncate tracking-tight">{mapping[color] || color}</span>
+              <span className="text-[8px] text-gray-400 font-mono leading-none mb-0.5 truncate">
+                {color}
+              </span>
+              <span className="text-[10px] font-black text-gray-700 font-mono leading-none truncate tracking-tight">
+                {mapping[color] || color}
+              </span>
             </div>
           </div>
         </div>

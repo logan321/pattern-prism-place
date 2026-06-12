@@ -1,17 +1,17 @@
-const BLOCKED_SVG_SELECTORS = ['script', 'foreignObject', 'iframe', 'object', 'embed'];
+const BLOCKED_SVG_SELECTORS = ["script", "foreignObject", "iframe", "object", "embed"];
 const UNSAFE_STYLE_PATTERN = /url\s*\(|@import|expression\s*\(/i;
 const UNSAFE_URL_PATTERN = /^\s*(?:javascript:|vbscript:|data:(?!image\/))/i;
 
 function parseSvgDocument(markup: string) {
   const parser = new DOMParser();
-  return parser.parseFromString(markup, 'image/svg+xml');
+  return parser.parseFromString(markup, "image/svg+xml");
 }
 
 function isPureBlack(hex: string) {
-  if (!hex || typeof hex !== 'string') return false;
+  if (!hex || typeof hex !== "string") return false;
 
   const cleanHex = hex.trim();
-  if (!cleanHex.startsWith('#')) return false;
+  if (!cleanHex.startsWith("#")) return false;
 
   let r = 0;
   let g = 0;
@@ -33,37 +33,37 @@ function isPureBlack(hex: string) {
 }
 
 function escapeRegExp(value: string) {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 export function sanitizeSvgMarkup(markup: string) {
-  if (!markup.trim()) return '';
+  if (!markup.trim()) return "";
 
   const doc = parseSvgDocument(markup);
   const root = doc.documentElement;
 
-  if (!root || root.nodeName.toLowerCase() !== 'svg') {
-    return '';
+  if (!root || root.nodeName.toLowerCase() !== "svg") {
+    return "";
   }
 
-  doc.querySelectorAll(BLOCKED_SVG_SELECTORS.join(',')).forEach((node) => node.remove());
+  doc.querySelectorAll(BLOCKED_SVG_SELECTORS.join(",")).forEach((node) => node.remove());
 
-  Array.from(doc.querySelectorAll('*')).forEach((element) => {
+  Array.from(doc.querySelectorAll("*")).forEach((element) => {
     Array.from(element.attributes).forEach((attribute) => {
       const name = attribute.name.toLowerCase();
       const value = attribute.value.trim();
 
-      if (name.startsWith('on')) {
+      if (name.startsWith("on")) {
         element.removeAttribute(attribute.name);
         return;
       }
 
-      if (name === 'style' && UNSAFE_STYLE_PATTERN.test(value)) {
+      if (name === "style" && UNSAFE_STYLE_PATTERN.test(value)) {
         element.removeAttribute(attribute.name);
         return;
       }
 
-      if ((name === 'href' || name === 'xlink:href') && UNSAFE_URL_PATTERN.test(value)) {
+      if ((name === "href" || name === "xlink:href") && UNSAFE_URL_PATTERN.test(value)) {
         element.removeAttribute(attribute.name);
       }
     });
@@ -76,16 +76,16 @@ export function extractEditableSvgColors(markup: string) {
   if (!markup.trim()) return [];
 
   const doc = parseSvgDocument(markup);
-  const elements = Array.from(doc.getElementsByTagName('*'));
+  const elements = Array.from(doc.getElementsByTagName("*"));
   const detectedColors = new Set<string>();
 
   elements.forEach((element) => {
-    const fill = element.getAttribute('fill');
-    if (fill && fill.startsWith('#') && !isPureBlack(fill)) {
+    const fill = element.getAttribute("fill");
+    if (fill && fill.startsWith("#") && !isPureBlack(fill)) {
       detectedColors.add(fill.toUpperCase());
     }
 
-    const style = element.getAttribute('style');
+    const style = element.getAttribute("style");
     if (!style) return;
 
     const fillMatches = style.matchAll(/fill:\s*(#[0-9a-fA-F]{3,6})/gi);
@@ -103,7 +103,7 @@ export function applySvgColorMapping(markup: string, mapping: Record<string, str
   let updatedMarkup = markup;
 
   Object.entries(mapping).forEach(([original, current]) => {
-    const regex = new RegExp(escapeRegExp(original), 'gi');
+    const regex = new RegExp(escapeRegExp(original), "gi");
     updatedMarkup = updatedMarkup.replace(regex, current);
   });
 
@@ -111,6 +111,6 @@ export function applySvgColorMapping(markup: string, mapping: Record<string, str
 }
 
 export function svgMarkupToDataUrl(markup: string) {
-  if (!markup.trim()) return '';
+  if (!markup.trim()) return "";
   return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(markup)}`;
 }

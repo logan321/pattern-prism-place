@@ -85,15 +85,18 @@ async function loadCachedImage(url: string, colorMapping?: Record<string, string
       const img = new Image();
       img.crossOrigin = 'anonymous';
       
-      if (url.toLowerCase().endsWith('.svg') && colorMapping && Object.keys(colorMapping).length > 0) {
+      if (url.toLowerCase().endsWith('.svg') || url.startsWith('data:image/svg+xml') || (colorMapping && Object.keys(colorMapping).length > 0)) {
         // Process SVG with color mapping
         const response = await fetch(url);
         let svgText = await response.text();
         
-        Object.entries(colorMapping).forEach(([original, current]) => {
-          const regex = new RegExp(original, 'gi');
-          svgText = svgText.replace(regex, current);
-        });
+        if (colorMapping && Object.keys(colorMapping).length > 0) {
+          Object.entries(colorMapping).forEach(([original, current]) => {
+            // Search for hex color in fill, stroke, and style attributes, case-insensitive
+            const regex = new RegExp(original, 'gi');
+            svgText = svgText.replace(regex, current);
+          });
+        }
         
         const blob = new Blob([svgText], { type: 'image/svg+xml' });
         const blobUrl = URL.createObjectURL(blob);

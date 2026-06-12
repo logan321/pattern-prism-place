@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { X, Palette, Check, Save, Loader2 } from 'lucide-react';
 import { supabase } from '../integrations/supabase/client';
+import { applySvgColorMapping, extractEditableSvgColors, sanitizeSvgMarkup } from '../lib/svgUtils';
 
 interface ColorMapping {
   [originalHex: string]: string;
@@ -36,58 +37,10 @@ export const SVGColorEditor: React.FC<SVGColorEditorProps> = ({
         setLoading(true);
         const response = await fetch(svgUrl);
         const text = await response.text();
-        setSvgContent(text);
-        
-        const parser = new DOMParser();
-        const svgDoc = parser.parseFromString(text, 'image/svg+xml');
-        const elements = Array.from(svgDoc.getElementsByTagName('*'));
-        const detectedColors = new Set<string>();
+        const sanitizedSvg = sanitizeSvgMarkup(text);
+        setSvgContent(sanitizedSvg);
 
-        const isPureBlack = (hex: string) => {
-          if (!hex || typeof hex !== 'string') return false;
-          // Normalize hex
-          let cleanHex = hex.trim();
-          if (!cleanHex.startsWith('#')) return false;
-          
-          let r = 0, g = 0, b = 0;
-          if (cleanHex.length === 4) {
-            r = parseInt(cleanHex[1] + cleanHex[1], 16);
-            g = parseInt(cleanHex[2] + cleanHex[2], 16);
-            b = parseInt(cleanHex[3] + cleanHex[3], 16);
-          } else if (cleanHex.length === 7) {
-            r = parseInt(cleanHex.substring(1, 3), 16);
-            g = parseInt(cleanHex.substring(3, 5), 16);
-            b = parseInt(cleanHex.substring(5, 7), 16);
-          } else {
-            return false;
-          }
-          return r < 30 && g < 30 && b < 30;
-        };
-
-        elements.forEach(el => {
-          // 1. Check fill attribute
-          const fill = el.getAttribute('fill');
-          if (fill && fill.startsWith('#') && !isPureBlack(fill)) {
-            detectedColors.add(fill.toUpperCase());
-          }
-          
-          // 2. Check style attribute for fill
-          const style = el.getAttribute('style');
-          if (style) {
-            // Regex improved to catch hex in style="..."
-            const fillMatches = style.matchAll(/fill:\s*(#[0-9a-fA-F]{3,6})/gi);
-            for (const match of fillMatches) {
-              if (match[1] && !isPureBlack(match[1])) {
-                detectedColors.add(match[1].toUpperCase());
-              }
-            }
-          }
-
-          // 3. Check for specific SVG elements that might have fill as CSS
-          // Some SVGs use presentation attributes that act like CSS
-        });
-
-        const foundColors = Array.from(detectedColors);
+        const foundColors = extractEditableSvgColors(sanitizedSvg);
         setColors(foundColors);
         
         // Initialize mapping if empty
@@ -109,13 +62,7 @@ export const SVGColorEditor: React.FC<SVGColorEditorProps> = ({
   }, [svgUrl]);
 
   const previewSvg = useMemo(() => {
-    let modified = svgContent;
-    Object.entries(mapping).forEach(([original, current]) => {
-      // Use case-insensitive global replacement for the hex color
-      const regex = new RegExp(original, 'gi');
-      modified = modified.replace(regex, current);
-    });
-    return modified;
+    return applySvgColorMapping(svgContent, mapping);
   }, [svgContent, mapping]);
 
   const handleColorChange = (original: string, newColor: string) => {

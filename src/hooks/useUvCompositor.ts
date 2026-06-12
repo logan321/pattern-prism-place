@@ -7,9 +7,10 @@ interface Options {
   layers: UvLayer[];
   uvWidth?: number | null;
   uvHeight?: number | null;
+  colorMapping?: Record<string, string>;
 }
 
-export function useUvCompositor({ baseUrl, zones, layers, uvWidth, uvHeight }: Options) {
+export function useUvCompositor({ baseUrl, zones, layers, uvWidth, uvHeight, colorMapping }: Options) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   if (!canvasRef.current && typeof document !== 'undefined') {
     canvasRef.current = document.createElement('canvas');
@@ -30,6 +31,7 @@ export function useUvCompositor({ baseUrl, zones, layers, uvWidth, uvHeight }: O
         uvWidth,
         uvHeight,
         canvas: canvasRef.current!,
+        colorMapping,
       }).then(() => {
         if (cancelled) return;
         setReady(true);
@@ -39,7 +41,7 @@ export function useUvCompositor({ baseUrl, zones, layers, uvWidth, uvHeight }: O
       });
     }, delay);
     return () => { cancelled = true; window.clearTimeout(timer); };
-  }, [baseUrl, zones, layers, uvWidth, uvHeight]);
+  }, [baseUrl, zones, layers, uvWidth, uvHeight, colorMapping]);
 
   return { canvas: canvasRef.current, version, ready };
 }

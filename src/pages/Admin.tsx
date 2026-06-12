@@ -697,6 +697,7 @@ export default function Admin() {
             image_url: pngUrl,
             svg_url: svgUrl,
             uv_matriz_id: patternData.uvMatrizId || null,
+            category: patternData.category || null,
             updated_at: new Date().toISOString()
           } as any)
           .eq('id', editingPattern.id);
@@ -710,6 +711,7 @@ export default function Admin() {
             image_url: pngUrl,
             svg_url: svgUrl,
             uv_matriz_id: patternData.uvMatrizId || null,
+            category: patternData.category || null,
             created_at: new Date().toISOString()
           } as any);
         if (dbError) throw dbError;
@@ -821,6 +823,21 @@ export default function Admin() {
       return patternsWithSignedUrls;
     }
   });
+
+  const categories = React.useMemo(() => {
+    if (!patterns) return ['All'];
+    const cats = new Set(patterns.map((p: any) => p.category).filter(Boolean));
+    return ['All', ...Array.from(cats)];
+  }, [patterns]);
+
+  const filteredPatterns = React.useMemo(() => {
+    if (!patterns) return [];
+    return patterns.filter((p: any) => {
+      const matchesSearch = p.name.toLowerCase().includes(patternSearch.toLowerCase());
+      const matchesCategory = patternCategoryFilter === 'All' || p.category === patternCategoryFilter;
+      return matchesSearch && matchesCategory;
+    });
+  }, [patterns, patternSearch, patternCategoryFilter]);
 
 
   return (
@@ -1061,7 +1078,7 @@ export default function Admin() {
                     onChange={(e) => setPatternCategoryFilter(e.target.value)}
                     className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-orange-500 text-sm bg-white"
                   >
-                    {categories.map(cat => (
+                    {categories.map((cat: any) => (
                       <option key={cat} value={cat}>{cat === 'All' ? 'Todas as Categorias' : cat}</option>
                     ))}
                   </select>

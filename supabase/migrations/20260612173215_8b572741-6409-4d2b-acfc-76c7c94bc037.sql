@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.claim_admin_role() FROM PUBLIC, anon;

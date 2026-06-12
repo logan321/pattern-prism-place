@@ -920,6 +920,19 @@ export default function Simulator() {
           </div>
         </main>
       </div>
+      {/* Color Editor Modal */}
+      {isColorEditorOpen && currentPattern && currentPattern.svg_url && (
+        <SVGColorEditor
+          svgUrl={currentPattern.svg_url}
+          patternId={currentPattern.id}
+          initialMapping={(currentPattern as any).color_mapping || {}}
+          initialBaseColor={(currentPattern as any).base_color_hex || null}
+          onClose={() => setIsColorEditorOpen(false)}
+          onSave={() => {
+            // A query do TanStack vai invalidar e recarregar
+          }}
+        />
+      )}
     </div>
     </>
   );

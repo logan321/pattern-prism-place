@@ -30,6 +30,7 @@ import { CustomizerModel } from '../components/CustomizerModel';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../integrations/supabase/client';
 import { generateFinalTexture, UVZone, UvLayer } from '../lib/textureGenerator';
+import { SVGColorEditor } from '../components/SVGColorEditor';
 import * as THREE from 'three';
 import { useUvCompositor } from '../hooks/useUvCompositor';
 import { FormationSelector } from '../components/FormationSelector';
@@ -206,6 +207,8 @@ export default function Simulator() {
     clearUvState,
   } = useCustomizerStore();
 
+  const [isColorEditorOpen, setIsColorEditorOpen] = useState(false);
+
   const { data: models } = useQuery({
     queryKey: ['models'],
     queryFn: async () => {
@@ -326,9 +329,15 @@ export default function Simulator() {
 
   const currentPattern = React.useMemo(() => patterns?.find(p => p.id === selectedPattern), [patterns, selectedPattern]);
 
-  const textureUrl = React.useMemo(() => 
-    currentPattern?.svg_url || currentPattern?.image_url || undefined
-  , [currentPattern]);
+  const textureUrl = React.useMemo(() => {
+    if (!currentPattern) return undefined;
+    
+    // Se for SVG e tiver mapeamento de cores, poderíamos processar aqui
+    // mas o requisito diz que o compositor já lida com o baseUrl.
+    // Para simplificar, vamos manter a lógica de URL, mas no futuro 
+    // poderíamos injetar o SVG processado como Data URI se necessário.
+    return currentPattern.svg_url || currentPattern.image_url || undefined;
+  }, [currentPattern]);
 
   const uvZonesActive = Object.keys(uvMapZones).length > 0;
 

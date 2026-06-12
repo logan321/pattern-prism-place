@@ -13,8 +13,10 @@ import {
   Target,
   Edit3,
   FileText,
-  Lock
+  Lock,
+  Palette
 } from 'lucide-react';
+import { SVGColorEditor } from '../components/SVGColorEditor';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { clsx, type ClassValue } from 'clsx';
@@ -433,6 +435,7 @@ export default function Admin() {
   };
 
   const queryClient = useQueryClient();
+  const [selectedPatternForColors, setSelectedPatternForColors] = useState<any | null>(null);
 
   if (false && !session) {
     return (

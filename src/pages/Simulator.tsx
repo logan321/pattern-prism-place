@@ -30,7 +30,6 @@ import { CustomizerModel } from '../components/CustomizerModel';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../integrations/supabase/client';
 import { generateFinalTexture, UVZone, UvLayer } from '../lib/textureGenerator';
-import { SVGColorEditor } from '../components/SVGColorEditor';
 import * as THREE from 'three';
 import { useUvCompositor } from '../hooks/useUvCompositor';
 import { FormationSelector } from '../components/FormationSelector';
@@ -206,8 +205,6 @@ export default function Simulator() {
     setUvBaseUrl, 
     clearUvState,
   } = useCustomizerStore();
-
-  const [isColorEditorOpen, setIsColorEditorOpen] = useState(false);
 
   const { data: models } = useQuery({
     queryKey: ['models'],
@@ -793,26 +790,6 @@ export default function Simulator() {
                           active={selectedPattern === pattern.id}
                           onClick={() => setSelectedPattern(pattern.id)}
                         />
-                        {selectedPattern === pattern.id && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (pattern.svg_url) {
-                                setIsColorEditorOpen(true);
-                              }
-                            }}
-                            disabled={!pattern.svg_url}
-                            className={cn(
-                              "absolute -top-1 -right-1 p-2 rounded-full shadow-xl z-20 transition-all transform hover:scale-110 active:scale-95",
-                              pattern.svg_url 
-                                ? "bg-orange-600 text-white ring-2 ring-white" 
-                                : "bg-gray-200 text-gray-400 cursor-not-allowed opacity-50"
-                            )}
-                            title={pattern.svg_url ? "Editar Cores" : "Cores editáveis apenas em SVG"}
-                          >
-                            <Palette className="w-4 h-4" />
-                          </button>
-                        )}
                       </div>
                     ))}
                   </div>
@@ -925,20 +902,6 @@ export default function Simulator() {
             </div>
           </div>
         </main>
-      </div>
-      {/* Color Editor Modal */}
-      {isColorEditorOpen && currentPattern && currentPattern.svg_url && (
-        <SVGColorEditor
-          svgUrl={currentPattern.svg_url}
-          patternId={currentPattern.id}
-          initialMapping={(currentPattern as any).color_mapping || {}}
-          initialBaseColor={(currentPattern as any).base_color_hex || null}
-          onClose={() => setIsColorEditorOpen(false)}
-          onSave={() => {
-            // A query do TanStack vai invalidar e recarregar
-          }}
-        />
-      )}
     </div>
     </>
   );

@@ -904,5 +904,6 @@ export default function Simulator() {
         </main>
       </div>
     </div>
+    </>
   );
 }

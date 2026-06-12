@@ -29,12 +29,41 @@ export const SimulatorSVGColorControls: React.FC<SimulatorSVGColorControlsProps>
         const response = await fetch(svgUrl);
         const text = await response.text();
         
-        // Extract unique colors from SVG
-        const hexRegex = /#(?:[0-9a-fA-F]{3}){1,2}\b/g;
-        const foundColors = Array.from(new Set(text.match(hexRegex) || []))
-          .map(c => c.toUpperCase())
-          .filter(c => c !== '#000000' && c !== 'NONE' && c !== 'TRANSPARENT');
-        
+        const parser = new DOMParser();
+        const svgDoc = parser.parseFromString(text, 'image/svg+xml');
+        const elements = svgDoc.querySelectorAll('*');
+        const detectedColors = new Set<string>();
+
+        const isVeryDark = (hex: string) => {
+          let r = 0, g = 0, b = 0;
+          if (hex.length === 4) {
+            r = parseInt(hex[1] + hex[1], 16);
+            g = parseInt(hex[2] + hex[2], 16);
+            b = parseInt(hex[3] + hex[3], 16);
+          } else if (hex.length === 7) {
+            r = parseInt(hex.substring(1, 3), 16);
+            g = parseInt(hex.substring(3, 5), 16);
+            b = parseInt(hex.substring(5, 7), 16);
+          }
+          return r < 60 && g < 60 && b < 60;
+        };
+
+        elements.forEach(el => {
+          const fill = el.getAttribute('fill');
+          if (fill && fill.startsWith('#') && !isVeryDark(fill)) {
+            detectedColors.add(fill.toUpperCase());
+          }
+          
+          const style = el.getAttribute('style');
+          if (style) {
+            const fillMatch = style.match(/fill:\s*(#[0-9a-fA-F]{3,6})/i);
+            if (fillMatch && !isVeryDark(fillMatch[1])) {
+              detectedColors.add(fillMatch[1].toUpperCase());
+            }
+          }
+        });
+
+        const foundColors = Array.from(detectedColors);
         setColors(foundColors);
         
         // Use initial mapping or create default

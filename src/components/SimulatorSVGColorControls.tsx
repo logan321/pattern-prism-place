@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Palette, Check, Loader2 } from 'lucide-react';
+import { applySvgColorMapping, extractEditableSvgColors, sanitizeSvgMarkup, svgMarkupToDataUrl } from '../lib/svgUtils';
 
 interface ColorMapping {
   [originalHex: string]: string;
@@ -21,6 +22,7 @@ export const SimulatorSVGColorControls: React.FC<SimulatorSVGColorControlsProps>
   const [colors, setColors] = useState<string[]>([]);
   const [mapping, setMapping] = useState<ColorMapping>(initialMapping);
   const [loading, setLoading] = useState(true);
+  const [sanitizedSvg, setSanitizedSvg] = useState('');
 
   useEffect(() => {
     const fetchSvg = async () => {
@@ -28,50 +30,10 @@ export const SimulatorSVGColorControls: React.FC<SimulatorSVGColorControlsProps>
         setLoading(true);
         const response = await fetch(svgUrl);
         const text = await response.text();
-        
-        const parser = new DOMParser();
-        const svgDoc = parser.parseFromString(text, 'image/svg+xml');
-        const elements = Array.from(svgDoc.getElementsByTagName('*'));
-        const detectedColors = new Set<string>();
+        const safeSvg = sanitizeSvgMarkup(text);
+        setSanitizedSvg(safeSvg);
 
-        const isPureBlack = (hex: string) => {
-          if (!hex || typeof hex !== 'string') return false;
-          let cleanHex = hex.trim();
-          if (!cleanHex.startsWith('#')) return false;
-
-          let r = 0, g = 0, b = 0;
-          if (cleanHex.length === 4) {
-            r = parseInt(cleanHex[1] + cleanHex[1], 16);
-            g = parseInt(cleanHex[2] + cleanHex[2], 16);
-            b = parseInt(cleanHex[3] + cleanHex[3], 16);
-          } else if (cleanHex.length === 7) {
-            r = parseInt(cleanHex.substring(1, 3), 16);
-            g = parseInt(cleanHex.substring(3, 5), 16);
-            b = parseInt(cleanHex.substring(5, 7), 16);
-          } else {
-            return false;
-          }
-          return r < 30 && g < 30 && b < 30;
-        };
-
-        elements.forEach(el => {
-          const fill = el.getAttribute('fill');
-          if (fill && fill.startsWith('#') && !isPureBlack(fill)) {
-            detectedColors.add(fill.toUpperCase());
-          }
-          
-          const style = el.getAttribute('style');
-          if (style) {
-            const fillMatches = style.matchAll(/fill:\s*(#[0-9a-fA-F]{3,6})/gi);
-            for (const match of fillMatches) {
-              if (match[1] && !isPureBlack(match[1])) {
-                detectedColors.add(match[1].toUpperCase());
-              }
-            }
-          }
-        });
-
-        const foundColors = Array.from(detectedColors);
+        const foundColors = extractEditableSvgColors(safeSvg);
         setColors(foundColors);
         
         // Use initial mapping or create default
@@ -92,13 +54,23 @@ export const SimulatorSVGColorControls: React.FC<SimulatorSVGColorControlsProps>
     fetchSvg();
   }, [svgUrl, initialMapping]);
 
+  useEffect(() => {
+    if (!sanitizedSvg) return;
+
+    const recoloredSvg = applySvgColorMapping(sanitizedSvg, mapping);
+    const dataUrl = svgMarkupToDataUrl(recoloredSvg);
+
+    if (dataUrl) {
+      onMappingChange({ ...mapping, __previewUrl: dataUrl });
+    }
+  }, [mapping, onMappingChange, sanitizedSvg]);
+
   const handleColorChange = (original: string, newColor: string) => {
     const updatedMapping = {
       ...mapping,
       [original]: newColor
     };
     setMapping(updatedMapping);
-    onMappingChange(updatedMapping);
   };
 
   if (loading) {

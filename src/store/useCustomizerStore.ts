@@ -28,6 +28,7 @@ interface CustomizerState {
   uvLayers: UvLayer[];                       // layers ativos (texto / imagem)
   uvTextDrafts: Record<string, string>;      // rascunho live do texto (antes do debounce)
   uvBaseUrl: string | null;                  // URL da imagem base do UV map
+  patternColorMapping: Record<string, string>; // Mapeamento de cores da estampa ativa (live no simulador)
 
   setSelectedModel: (id: string | null) => void;
   setSelectedPattern: (id: string | null) => void;
@@ -54,6 +55,7 @@ interface CustomizerState {
   setUvLayers: (layers: UvLayer[] | ((prev: UvLayer[]) => UvLayer[])) => void;
   setUvTextDrafts: (drafts: Record<string, string> | ((prev: Record<string, string>) => Record<string, string>)) => void;
   setUvBaseUrl: (url: string | null) => void;
+  setPatternColorMapping: (mapping: Record<string, string> | ((prev: Record<string, string>) => Record<string, string>)) => void;
   clearUvState: () => void;
 }
 
@@ -83,9 +85,10 @@ export const useCustomizerStore = create<CustomizerState>((set) => ({
   uvLayers: [],
   uvTextDrafts: {},
   uvBaseUrl: null,
+  patternColorMapping: {},
 
   setSelectedModel: (id) => set({ selectedModel: id }),
-  setSelectedPattern: (id) => set({ selectedPattern: id }),
+  setSelectedPattern: (id) => set({ selectedPattern: id, patternColorMapping: {} }),
   setSyncShirtShorts: (sync) => set({ syncShirtShorts: sync }),
   setActiveTab: (tab) => set({ activeTab: tab }),
   setSubTab: (tab) => set({ subTab: tab }),
@@ -112,11 +115,15 @@ export const useCustomizerStore = create<CustomizerState>((set) => ({
     uvTextDrafts: typeof drafts === 'function' ? drafts(state.uvTextDrafts) : drafts
   })),
   setUvBaseUrl: (uvBaseUrl) => set({ uvBaseUrl }),
+  setPatternColorMapping: (mapping) => set((state) => ({
+    patternColorMapping: typeof mapping === 'function' ? mapping(state.patternColorMapping) : mapping
+  })),
   clearUvState: () => set({
     uvMapZones: {},
     uvMapDims: { w: null, h: null },
     uvLayers: [],
     uvTextDrafts: {},
     uvBaseUrl: null,
+    patternColorMapping: {},
   }),
 }));

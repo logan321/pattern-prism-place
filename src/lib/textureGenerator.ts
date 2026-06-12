@@ -1,9 +1,10 @@
-import * as THREE from 'three';
+import * as THREE from "three";
+import { applySvgColorMapping, sanitizeSvgMarkup } from "./svgUtils";
 
 export interface UVZone {
   id: string;
   name: string;
-  type: 'logo' | 'text' | 'number' | 'sponsor';
+  type: "logo" | "text" | "number" | "sponsor";
   x: number;
   y: number;
   width: number;
@@ -41,7 +42,7 @@ export type UvLayer =
   | {
       id: string;
       zoneKey: string;
-      type: 'text';
+      type: "text";
       content: string;
       fontFamily?: string;
       fontWeight?: string | number;
@@ -58,7 +59,7 @@ export type UvLayer =
   | {
       id: string;
       zoneKey: string;
-      type: 'image';
+      type: "image";
       url: string;
       rotation?: number;
       scale?: number;
@@ -71,51 +72,54 @@ export type UvLayer =
 
 const imgCache = new Map<string, Promise<HTMLImageElement>>();
 
-async function loadCachedImage(url: string, colorMapping?: Record<string, string>): Promise<HTMLImageElement> {
-  if (!url) return Promise.reject(new Error('empty url'));
-  
-  const cacheKey = colorMapping 
-    ? `${url}?mapping=${JSON.stringify(colorMapping)}`
-    : url;
+async function loadCachedImage(
+  url: string,
+  colorMapping?: Record<string, string>,
+): Promise<HTMLImageElement> {
+  if (!url) return Promise.reject(new Error("empty url"));
+
+  const cacheKey = colorMapping ? `${url}?mapping=${JSON.stringify(colorMapping)}` : url;
 
   if (imgCache.has(cacheKey)) return imgCache.get(cacheKey)!;
-  
-  const p = new Promise<HTMLImageElement>(async (resolve, reject) => {
-    try {
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      
-      if (url.toLowerCase().endsWith('.svg') || url.startsWith('data:image/svg+xml') || (colorMapping && Object.keys(colorMapping).length > 0)) {
-        // Process SVG with color mapping
-        const response = await fetch(url);
-        let svgText = await response.text();
-        
-        if (colorMapping && Object.keys(colorMapping).length > 0) {
-          Object.entries(colorMapping).forEach(([original, current]) => {
-            // Search for hex color in fill, stroke, and style attributes, case-insensitive
-            const regex = new RegExp(original, 'gi');
-            svgText = svgText.replace(regex, current);
-          });
+
+  const p = new Promise<HTMLImageElement>((resolve, reject) => {
+    void (async () => {
+      try {
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+
+        if (
+          url.toLowerCase().endsWith(".svg") ||
+          url.startsWith("data:image/svg+xml") ||
+          (colorMapping && Object.keys(colorMapping).length > 0)
+        ) {
+          // Process SVG with color mapping
+          const response = await fetch(url);
+          let svgText = sanitizeSvgMarkup(await response.text());
+
+          if (colorMapping && Object.keys(colorMapping).length > 0) {
+            svgText = applySvgColorMapping(svgText, colorMapping);
+          }
+
+          const blob = new Blob([svgText], { type: "image/svg+xml" });
+          const blobUrl = URL.createObjectURL(blob);
+          img.src = blobUrl;
+          img.onload = () => {
+            resolve(img);
+            URL.revokeObjectURL(blobUrl);
+          };
+        } else {
+          img.src = url;
+          img.onload = () => resolve(img);
         }
-        
-        const blob = new Blob([svgText], { type: 'image/svg+xml' });
-        const blobUrl = URL.createObjectURL(blob);
-        img.src = blobUrl;
-        img.onload = () => {
-          resolve(img);
-          URL.revokeObjectURL(blobUrl);
-        };
-      } else {
-        img.src = url;
-        img.onload = () => resolve(img);
+
+        img.onerror = () => reject(new Error("Image load failed"));
+      } catch (err) {
+        reject(err);
       }
-      
-      img.onerror = (e) => reject(new Error('Image load failed'));
-    } catch (err) {
-      reject(err);
-    }
+    })();
   });
-  
+
   imgCache.set(cacheKey, p);
   return p;
 }
@@ -134,10 +138,10 @@ export async function composeUvTexture(opts: {
   const base = await loadCachedImage(opts.baseUrl, opts.colorMapping);
   const w = opts.uvWidth || base.naturalWidth;
   const h = opts.uvHeight || base.naturalHeight;
-  const canvas = opts.canvas ?? document.createElement('canvas');
+  const canvas = opts.canvas ?? document.createElement("canvas");
   if (canvas.width !== w) canvas.width = w;
   if (canvas.height !== h) canvas.height = h;
-  const ctx = canvas.getContext('2d')!;
+  const ctx = canvas.getContext("2d")!;
   ctx.clearRect(0, 0, w, h);
   ctx.drawImage(base, 0, 0, w, h);
 
@@ -154,17 +158,17 @@ export async function composeUvTexture(opts: {
     if (layer.rotation) ctx.rotate(layer.rotation);
     const scale = layer.scale ?? 1;
 
-    if (layer.type === 'text') {
-      const family = layer.fontFamily || 'Arial';
+    if (layer.type === "text") {
+      const family = layer.fontFamily || "Arial";
       const weight = layer.fontWeight ?? 700;
       const targetW = zone.width * 0.92 * scale;
       const targetH = zone.height * 0.92 * scale;
       let size = Math.max(8, layer.fontSize ?? targetH);
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
       for (let i = 0; i < 12; i++) {
         ctx.font = `${weight} ${size}px ${family}`;
-        const m = ctx.measureText(layer.content || ' ');
+        const m = ctx.measureText(layer.content || " ");
         if (m.width <= targetW) break;
         size *= targetW / Math.max(m.width, 1);
       }
@@ -177,7 +181,7 @@ export async function composeUvTexture(opts: {
           else ctx.fillText(layer.content, 0, 0);
           return;
         }
-        const text = layer.content || '';
+        const text = layer.content || "";
         const radius = Math.max(targetW, targetH) * (140 / Math.max(Math.abs(curvature), 1));
         const direction = curvature > 0 ? -1 : 1;
         const totalWidth = ctx.measureText(text).width;
@@ -197,12 +201,12 @@ export async function composeUvTexture(opts: {
       };
 
       if (layer.strokeWidth && layer.strokeWidth > 0) {
-        ctx.lineJoin = 'round';
-        ctx.strokeStyle = layer.strokeColor || '#000';
+        ctx.lineJoin = "round";
+        ctx.strokeStyle = layer.strokeColor || "#000";
         ctx.lineWidth = layer.strokeWidth;
         drawText(true);
       }
-      ctx.fillStyle = layer.color || '#ffffff';
+      ctx.fillStyle = layer.color || "#ffffff";
       drawText(false);
     } else {
       try {
@@ -225,19 +229,24 @@ export async function composeUvTexture(opts: {
 
 // ─── Sistema legado (mantido para compatibilidade) ──────────────────────────
 
-async function loadImage(url: string, colorMapping?: Record<string, string>): Promise<HTMLImageElement> {
+async function loadImage(
+  url: string,
+  colorMapping?: Record<string, string>,
+): Promise<HTMLImageElement> {
   return loadCachedImage(url, colorMapping);
 }
 
-export async function generateFinalTexture(opts: TextureGenerationParams & {
-  colorMapping?: Record<string, string>;
-}): Promise<HTMLCanvasElement> {
+export async function generateFinalTexture(
+  opts: TextureGenerationParams & {
+    colorMapping?: Record<string, string>;
+  },
+): Promise<HTMLCanvasElement> {
   const { baseTextureUrl, zones, customizations, colorMapping } = opts;
-  const canvas = document.createElement('canvas');
+  const canvas = document.createElement("canvas");
   canvas.width = 2048;
   canvas.height = 2048;
-  const ctx = canvas.getContext('2d', { alpha: true });
-  if (!ctx) throw new Error('Could not get canvas context');
+  const ctx = canvas.getContext("2d", { alpha: true });
+  if (!ctx) throw new Error("Could not get canvas context");
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   if (baseTextureUrl) {
@@ -245,11 +254,11 @@ export async function generateFinalTexture(opts: TextureGenerationParams & {
       const baseImg = await loadImage(baseTextureUrl, colorMapping);
       ctx.drawImage(baseImg, 0, 0, canvas.width, canvas.height);
     } catch (e) {
-      ctx.fillStyle = '#ffffff';
+      ctx.fillStyle = "#ffffff";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
   } else {
-    ctx.fillStyle = '#f0f0f0';
+    ctx.fillStyle = "#f0f0f0";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
   }
 
@@ -259,47 +268,49 @@ export async function generateFinalTexture(opts: TextureGenerationParams & {
     ctx.save();
     ctx.translate(zone.x, zone.y);
     ctx.rotate((zone.rotation * Math.PI) / 180);
-    const font = nameFont || 'Arial';
+    const font = nameFont || "Arial";
 
-    if (zone.type === 'logo' && shieldUrl) {
+    if (zone.type === "logo" && shieldUrl) {
       try {
         const img = await loadImage(shieldUrl);
         ctx.drawImage(img, -zone.width / 2, -zone.height / 2, zone.width, zone.height);
-      } catch (e) {}
-    } else if (zone.type === 'text' && name) {
+      } catch {
+        // Ignore missing logo images and continue rendering.
+      }
+    } else if (zone.type === "text" && name) {
       const textToDraw = name.toUpperCase();
       const fontSize = Math.floor(zone.height);
       ctx.font = `bold ${fontSize}px ${font}`;
-      ctx.fillStyle = nameColor || '#ffffff';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
+      ctx.fillStyle = nameColor || "#ffffff";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
       const metrics = ctx.measureText(textToDraw);
       const scale = Math.min(1, zone.width / metrics.width);
       if (scale < 1) ctx.scale(scale, 1);
-      ctx.strokeStyle = 'rgba(0,0,0,0.5)';
+      ctx.strokeStyle = "rgba(0,0,0,0.5)";
       ctx.lineWidth = fontSize * 0.05;
       ctx.strokeText(textToDraw, 0, 0);
       ctx.fillText(textToDraw, 0, 0);
-    } else if (zone.type === 'number' && number) {
+    } else if (zone.type === "number" && number) {
       const fontSize = Math.floor(zone.height);
-      const fontNum = numberFont || nameFont || 'Arial';
+      const fontNum = numberFont || nameFont || "Arial";
       ctx.font = `bold ${fontSize}px ${fontNum}`;
-      ctx.fillStyle = numberColor || '#ffffff';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
+      ctx.fillStyle = numberColor || "#ffffff";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
       const metrics = ctx.measureText(number);
       const scale = Math.min(1, zone.width / metrics.width);
       if (scale < 1) ctx.scale(scale, 1);
-      ctx.strokeStyle = 'rgba(0,0,0,0.5)';
+      ctx.strokeStyle = "rgba(0,0,0,0.5)";
       ctx.lineWidth = fontSize * 0.05;
       ctx.strokeText(number, 0, 0);
       ctx.fillText(number, 0, 0);
-    } else if (zone.type === 'sponsor' && name) {
+    } else if (zone.type === "sponsor" && name) {
       const fontSize = Math.floor(zone.height);
       ctx.font = `bold ${fontSize}px ${font}`;
-      ctx.fillStyle = nameColor || '#ffffff';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
+      ctx.fillStyle = nameColor || "#ffffff";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
       ctx.fillText(name.toUpperCase(), 0, 0);
     }
     ctx.restore();

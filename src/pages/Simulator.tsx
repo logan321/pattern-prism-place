@@ -329,15 +329,32 @@ export default function Simulator() {
 
   const currentPattern = React.useMemo(() => patterns?.find(p => p.id === selectedPattern), [patterns, selectedPattern]);
 
+  const effectivePatternColorMapping = React.useMemo(() => {
+    const sourceMapping = Object.keys(patternColorMapping).length > 0
+      ? patternColorMapping
+      : ((currentPattern as any)?.color_mapping ?? {});
+
+    if (!sourceMapping || typeof sourceMapping !== 'object') return {};
+
+    const { __previewUrl, ...colorEntries } = sourceMapping as Record<string, string>;
+    return colorEntries;
+  }, [currentPattern, patternColorMapping]);
+
+  const livePatternPreviewUrl = React.useMemo(() => {
+    const sourceMapping = Object.keys(patternColorMapping).length > 0
+      ? patternColorMapping
+      : ((currentPattern as any)?.color_mapping ?? {});
+
+    if (!sourceMapping || typeof sourceMapping !== 'object') return null;
+
+    return (sourceMapping as Record<string, string>).__previewUrl ?? null;
+  }, [currentPattern, patternColorMapping]);
+
   const textureUrl = React.useMemo(() => {
     if (!currentPattern) return undefined;
-    
-    // Se for SVG e tiver mapeamento de cores, poderíamos processar aqui
-    // mas o requisito diz que o compositor já lida com o baseUrl.
-    // Para simplificar, vamos manter a lógica de URL, mas no futuro 
-    // poderíamos injetar o SVG processado como Data URI se necessário.
-    return currentPattern.svg_url || currentPattern.image_url || undefined;
-  }, [currentPattern]);
+
+    return livePatternPreviewUrl || currentPattern.svg_url || currentPattern.image_url || undefined;
+  }, [currentPattern, livePatternPreviewUrl]);
 
   const uvZonesActive = Object.keys(uvMapZones).length > 0;
 
@@ -348,6 +365,7 @@ export default function Simulator() {
     uvWidth: uvMapDims.w,
     uvHeight: uvMapDims.h,
     colorMapping: Object.keys(patternColorMapping).length > 0 ? patternColorMapping : (currentPattern as any)?.color_mapping,
+    colorMapping: effectivePatternColorMapping,
   });
 
   // Quando o padrão (pattern) selecionado mudar, busca o UV map vinculado
@@ -629,7 +647,7 @@ export default function Simulator() {
           // Sistema legado: textureGenerator
           canvas = await generateFinalTexture({
             baseTextureUrl: textureUrl,
-            colorMapping: Object.keys(patternColorMapping).length > 0 ? patternColorMapping : (currentPattern as any)?.color_mapping,
+            colorMapping: effectivePatternColorMapping,
             zones: (activeUVMatriz?.zones as unknown as UVZone[]) || [],
             customizations: {
               name: customName,
@@ -658,7 +676,7 @@ export default function Simulator() {
     textureUrl, activeUVMatriz, customName, customNumber,
     shieldUrl, nameColor, numberColor, nameFont, numberFont,
     uvZonesActive, uvComposite.canvas, uvComposite.version, uvComposite.ready,
-    patternColorMapping
+    effectivePatternColorMapping
   ]);
 
   // Logs removidos para evitar poluição no console e possíveis erros de hook indiretos
@@ -819,7 +837,7 @@ export default function Simulator() {
                       {currentPattern?.svg_url ? (
                         <SimulatorSVGColorControls 
                           svgUrl={currentPattern.svg_url}
-                          initialMapping={Object.keys(patternColorMapping).length > 0 ? patternColorMapping : (currentPattern as any)?.color_mapping || {}}
+                          initialMapping={effectivePatternColorMapping}
                           baseColorHex={(currentPattern as any)?.base_color_hex}
                           onMappingChange={setPatternColorMapping}
                         />

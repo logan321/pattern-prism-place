@@ -364,7 +364,6 @@ export default function Simulator() {
     layers: uvLayers,
     uvWidth: uvMapDims.w,
     uvHeight: uvMapDims.h,
-    colorMapping: Object.keys(patternColorMapping).length > 0 ? patternColorMapping : (currentPattern as any)?.color_mapping,
     colorMapping: effectivePatternColorMapping,
   });
 

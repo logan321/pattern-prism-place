@@ -52,17 +52,112 @@ const LOCAL_MODELS = [
   },
 ];
 
+// Shared shirt silhouette as the base for collar icons — the neckline differs per option.
+const ShirtIcon = ({ neckline }: { neckline: React.ReactNode }) => (
+  <svg viewBox="0 0 64 64" className="w-12 h-12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    {/* shoulders + sleeves outline */}
+    <path d="M14 18 L24 12 L40 12 L50 18 L56 26 L48 30 L46 26 L46 52 L18 52 L18 26 L16 30 L8 26 Z" />
+    {neckline}
+  </svg>
+);
+
 const COLLAR_OPTIONS = [
-  { id: "padre", name: "Padre", svg: <svg viewBox="0 0 64 64" className="w-10 h-10 text-gray-600"><path d="M20 20 C20 8, 44 8, 44 20 L44 28 L20 28 Z" fill="currentColor" opacity="0.8"/><rect x="18" y="28" width="28" height="4" rx="1" fill="currentColor" opacity="0.4"/></svg> },
-  { id: "careca", name: "Careca", svg: <svg viewBox="0 0 64 64" className="w-10 h-10 text-gray-600"><path d="M16 28 L48 28" stroke="currentColor" strokeWidth="6" strokeLinecap="round" opacity="0.7"/></svg> },
-  { id: "v", name: "V", svg: <svg viewBox="0 0 64 64" className="w-10 h-10 text-gray-600"><path d="M24 16 L32 32 L40 16" stroke="currentColor" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" fill="none" opacity="0.8"/></svg> },
-  { id: "esportiva", name: "Esportiva", svg: <svg viewBox="0 0 64 64" className="w-10 h-10 text-gray-600"><path d="M18 20 C18 10, 46 10, 46 20 L46 26 L18 26 Z" fill="currentColor" opacity="0.7"/><path d="M22 26 L42 26" stroke="currentColor" strokeWidth="3" opacity="0.5"/></svg> },
+  {
+    id: "padre",
+    name: "Padre",
+    svg: (
+      <ShirtIcon
+        neckline={
+          <>
+            <path d="M24 12 L24 20 L40 20 L40 12" />
+            <path d="M24 20 L24 23 L40 23 L40 20" />
+          </>
+        }
+      />
+    ),
+  },
+  {
+    id: "careca",
+    name: "Careca",
+    svg: <ShirtIcon neckline={<path d="M24 12 C26 20, 38 20, 40 12" />} />,
+  },
+  {
+    id: "v",
+    name: "V",
+    svg: <ShirtIcon neckline={<path d="M24 12 L32 24 L40 12" />} />,
+  },
+  {
+    id: "esportiva",
+    name: "Esportiva",
+    svg: (
+      <ShirtIcon
+        neckline={
+          <>
+            <path d="M24 12 C26 20, 38 20, 40 12" />
+            <path d="M22 16 L26 18" />
+            <path d="M42 16 L38 18" />
+          </>
+        }
+      />
+    ),
+  },
 ];
 
 const SLEEVE_OPTIONS = [
-  { id: "curta", name: "Curta", svg: <svg viewBox="0 0 64 64" className="w-10 h-10 text-gray-600"><path d="M14 20 L6 36 L14 36 L18 24 Z" fill="currentColor" opacity="0.7"/><path d="M50 20 L58 36 L50 36 L46 24 Z" fill="currentColor" opacity="0.7"/></svg> },
-  { id: "longa", name: "Longa", svg: <svg viewBox="0 0 64 64" className="w-10 h-10 text-gray-600"><path d="M14 20 L4 48 L14 48 L20 24 Z" fill="currentColor" opacity="0.7"/><path d="M50 20 L60 48 L50 48 L44 24 Z" fill="currentColor" opacity="0.7"/></svg> },
-  { id: "regata", name: "Regata", svg: <svg viewBox="0 0 64 64" className="w-10 h-10 text-gray-600"><path d="M22 16 L14 24 L18 28 L26 20 Z" fill="currentColor" opacity="0.7"/><path d="M42 16 L50 24 L46 28 L38 20 Z" fill="currentColor" opacity="0.7"/></svg> },
+  {
+    id: "curta",
+    name: "Curta",
+    svg: (
+      <svg viewBox="0 0 64 64" className="w-12 h-12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M14 18 L24 12 L40 12 L50 18 L56 26 L48 30 L46 26 L46 52 L18 52 L18 26 L16 30 L8 26 Z" />
+        <path d="M24 12 C26 20, 38 20, 40 12" />
+      </svg>
+    ),
+  },
+  {
+    id: "longa",
+    name: "Longa",
+    svg: (
+      <svg viewBox="0 0 64 64" className="w-12 h-12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M22 14 L14 22 L6 50 L16 54 L22 32 L22 54 L42 54 L42 32 L48 54 L58 50 L50 22 L42 14 Z" />
+        <path d="M22 14 C26 20, 38 20, 42 14" />
+      </svg>
+    ),
+  },
+  {
+    id: "regata",
+    name: "Regata",
+    svg: (
+      <svg viewBox="0 0 64 64" className="w-12 h-12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M22 12 L18 22 L18 52 L46 52 L46 22 L42 12" />
+        <path d="M22 12 C26 24, 38 24, 42 12" />
+      </svg>
+    ),
+  },
+];
+
+const CUFF_OPTIONS = [
+  {
+    id: "com-dedal",
+    name: "Com dedal",
+    svg: (
+      <svg viewBox="0 0 64 64" className="w-12 h-12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M16 14 L48 14 L46 50 L18 50 Z" />
+        <path d="M16 22 L48 22" />
+        <ellipse cx="44" cy="44" rx="4" ry="6" />
+      </svg>
+    ),
+  },
+  {
+    id: "sem-dedal",
+    name: "Sem dedal",
+    svg: (
+      <svg viewBox="0 0 64 64" className="w-12 h-12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M16 14 L48 14 L46 50 L18 50 Z" />
+        <path d="M16 22 L48 22" />
+      </svg>
+    ),
+  },
 ];
 
 const CMYK_COLORS = [
@@ -214,7 +309,12 @@ const StyleCard = ({
       active ? "border-orange-500 ring-1 ring-orange-500" : "border-gray-200",
     )}
   >
-    <div className="w-full aspect-square bg-gray-50 rounded mb-2 flex items-center justify-center overflow-hidden">
+    <div
+      className={cn(
+        "w-full aspect-square bg-gray-50 rounded mb-2 flex items-center justify-center overflow-hidden transition-colors",
+        active ? "text-orange-500" : "text-gray-400",
+      )}
+    >
       {icon}
     </div>
     <span className="text-[10px] text-gray-500 truncate w-full text-center">{name}</span>
@@ -1104,7 +1204,7 @@ export default function Simulator() {
                             name={opt.name}
                             active={selectedCollar === opt.id}
                             onClick={() => setSelectedCollar(opt.id)}
-                            icon={COLLAR_OPTIONS.find((c) => c.id === opt.id)?.svg ?? <Scissors className="w-8 h-8 text-gray-400" />}
+                            icon={COLLAR_OPTIONS.find((c) => c.id === opt.id)?.svg ?? null}
                           />
                         ))}
                       </div>
@@ -1120,7 +1220,7 @@ export default function Simulator() {
                             name={opt.name}
                             active={selectedSleeve === opt.id}
                             onClick={() => setSelectedSleeve(opt.id)}
-                            icon={SLEEVE_OPTIONS.find((s) => s.id === opt.id)?.svg ?? <Scissors className="w-8 h-8 text-gray-400" />}
+                            icon={SLEEVE_OPTIONS.find((s) => s.id === opt.id)?.svg ?? null}
                           />
                         ))}
                       </div>
@@ -1137,7 +1237,7 @@ export default function Simulator() {
                               name={opt.name}
                               active={selectedCuff === opt.id}
                               onClick={() => setSelectedCuff(opt.id)}
-                              icon={<Scissors className="w-8 h-8 text-gray-400" />}
+                              icon={CUFF_OPTIONS.find((c) => c.id === opt.id)?.svg ?? null}
                             />
                           ))}
                         </div>

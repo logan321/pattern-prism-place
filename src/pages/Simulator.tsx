@@ -848,6 +848,8 @@ export default function Simulator() {
               color: nameColor,
               fontFamily: nameFont,
               scale: nameSize,
+              strokeColor: nameOutline || undefined,
+              strokeWidth: nameOutline ? 8 : 0,
             };
           }
           if (layer.zoneKey.includes("CENTRO COSTAS")) {
@@ -857,6 +859,8 @@ export default function Simulator() {
               color: numberColor,
               fontFamily: numberFont,
               scale: numberSize,
+              strokeColor: numberOutline || undefined,
+              strokeWidth: numberOutline ? 14 : 0,
             };
           }
         }
@@ -883,6 +887,8 @@ export default function Simulator() {
     numberSize,
     shieldSize,
     uvZonesActive,
+    nameOutline,
+    numberOutline,
   ]);
 
   return (

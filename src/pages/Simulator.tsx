@@ -1213,6 +1213,12 @@ export default function Simulator() {
                       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-2 gap-2 md:gap-3">
                         {patterns
                           ?.filter((p) => p.image_url)
+                          .filter((p) => {
+                            if (!nicho) return true;
+                            const pn = (p as any).nicho;
+                            if (!pn) return true;
+                            return String(pn).toLowerCase() === nicho;
+                          })
                           .map((pattern) => (
                             <div key={pattern.id} className="relative group">
                               <PatternCard

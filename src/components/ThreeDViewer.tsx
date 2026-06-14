@@ -300,7 +300,11 @@ export const ThreeDViewer = forwardRef<ThreeDViewerRef, {
           <OrbitControls 
             ref={orbitRef}
             enablePan={false}
-            enableZoom={false}
+            enableZoom={true}
+            minDistance={1.2}
+            maxDistance={5}
+            minPolarAngle={Math.PI / 3}
+            maxPolarAngle={(2 * Math.PI) / 3}
             makeDefault
           />
         </Suspense>

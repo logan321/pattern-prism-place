@@ -49,6 +49,19 @@ const LOCAL_MODELS = [
   },
 ];
 
+const COLLAR_OPTIONS = [
+  { id: "padre", name: "Padre", svg: <svg viewBox="0 0 64 64" className="w-10 h-10 text-gray-600"><path d="M20 20 C20 8, 44 8, 44 20 L44 28 L20 28 Z" fill="currentColor" opacity="0.8"/><rect x="18" y="28" width="28" height="4" rx="1" fill="currentColor" opacity="0.4"/></svg> },
+  { id: "careca", name: "Careca", svg: <svg viewBox="0 0 64 64" className="w-10 h-10 text-gray-600"><path d="M16 28 L48 28" stroke="currentColor" strokeWidth="6" strokeLinecap="round" opacity="0.7"/></svg> },
+  { id: "v", name: "V", svg: <svg viewBox="0 0 64 64" className="w-10 h-10 text-gray-600"><path d="M24 16 L32 32 L40 16" stroke="currentColor" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" fill="none" opacity="0.8"/></svg> },
+  { id: "esportiva", name: "Esportiva", svg: <svg viewBox="0 0 64 64" className="w-10 h-10 text-gray-600"><path d="M18 20 C18 10, 46 10, 46 20 L46 26 L18 26 Z" fill="currentColor" opacity="0.7"/><path d="M22 26 L42 26" stroke="currentColor" strokeWidth="3" opacity="0.5"/></svg> },
+];
+
+const SLEEVE_OPTIONS = [
+  { id: "curta", name: "Curta", svg: <svg viewBox="0 0 64 64" className="w-10 h-10 text-gray-600"><path d="M14 20 L6 36 L14 36 L18 24 Z" fill="currentColor" opacity="0.7"/><path d="M50 20 L58 36 L50 36 L46 24 Z" fill="currentColor" opacity="0.7"/></svg> },
+  { id: "longa", name: "Longa", svg: <svg viewBox="0 0 64 64" className="w-10 h-10 text-gray-600"><path d="M14 20 L4 48 L14 48 L20 24 Z" fill="currentColor" opacity="0.7"/><path d="M50 20 L60 48 L50 48 L44 24 Z" fill="currentColor" opacity="0.7"/></svg> },
+  { id: "regata", name: "Regata", svg: <svg viewBox="0 0 64 64" className="w-10 h-10 text-gray-600"><path d="M22 16 L14 24 L18 28 L26 20 Z" fill="currentColor" opacity="0.7"/><path d="M42 16 L50 24 L46 28 L38 20 Z" fill="currentColor" opacity="0.7"/></svg> },
+];
+
 const CMYK_COLORS = [
   "#FFFFFF",
   "#000000",

@@ -70,7 +70,7 @@ export const useCustomizerStore = create<CustomizerState>((set) => ({
   selectedModel: 'local-gola-padre',
   selectedPattern: null,
   syncShirtShorts: true,
-  activeTab: 'Modelo',
+  activeTab: 'Estilo',
   subTab: 'Camisa',
 
   name: 'SEU NOME',

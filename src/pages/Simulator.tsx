@@ -970,6 +970,17 @@ export default function Simulator() {
           </div>
 
           <div className="flex items-center space-x-2">
+            <button
+              onClick={() => {
+                clearUvState();
+                setSelectedPattern(null);
+                setNicho(null);
+              }}
+              title="Trocar nicho"
+              className="bg-white/20 p-2 rounded-full text-white hover:bg-white/30"
+            >
+              <Home className="w-4 h-4" />
+            </button>
             <button className="bg-white/20 p-2 rounded-full text-white">
               <Settings className="w-4 h-4" />
             </button>

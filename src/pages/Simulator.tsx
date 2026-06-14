@@ -793,6 +793,8 @@ export default function Simulator() {
               numberColor,
               nameFont,
               numberFont,
+              nameOutline,
+              numberOutline,
             },
           });
         }

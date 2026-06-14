@@ -945,16 +945,16 @@ export default function Simulator() {
               onClick={() => setActiveTab("Modelo")}
             />
             <SidebarItem
+              icon={Scissors}
+              label="Estilo"
+              active={activeTab === "Estilo"}
+              onClick={() => setActiveTab("Estilo")}
+            />
+            <SidebarItem
               icon={Palette}
               label="Estampas"
               active={activeTab === "Cores"}
               onClick={() => setActiveTab("Cores")}
-            />
-            <SidebarItem
-              icon={Scissors}
-              label="Acab."
-              active={activeTab === "Acabamentos"}
-              onClick={() => setActiveTab("Acabamentos")}
             />
             <SidebarItem
               icon={Type}

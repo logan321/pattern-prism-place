@@ -24,6 +24,8 @@ export interface TextureGenerationParams {
     nameFont?: string;
     numberFont?: string;
     formation?: string;
+    nameOutline?: string | null;
+    numberOutline?: string | null;
   };
 }
 

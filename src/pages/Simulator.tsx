@@ -954,6 +954,7 @@ export default function Simulator() {
         <meta property="og:url" content="https://pattern-prism-place.lovable.app/" />
         <meta property="og:type" content="website" />
       </Helmet>
+      {nicho === null && <NicheSelector />}
       <div className="flex flex-col h-screen bg-[#f0f0f0] font-sans overflow-hidden">
         {/* Header - Aumentado para mobile */}
         <header className="bg-orange-600 h-14 md:h-16 flex items-center justify-between px-3 shrink-0 shadow-md z-20">

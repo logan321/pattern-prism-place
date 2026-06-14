@@ -17,6 +17,8 @@ interface CustomizationState {
   numberColor: string;
   nameFont: string;
   shieldUrl?: string | null;
+  nameOutline?: string | null;
+  numberOutline?: string | null;
 }
 
 function ZoneDecal({ zone, customization }: { zone: any; customization: CustomizationState }) {
@@ -50,15 +52,18 @@ function ZoneDecal({ zone, customization }: { zone: any; customization: Customiz
     let color = customization.nameColor || '#ffffff';
     let fontSize = 40;
     let imageToRender: string | null = null;
+    let outline: string | null = null;
 
     if (name.includes('nome') || name.includes('name')) {
       content = customization.name || '';
       color = customization.nameColor;
       fontSize = 60;
+      outline = customization.nameOutline || null;
     } else if (name.includes('número') || name.includes('number')) {
       content = customization.number || '';
       color = customization.numberColor;
       fontSize = 120;
+      outline = customization.numberOutline || null;
     } else if ((name.includes('escudo') || name.includes('shield')) && customization.shieldUrl) {
       imageToRender = customization.shieldUrl;
     } else {
@@ -108,6 +113,12 @@ function ZoneDecal({ zone, customization }: { zone: any; customization: Customiz
       ctx.font = `bold ${fontSize}px ${customization.nameFont || 'sans-serif'}`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
+      if (outline) {
+        ctx.lineJoin = 'round';
+        ctx.strokeStyle = outline;
+        ctx.lineWidth = fontSize * 0.08;
+        ctx.strokeText(content, canvas.width / 2, canvas.height / 2);
+      }
       ctx.fillText(content, canvas.width / 2, canvas.height / 2);
 
       const newTexture = new THREE.CanvasTexture(canvas);

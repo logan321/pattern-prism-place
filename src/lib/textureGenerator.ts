@@ -264,7 +264,7 @@ export async function generateFinalTexture(
     ctx.fillRect(0, 0, canvas.width, canvas.height);
   }
 
-  const { name, number, shieldUrl, nameColor, numberColor, nameFont, numberFont } = customizations;
+  const { name, number, shieldUrl, nameColor, numberColor, nameFont, numberFont, nameOutline, numberOutline } = customizations;
 
   for (const zone of zones) {
     ctx.save();
@@ -289,9 +289,12 @@ export async function generateFinalTexture(
       const metrics = ctx.measureText(textToDraw);
       const scale = Math.min(1, zone.width / metrics.width);
       if (scale < 1) ctx.scale(scale, 1);
-      ctx.strokeStyle = "rgba(0,0,0,0.5)";
-      ctx.lineWidth = fontSize * 0.05;
-      ctx.strokeText(textToDraw, 0, 0);
+      if (nameOutline) {
+        ctx.lineJoin = "round";
+        ctx.strokeStyle = nameOutline;
+        ctx.lineWidth = fontSize * 0.08;
+        ctx.strokeText(textToDraw, 0, 0);
+      }
       ctx.fillText(textToDraw, 0, 0);
     } else if (zone.type === "number" && number) {
       const fontSize = Math.floor(zone.height);
@@ -303,9 +306,12 @@ export async function generateFinalTexture(
       const metrics = ctx.measureText(number);
       const scale = Math.min(1, zone.width / metrics.width);
       if (scale < 1) ctx.scale(scale, 1);
-      ctx.strokeStyle = "rgba(0,0,0,0.5)";
-      ctx.lineWidth = fontSize * 0.05;
-      ctx.strokeText(number, 0, 0);
+      if (numberOutline) {
+        ctx.lineJoin = "round";
+        ctx.strokeStyle = numberOutline;
+        ctx.lineWidth = fontSize * 0.08;
+        ctx.strokeText(number, 0, 0);
+      }
       ctx.fillText(number, 0, 0);
     } else if (zone.type === "sponsor" && name) {
       const fontSize = Math.floor(zone.height);

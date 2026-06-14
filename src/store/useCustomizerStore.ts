@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { UvLayer, UvZoneRect } from '@/lib/textureGenerator';
 
 interface CustomizerState {
+  nicho: 'pesca' | 'agro' | 'esportivo' | null;
   selectedModel: string | null;
   selectedPattern: string | null;
   syncShirtShorts: boolean;
@@ -33,6 +34,7 @@ interface CustomizerState {
   patternColorMapping: Record<string, string>; // Mapeamento de cores da estampa ativa (live no simulador)
 
   setSelectedModel: (id: string | null) => void;
+  setNicho: (n: 'pesca' | 'agro' | 'esportivo' | null) => void;
   setSelectedPattern: (id: string | null) => void;
   setSyncShirtShorts: (sync: boolean) => void;
   setActiveTab: (tab: string) => void;
@@ -64,6 +66,7 @@ interface CustomizerState {
 }
 
 export const useCustomizerStore = create<CustomizerState>((set) => ({
+  nicho: null,
   selectedModel: 'local-gola-padre',
   selectedPattern: null,
   syncShirtShorts: true,
@@ -94,6 +97,7 @@ export const useCustomizerStore = create<CustomizerState>((set) => ({
   patternColorMapping: {},
 
   setSelectedModel: (id) => set({ selectedModel: id }),
+  setNicho: (nicho) => set({ nicho }),
   setSelectedPattern: (id) => set({ selectedPattern: id, patternColorMapping: {} }),
   setSyncShirtShorts: (sync) => set({ syncShirtShorts: sync }),
   setActiveTab: (tab) => set({ activeTab: tab }),

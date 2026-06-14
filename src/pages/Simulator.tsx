@@ -180,6 +180,31 @@ const ModelCard = ({
   </div>
 );
 
+const StyleCard = ({
+  name,
+  active,
+  onClick,
+  icon,
+}: {
+  name: string;
+  active?: boolean;
+  onClick: () => void;
+  icon: React.ReactNode;
+}) => (
+  <div
+    onClick={onClick}
+    className={cn(
+      "border rounded-lg p-2 cursor-pointer transition-all hover:shadow-md bg-white flex flex-col items-center",
+      active ? "border-orange-500 ring-1 ring-orange-500" : "border-gray-200",
+    )}
+  >
+    <div className="w-full aspect-square bg-gray-50 rounded mb-2 flex items-center justify-center overflow-hidden">
+      {icon}
+    </div>
+    <span className="text-[10px] text-gray-500 truncate w-full text-center">{name}</span>
+  </div>
+);
+
 const PatternCard = ({
   name,
   active,

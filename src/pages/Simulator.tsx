@@ -36,6 +36,9 @@ import { useUvCompositor } from "../hooks/useUvCompositor";
 import { FormationSelector } from "../components/FormationSelector";
 import golaPadreAsset from "../assets/GOLA_PADRE_otimizado.glb.asset.json";
 import shieldPlaceholderUrl from "../assets/shield-placeholder.svg";
+import { NicheSelector } from "../components/NicheSelector";
+import { NICHO_CONFIG } from "../lib/nichoConfig";
+import { Home } from "lucide-react";
 
 const LOCAL_MODELS = [
   {

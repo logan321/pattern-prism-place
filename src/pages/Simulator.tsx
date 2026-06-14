@@ -1246,6 +1246,8 @@ export default function Simulator() {
                   numberColor,
                   nameFont,
                   shieldUrl,
+                  nameOutline,
+                  numberOutline,
                 }}
               />
             </div>

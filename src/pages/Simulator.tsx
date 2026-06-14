@@ -259,6 +259,8 @@ const PatternCard = ({
 
 export default function Simulator() {
   const viewerRef = useRef<ThreeDViewerRef>(null);
+  const [selectedCollar, setSelectedCollar] = useState<string | null>(null);
+  const [selectedSleeve, setSelectedSleeve] = useState<string | null>(null);
   const {
     activeTab,
     setActiveTab,

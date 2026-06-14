@@ -35,6 +35,7 @@ import * as THREE from "three";
 import { useUvCompositor } from "../hooks/useUvCompositor";
 import { FormationSelector } from "../components/FormationSelector";
 import golaPadreAsset from "../assets/GOLA_PADRE_otimizado.glb.asset.json";
+import shieldPlaceholderUrl from "../assets/shield-placeholder.svg";
 
 const LOCAL_MODELS = [
   {
@@ -505,8 +506,7 @@ export default function Simulator() {
       const autoLayers: UvLayer[] = [];
       const autoDrafts: Record<string, string> = {};
 
-      const DEFAULT_SHIELD =
-        "https://vjhzocuofmbtmgyfxtqy.supabase.co/storage/v1/object/public/textures/shield_placeholder.png";
+      const DEFAULT_SHIELD = shieldPlaceholderUrl;
 
       // 1. Lógica FRENTE (Formações C e D)
       if (formationFrente === "C") {
@@ -870,9 +870,7 @@ export default function Simulator() {
           layer.type === "image" &&
           (layer.zoneKey.includes("PEITO ESQUERDO") || layer.zoneKey.includes("PEITO DIREITO"))
         ) {
-          const DEFAULT_SHIELD =
-            "https://vjhzocuofmbtmgyfxtqy.supabase.co/storage/v1/object/public/textures/shield_placeholder.png";
-          return { ...layer, url: shieldUrl || DEFAULT_SHIELD, scale: shieldSize };
+          return { ...layer, url: shieldUrl || shieldPlaceholderUrl, scale: shieldSize };
         }
         return layer;
       }),

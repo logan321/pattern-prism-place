@@ -1079,6 +1079,41 @@ export default function Simulator() {
                       onClick={() => setSelectedModel(model.id)}
                     />
                   ))
+                ) : activeTab === "Estilo" ? (
+                  <div className="col-span-full space-y-5">
+                    <div>
+                      <h3 className="text-[10px] font-bold text-gray-500 uppercase mb-2">
+                        Tipo de Gola
+                      </h3>
+                      <div className="grid grid-cols-2 gap-2">
+                        {COLLAR_OPTIONS.map((opt) => (
+                          <StyleCard
+                            key={opt.id}
+                            name={opt.name}
+                            active={selectedCollar === opt.id}
+                            onClick={() => setSelectedCollar(opt.id)}
+                            icon={opt.svg}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <h3 className="text-[10px] font-bold text-gray-500 uppercase mb-2">
+                        Tipo de Manga
+                      </h3>
+                      <div className="grid grid-cols-2 gap-2">
+                        {SLEEVE_OPTIONS.map((opt) => (
+                          <StyleCard
+                            key={opt.id}
+                            name={opt.name}
+                            active={selectedSleeve === opt.id}
+                            onClick={() => setSelectedSleeve(opt.id)}
+                            icon={opt.svg}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
                 ) : activeTab === "Cores" ? (
                   <div className="col-span-full space-y-4">
                     <div className="flex border-b overflow-x-auto no-scrollbar mb-2">

@@ -309,7 +309,12 @@ const StyleCard = ({
       active ? "border-orange-500 ring-1 ring-orange-500" : "border-gray-200",
     )}
   >
-    <div className="w-full aspect-square bg-gray-50 rounded mb-2 flex items-center justify-center overflow-hidden">
+    <div
+      className={cn(
+        "w-full aspect-square bg-gray-50 rounded mb-2 flex items-center justify-center overflow-hidden transition-colors",
+        active ? "text-orange-500" : "text-gray-400",
+      )}
+    >
       {icon}
     </div>
     <span className="text-[10px] text-gray-500 truncate w-full text-center">{name}</span>
@@ -1199,7 +1204,7 @@ export default function Simulator() {
                             name={opt.name}
                             active={selectedCollar === opt.id}
                             onClick={() => setSelectedCollar(opt.id)}
-                            icon={COLLAR_OPTIONS.find((c) => c.id === opt.id)?.svg ?? <Scissors className="w-8 h-8 text-gray-400" />}
+                            icon={COLLAR_OPTIONS.find((c) => c.id === opt.id)?.svg ?? null}
                           />
                         ))}
                       </div>
@@ -1215,7 +1220,7 @@ export default function Simulator() {
                             name={opt.name}
                             active={selectedSleeve === opt.id}
                             onClick={() => setSelectedSleeve(opt.id)}
-                            icon={SLEEVE_OPTIONS.find((s) => s.id === opt.id)?.svg ?? <Scissors className="w-8 h-8 text-gray-400" />}
+                            icon={SLEEVE_OPTIONS.find((s) => s.id === opt.id)?.svg ?? null}
                           />
                         ))}
                       </div>
@@ -1232,7 +1237,7 @@ export default function Simulator() {
                               name={opt.name}
                               active={selectedCuff === opt.id}
                               onClick={() => setSelectedCuff(opt.id)}
-                              icon={<Scissors className="w-8 h-8 text-gray-400" />}
+                              icon={CUFF_OPTIONS.find((c) => c.id === opt.id)?.svg ?? null}
                             />
                           ))}
                         </div>

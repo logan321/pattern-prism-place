@@ -1104,13 +1104,13 @@ export default function Simulator() {
                         Tipo de Gola
                       </h3>
                       <div className="grid grid-cols-2 gap-2">
-                        {COLLAR_OPTIONS.map((opt) => (
+                        {(nicho ? NICHO_CONFIG[nicho].collars : COLLAR_OPTIONS).map((opt) => (
                           <StyleCard
                             key={opt.id}
                             name={opt.name}
                             active={selectedCollar === opt.id}
                             onClick={() => setSelectedCollar(opt.id)}
-                            icon={opt.svg}
+                            icon={COLLAR_OPTIONS.find((c) => c.id === opt.id)?.svg ?? <Scissors className="w-8 h-8 text-gray-400" />}
                           />
                         ))}
                       </div>
@@ -1120,17 +1120,35 @@ export default function Simulator() {
                         Tipo de Manga
                       </h3>
                       <div className="grid grid-cols-2 gap-2">
-                        {SLEEVE_OPTIONS.map((opt) => (
+                        {(nicho ? NICHO_CONFIG[nicho].sleeves : SLEEVE_OPTIONS).map((opt) => (
                           <StyleCard
                             key={opt.id}
                             name={opt.name}
                             active={selectedSleeve === opt.id}
                             onClick={() => setSelectedSleeve(opt.id)}
-                            icon={opt.svg}
+                            icon={SLEEVE_OPTIONS.find((s) => s.id === opt.id)?.svg ?? <Scissors className="w-8 h-8 text-gray-400" />}
                           />
                         ))}
                       </div>
                     </div>
+                    {nicho && NICHO_CONFIG[nicho].cuffs && (
+                      <div>
+                        <h3 className="text-[10px] font-bold text-gray-500 uppercase mb-2">
+                          Tipo de Punho
+                        </h3>
+                        <div className="grid grid-cols-2 gap-2">
+                          {NICHO_CONFIG[nicho].cuffs!.map((opt) => (
+                            <StyleCard
+                              key={opt.id}
+                              name={opt.name}
+                              active={selectedCuff === opt.id}
+                              onClick={() => setSelectedCuff(opt.id)}
+                              icon={<Scissors className="w-8 h-8 text-gray-400" />}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ) : activeTab === "Cores" ? (
                   <div className="col-span-full space-y-4">

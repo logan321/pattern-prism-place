@@ -521,6 +521,8 @@ export default function Simulator() {
             fontFamily: nameFont,
             fontWeight: 900,
             scale: nameSize,
+            strokeColor: nameOutline || undefined,
+            strokeWidth: nameOutline ? 8 : 0,
           } as UvLayer);
           autoDrafts["PEITO ESQUERDO"] = customName || "NOME";
         }
@@ -556,6 +558,8 @@ export default function Simulator() {
             fontFamily: nameFont,
             fontWeight: 900,
             scale: nameSize,
+            strokeColor: nameOutline || undefined,
+            strokeWidth: nameOutline ? 8 : 0,
           } as UvLayer);
           autoDrafts["PEITO DIREITO"] = customName || "NOME";
         }
@@ -573,6 +577,8 @@ export default function Simulator() {
           fontFamily: numberFont,
           fontWeight: 900,
           scale: numberSize,
+          strokeColor: numberOutline || undefined,
+          strokeWidth: numberOutline ? 14 : 0,
         } as UvLayer);
         autoDrafts["CENTRO COSTAS"] = customNumber || "10";
       }
@@ -589,6 +595,8 @@ export default function Simulator() {
             fontFamily: nameFont,
             fontWeight: 900,
             scale: nameSize,
+            strokeColor: nameOutline || undefined,
+            strokeWidth: nameOutline ? 8 : 0,
           } as UvLayer);
           autoDrafts["NOME COSTA TOPO"] = customName || "NOME";
         }
@@ -604,6 +612,8 @@ export default function Simulator() {
             fontFamily: nameFont,
             fontWeight: 900,
             scale: nameSize,
+            strokeColor: nameOutline || undefined,
+            strokeWidth: nameOutline ? 8 : 0,
           } as UvLayer);
           autoDrafts["NOME COSTA FUNDO"] = customName || "NOME";
         }
@@ -629,6 +639,8 @@ export default function Simulator() {
     nameSize,
     numberSize,
     shieldSize,
+    nameOutline,
+    numberOutline,
   ]);
 
   // Funções para manipular layers de texto

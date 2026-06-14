@@ -243,6 +243,8 @@ export default function Simulator() {
     nameSize,
     numberSize,
     shieldSize,
+    nameOutline,
+    numberOutline,
     setName,
     setNumber,
     setNameColor,
@@ -255,6 +257,8 @@ export default function Simulator() {
     setNameSize,
     setNumberSize,
     setShieldSize,
+    setNameOutline,
+    setNumberOutline,
     uvMapZones,
     uvMapDims,
     uvLayers,
@@ -517,6 +521,8 @@ export default function Simulator() {
             fontFamily: nameFont,
             fontWeight: 900,
             scale: nameSize,
+            strokeColor: nameOutline || undefined,
+            strokeWidth: nameOutline ? 8 : 0,
           } as UvLayer);
           autoDrafts["PEITO ESQUERDO"] = customName || "NOME";
         }
@@ -552,6 +558,8 @@ export default function Simulator() {
             fontFamily: nameFont,
             fontWeight: 900,
             scale: nameSize,
+            strokeColor: nameOutline || undefined,
+            strokeWidth: nameOutline ? 8 : 0,
           } as UvLayer);
           autoDrafts["PEITO DIREITO"] = customName || "NOME";
         }
@@ -569,6 +577,8 @@ export default function Simulator() {
           fontFamily: numberFont,
           fontWeight: 900,
           scale: numberSize,
+          strokeColor: numberOutline || undefined,
+          strokeWidth: numberOutline ? 14 : 0,
         } as UvLayer);
         autoDrafts["CENTRO COSTAS"] = customNumber || "10";
       }
@@ -585,6 +595,8 @@ export default function Simulator() {
             fontFamily: nameFont,
             fontWeight: 900,
             scale: nameSize,
+            strokeColor: nameOutline || undefined,
+            strokeWidth: nameOutline ? 8 : 0,
           } as UvLayer);
           autoDrafts["NOME COSTA TOPO"] = customName || "NOME";
         }
@@ -600,6 +612,8 @@ export default function Simulator() {
             fontFamily: nameFont,
             fontWeight: 900,
             scale: nameSize,
+            strokeColor: nameOutline || undefined,
+            strokeWidth: nameOutline ? 8 : 0,
           } as UvLayer);
           autoDrafts["NOME COSTA FUNDO"] = customName || "NOME";
         }
@@ -625,6 +639,8 @@ export default function Simulator() {
     nameSize,
     numberSize,
     shieldSize,
+    nameOutline,
+    numberOutline,
   ]);
 
   // Funções para manipular layers de texto
@@ -777,6 +793,8 @@ export default function Simulator() {
               numberColor,
               nameFont,
               numberFont,
+              nameOutline,
+              numberOutline,
             },
           });
         }
@@ -832,6 +850,8 @@ export default function Simulator() {
               color: nameColor,
               fontFamily: nameFont,
               scale: nameSize,
+              strokeColor: nameOutline || undefined,
+              strokeWidth: nameOutline ? 8 : 0,
             };
           }
           if (layer.zoneKey.includes("CENTRO COSTAS")) {
@@ -841,6 +861,8 @@ export default function Simulator() {
               color: numberColor,
               fontFamily: numberFont,
               scale: numberSize,
+              strokeColor: numberOutline || undefined,
+              strokeWidth: numberOutline ? 14 : 0,
             };
           }
         }
@@ -867,6 +889,8 @@ export default function Simulator() {
     numberSize,
     shieldSize,
     uvZonesActive,
+    nameOutline,
+    numberOutline,
   ]);
 
   return (
@@ -1123,6 +1147,33 @@ export default function Simulator() {
                         </div>
                       </div>
                       <SizeSlider label="Tamanho Nome" value={nameSize} onChange={setNameSize} />
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-bold text-gray-500 uppercase">
+                          Contorno Nome
+                        </label>
+                        <div className="flex flex-wrap gap-1.5 p-2 border rounded-lg bg-gray-50">
+                          <button
+                            onClick={() => setNameOutline(null)}
+                            className={cn(
+                              "w-6 h-6 rounded-md border flex items-center justify-center text-[10px] font-bold transition-all bg-white text-gray-500",
+                              !nameOutline
+                                ? "border-orange-500 ring-2 ring-orange-500 ring-offset-1 scale-110"
+                                : "border-gray-200 hover:border-gray-400",
+                            )}
+                            title="Sem contorno"
+                          >
+                            ✕
+                          </button>
+                          {CMYK_COLORS.map((color) => (
+                            <ColorSwatch
+                              key={`no-${color}`}
+                              color={color}
+                              active={nameOutline === color}
+                              onClick={() => setNameOutline(color)}
+                            />
+                          ))}
+                        </div>
+                      </div>
 
                       <div className="h-px bg-gray-100 my-2" />
 
@@ -1158,6 +1209,33 @@ export default function Simulator() {
                         value={numberSize}
                         onChange={setNumberSize}
                       />
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-bold text-gray-500 uppercase">
+                          Contorno Número
+                        </label>
+                        <div className="flex flex-wrap gap-1.5 p-2 border rounded-lg bg-gray-50">
+                          <button
+                            onClick={() => setNumberOutline(null)}
+                            className={cn(
+                              "w-6 h-6 rounded-md border flex items-center justify-center text-[10px] font-bold transition-all bg-white text-gray-500",
+                              !numberOutline
+                                ? "border-orange-500 ring-2 ring-orange-500 ring-offset-1 scale-110"
+                                : "border-gray-200 hover:border-gray-400",
+                            )}
+                            title="Sem contorno"
+                          >
+                            ✕
+                          </button>
+                          {CMYK_COLORS.map((color) => (
+                            <ColorSwatch
+                              key={`nuo-${color}`}
+                              color={color}
+                              active={numberOutline === color}
+                              onClick={() => setNumberOutline(color)}
+                            />
+                          ))}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 ) : activeTab === "Escudo" ? (
@@ -1222,6 +1300,8 @@ export default function Simulator() {
                   numberColor,
                   nameFont,
                   shieldUrl,
+                  nameOutline,
+                  numberOutline,
                 }}
               />
             </div>

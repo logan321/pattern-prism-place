@@ -36,6 +36,9 @@ import { useUvCompositor } from "../hooks/useUvCompositor";
 import { FormationSelector } from "../components/FormationSelector";
 import golaPadreAsset from "../assets/GOLA_PADRE_otimizado.glb.asset.json";
 import shieldPlaceholderUrl from "../assets/shield-placeholder.svg";
+import { NicheSelector } from "../components/NicheSelector";
+import { NICHO_CONFIG } from "../lib/nichoConfig";
+import { Home } from "lucide-react";
 
 const LOCAL_MODELS = [
   {
@@ -261,7 +264,10 @@ export default function Simulator() {
   const viewerRef = useRef<ThreeDViewerRef>(null);
   const [selectedCollar, setSelectedCollar] = useState<string | null>(null);
   const [selectedSleeve, setSelectedSleeve] = useState<string | null>(null);
+  const [selectedCuff, setSelectedCuff] = useState<string | null>(null);
   const {
+    nicho,
+    setNicho,
     activeTab,
     setActiveTab,
     subTab,
@@ -948,6 +954,7 @@ export default function Simulator() {
         <meta property="og:url" content="https://pattern-prism-place.lovable.app/" />
         <meta property="og:type" content="website" />
       </Helmet>
+      {nicho === null && <NicheSelector />}
       <div className="flex flex-col h-screen bg-[#f0f0f0] font-sans overflow-hidden">
         {/* Header - Aumentado para mobile */}
         <header className="bg-orange-600 h-14 md:h-16 flex items-center justify-between px-3 shrink-0 shadow-md z-20">
@@ -963,6 +970,17 @@ export default function Simulator() {
           </div>
 
           <div className="flex items-center space-x-2">
+            <button
+              onClick={() => {
+                clearUvState();
+                setSelectedPattern(null);
+                setNicho(null);
+              }}
+              title="Trocar nicho"
+              className="bg-white/20 p-2 rounded-full text-white hover:bg-white/30"
+            >
+              <Home className="w-4 h-4" />
+            </button>
             <button className="bg-white/20 p-2 rounded-full text-white">
               <Settings className="w-4 h-4" />
             </button>
@@ -1086,13 +1104,13 @@ export default function Simulator() {
                         Tipo de Gola
                       </h3>
                       <div className="grid grid-cols-2 gap-2">
-                        {COLLAR_OPTIONS.map((opt) => (
+                        {(nicho ? NICHO_CONFIG[nicho].collars : COLLAR_OPTIONS).map((opt) => (
                           <StyleCard
                             key={opt.id}
                             name={opt.name}
                             active={selectedCollar === opt.id}
                             onClick={() => setSelectedCollar(opt.id)}
-                            icon={opt.svg}
+                            icon={COLLAR_OPTIONS.find((c) => c.id === opt.id)?.svg ?? <Scissors className="w-8 h-8 text-gray-400" />}
                           />
                         ))}
                       </div>
@@ -1102,17 +1120,35 @@ export default function Simulator() {
                         Tipo de Manga
                       </h3>
                       <div className="grid grid-cols-2 gap-2">
-                        {SLEEVE_OPTIONS.map((opt) => (
+                        {(nicho ? NICHO_CONFIG[nicho].sleeves : SLEEVE_OPTIONS).map((opt) => (
                           <StyleCard
                             key={opt.id}
                             name={opt.name}
                             active={selectedSleeve === opt.id}
                             onClick={() => setSelectedSleeve(opt.id)}
-                            icon={opt.svg}
+                            icon={SLEEVE_OPTIONS.find((s) => s.id === opt.id)?.svg ?? <Scissors className="w-8 h-8 text-gray-400" />}
                           />
                         ))}
                       </div>
                     </div>
+                    {nicho && NICHO_CONFIG[nicho].cuffs && (
+                      <div>
+                        <h3 className="text-[10px] font-bold text-gray-500 uppercase mb-2">
+                          Tipo de Punho
+                        </h3>
+                        <div className="grid grid-cols-2 gap-2">
+                          {NICHO_CONFIG[nicho].cuffs!.map((opt) => (
+                            <StyleCard
+                              key={opt.id}
+                              name={opt.name}
+                              active={selectedCuff === opt.id}
+                              onClick={() => setSelectedCuff(opt.id)}
+                              icon={<Scissors className="w-8 h-8 text-gray-400" />}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ) : activeTab === "Cores" ? (
                   <div className="col-span-full space-y-4">
@@ -1177,6 +1213,12 @@ export default function Simulator() {
                       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-2 gap-2 md:gap-3">
                         {patterns
                           ?.filter((p) => p.image_url)
+                          .filter((p) => {
+                            if (!nicho) return true;
+                            const pn = (p as any).nicho;
+                            if (!pn) return true;
+                            return String(pn).toLowerCase() === nicho;
+                          })
                           .map((pattern) => (
                             <div key={pattern.id} className="relative group">
                               <PatternCard
